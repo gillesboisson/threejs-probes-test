@@ -1,0 +1,26 @@
+{
+  "name": "three-js-project",
+  "version": "0.0.1",
+  "main": "index.js",
+  "private": true,
+  "contributors": [
+    "Gilles Boisson <gillesboisson@gmail.com>"
+  ],
+  "license": "UNLICENSED",
+  "scripts": {
+    "clean": "lerna clean && rm -rf ./node_modules && lerna run clean",
+    "build:production": "lerna run build:production",
+    "build:dev": "lerna run build:dev"
+  },
+  "devDependencies": {
+    "lerna": "^4.0.0"
+  },
+  "workspaces": {
+    "packages": [
+      "app",
+      "libs/**"
+    ]
+  },
+  "npmClient": "yarn",
+  "useWorkspaces": true
+}
