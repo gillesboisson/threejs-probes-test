@@ -1,0 +1,28 @@
+{
+    "name": "irradiance-bis",
+    "file": "irradiance-bis_packed.png",
+    "cubemap_size": 64,
+    "texture_size": 2048,
+    "type": "irradiance",
+    "position": [
+        0.0,
+        0.0,
+        3.0
+    ],
+    "scale": [
+        4.927107810974121,
+        4.927107810974121,
+        4.927107810974121
+    ],
+    "data": {
+        "falloff": 1.0,
+        "resolution": [
+            2,
+            2,
+            2
+        ],
+        "clip_start": 0.009999999776482582,
+        "clip_end": 40.0,
+        "influence_distance": 0.30000001192092896
+    }
+}
