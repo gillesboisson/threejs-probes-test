@@ -1,9 +1,3 @@
-import {
-  BufferAttribute,
-  BufferGeometry,
-  DataTexture,
-  DynamicDrawUsage,
-} from 'three'
 import { AnyProbeVolumeJSON } from '../type'
 import { generateProbeGridCubemaps } from './generateProbeGridCubemaps'
 // import { AnyProbeVolume } from '../ProbeVolume'

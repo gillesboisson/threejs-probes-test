@@ -8,7 +8,7 @@ import {
 import { Probe } from './Probe'
 
 export abstract class ProbeVolume<
-  DataT,
+  DataT extends AnyProbeVolumeData,
   TypeT extends string
 > extends Object3D {
   protected _bounds = new Box3()
@@ -34,9 +34,12 @@ export abstract class ProbeVolume<
   protected abstract computeBounds(): void
   abstract getSuroundingProbes(
     position: Vector3,
+    volumeRatio: number,
     result: ProbeRatio[],
     offset?: number
   ): number
+
+  abstract getGlobalRatio(position: Vector3): number
 
   get bounds(): Box3 {
     if (this.needBoundsUpdate === true) {

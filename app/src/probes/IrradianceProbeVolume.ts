@@ -15,16 +15,17 @@ export class IrradianceProbeVolume extends ProbeVolume<
   readonly probeRadius: Vector3
   readonly gridBounds = new Box3()
 
+  readonly influenceBounds = new Box3()
+
   constructor(data: IrradianceVolumeProps) {
     super(data)
 
     this.resolution = new Vector3(
       data.data.resolution[0],
       data.data.resolution[1],
-      data.data.resolution[2],
+      data.data.resolution[2]
     )
 
-    console.log('this.resolution', this.resolution)
     this.influenceDistance = data.data.influence_distance
     this.clipStart = data.data.clip_start
     this.clipEnd = data.data.clip_end
@@ -34,6 +35,18 @@ export class IrradianceProbeVolume extends ProbeVolume<
       (this.scale.x * 2) / this.resolution.x,
       (this.scale.y * 2) / this.resolution.y,
       (this.scale.z * 2) / this.resolution.z
+    )
+
+    this.influenceBounds.min.set(
+      this.scale.x + (1 - this.falloff) * this.influenceDistance * this.scale.x,
+      this.scale.y + (1 - this.falloff) * this.influenceDistance * this.scale.y,
+      this.scale.z + (1 - this.falloff) * this.influenceDistance * this.scale.z
+    )
+
+    this.influenceBounds.max.set(
+      this.scale.x + this.influenceDistance * this.scale.x,
+      this.scale.y + this.influenceDistance * this.scale.y,
+      this.scale.z + this.influenceDistance * this.scale.z
     )
 
     this.buildGrid()
@@ -69,9 +82,58 @@ export class IrradianceProbeVolume extends ProbeVolume<
     }
   }
 
+  getGlobalRatio(position: Vector3): number {
+    const bounds = this.bounds
+    const influenceBoundsMin = this.influenceBounds.min
+    const influenceBoundsMax = this.influenceBounds.max
+
+    if (bounds.containsPoint(position)) {
+      const relativeX = Math.abs(position.x - this.position.x)
+      const relativeY = Math.abs(position.y - this.position.y)
+      const relativeZ = Math.abs(position.z - this.position.z)
+
+      const ratioX =
+        1 -
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (relativeX - influenceBoundsMin.x) /
+              (influenceBoundsMax.x - influenceBoundsMin.x)
+          )
+        )
+
+      const ratioY =
+        1 -
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (relativeY - influenceBoundsMin.y) /
+              (influenceBoundsMax.y - influenceBoundsMin.y)
+          )
+        )
+
+      const ratioZ =
+        1 -
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (relativeZ - influenceBoundsMin.z) /
+              (influenceBoundsMax.z - influenceBoundsMin.z)
+          )
+        )
+      return Math.min(ratioX, ratioY, ratioZ)
+    }
+
+    return 0
+  }
+
   getSuroundingProbes(
     position: Vector3,
-    result: ProbeRatio[],
+    volumeRatio: number,
+    out: ProbeRatio[],
     offset = 0
   ): number {
     if (this.needBoundsUpdate === true) {
@@ -82,7 +144,7 @@ export class IrradianceProbeVolume extends ProbeVolume<
     const { x, y, z } = position
     const { x: resX, y: resY, z: resZ } = this.resolution
     const { x: radiusX, y: radiusY, z: radiusZ } = this.probeRadius
-    const nbProbes = this.textures.length
+    // const nbProbes = this.textures.length
 
     const relativeX = x - this.gridBounds.min.x
     const relativeY = y - this.gridBounds.min.y
@@ -100,55 +162,10 @@ export class IrradianceProbeVolume extends ProbeVolume<
     const cellY = 1 - Math.max(gridPosY - gridIndexY, 0)
     const cellZ = 1 - Math.max(gridPosZ - gridIndexZ, 0)
 
-    console.log('cellX',relativeX, gridIndexX, cellX);
 
-    const resXresY = resX * resY
+    const resYresZ = resY * resZ
     let totalRatio = 0
     let resultIndex = offset
-
-    let influenceX = 1
-    let influenceY = 1
-    let influenceZ = 1
-
-    if (relativeX < 0) {
-      influenceX = Math.max(-relativeX / this.influenceDistance, 1)
-    }
-
-    if (position.x > this.gridBounds.max.x) {
-      influenceX = Math.max(
-        (position.x - this.gridBounds.max.x) / this.influenceDistance,
-        1
-      )
-    }
-
-    if (relativeY < 0) {
-      influenceY = Math.max(-relativeY / this.influenceDistance, 1)
-    }
-
-    if (position.y > this.gridBounds.max.y) {
-      influenceY = Math.max(
-        (position.y - this.gridBounds.max.y) / this.influenceDistance,
-        1
-      )
-    }
-
-    if (relativeZ < 0) {
-      influenceZ = Math.max(-relativeZ / this.influenceDistance, 1)
-    }
-
-    if (position.z > this.gridBounds.max.z) {
-      influenceZ = Math.max(
-        (position.z - this.gridBounds.max.z) / this.influenceDistance,
-        1
-      )
-    }
-
-
-    const influence = Math.min(influenceX, influenceY, influenceZ)
-
-    if (influence === 0) {
-      return 0
-    }
 
     for (let iX = 0; iX < 2; iX++) {
       for (let iY = 0; iY < 2; iY++) {
@@ -169,9 +186,9 @@ export class IrradianceProbeVolume extends ProbeVolume<
           }
 
           const probeIndex =
-            cCellIndexX + cCellIndexY * resX + cCellIndexZ * resXresY
-          const probe = this.probes[probeIndex]
+            cCellIndexX * resYresZ + cCellIndexY * resZ + cCellIndexZ
 
+          const probe = this.probes[probeIndex]
 
           const cCellX = iX === 1 ? 1 - cellX : cellX
           const cCellY = iY === 1 ? 1 - cellY : cellY
@@ -182,11 +199,11 @@ export class IrradianceProbeVolume extends ProbeVolume<
           if (ratio !== 0) {
             totalRatio += ratio
 
-            if (result.length > resultIndex) {
-              result[resultIndex][0] = probe
-              result[resultIndex][1] = ratio
+            if (out.length > resultIndex) {
+              out[resultIndex][0] = probe
+              out[resultIndex][1] = ratio
             } else {
-              result[resultIndex] = [probe, ratio]
+              out[resultIndex] = [probe, ratio]
             }
 
             resultIndex++
@@ -196,7 +213,7 @@ export class IrradianceProbeVolume extends ProbeVolume<
     }
 
     for (let redIndex = offset; redIndex < resultIndex; redIndex++) {
-      result[redIndex][1] /= totalRatio * influence
+      out[redIndex][1] /= totalRatio / volumeRatio
     }
 
     return resultIndex
@@ -215,6 +232,15 @@ export class IrradianceProbeVolume extends ProbeVolume<
       this.position.z + this.scale.z
     )
 
-    this._bounds.copy(this.gridBounds).expandByScalar(this.influenceDistance)
+
+    this._bounds.copy(this.gridBounds)
+
+    const expand = new Vector3(
+      this.scale.x * this.influenceDistance,
+      this.scale.y * this.influenceDistance,
+      this.scale.z * this.influenceDistance
+    )
+    this._bounds.min.sub(expand);
+    this._bounds.max.add(expand);
   }
 }

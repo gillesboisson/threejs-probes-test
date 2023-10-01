@@ -1,5 +1,6 @@
 import { CubeTexture } from 'three'
 import { Probe } from './Probe'
+import { AnyProbeVolume } from './ProbeVolume'
 
 export type ProbeVolumeDefinition<DataT, TypeT extends string> = {
   name: string
@@ -11,10 +12,10 @@ export type ProbeVolumeDefinition<DataT, TypeT extends string> = {
   data: DataT
 }
 
-export type ProbeVolumeJSON<DataT, TypeT extends string> = ProbeVolumeDefinition<
+export type ProbeVolumeJSON<
   DataT,
-  TypeT
-> & {
+  TypeT extends string
+> = ProbeVolumeDefinition<DataT, TypeT> & {
   file: string
 }
 
@@ -66,10 +67,7 @@ export type IrradianceVolumeJSON = ProbeVolumeJSON<
   'irradiance'
 >
 
-export type AnyProbeVolumeJSON =
-  | ReflectionVolumeJSON
-  | IrradianceVolumeJSON
-
+export type AnyProbeVolumeJSON = ReflectionVolumeJSON | IrradianceVolumeJSON
 
 export type ReflectionVolumeProps = ProbeVolumeProps<
   ReflectionVolumeData,
@@ -80,9 +78,9 @@ export type IrradianceVolumeProps = ProbeVolumeProps<
   'irradiance'
 >
 
-export type AnyProbeVolumeProps =
-  | ReflectionVolumeProps
-  | IrradianceVolumeProps
-
+export type AnyProbeVolumeProps = ReflectionVolumeProps | IrradianceVolumeProps
 
 export type ProbeRatio = [Probe, number]
+
+export type ProbeVolumeRatio<VolumeT extends AnyProbeVolume = AnyProbeVolume> =
+  [VolumeT, number]

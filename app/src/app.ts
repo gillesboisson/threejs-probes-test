@@ -32,6 +32,11 @@ import {
 } from './probes'
 import { ProbeMeshGroup } from './probes/ProbeMesh'
 import { AnyProbeVolume } from './probes/ProbeVolume'
+import {
+  IrradianceProbeVolumeGroup,
+  ProbeVolumeGroup,
+} from './probes/ProbeVolumeGroup'
+import { IrradianceProbeVolume } from './probes/IrradianceProbeVolume'
 
 const orthoWidth = 60
 export class App {
@@ -56,6 +61,8 @@ export class App {
 
   protected controls: OrbitControls
 
+  protected irradianceVolumes = new IrradianceProbeVolumeGroup()
+
   private _refreshClosure = () => this.refresh()
   probeDebug: Mesh
   cubemapTextures: CubeTexture[] = []
@@ -68,6 +75,7 @@ export class App {
     texture: CubeTexture
   }>[]
   probeVolumes: AnyProbeVolume[]
+  private _requestRender = true
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -123,6 +131,12 @@ export class App {
     console.log('volumes', this.probeVolumes)
 
     this.probes = this.probeVolumes.map((v) => v.probes).flat()
+
+    this.probeVolumes
+      .filter((v) => v instanceof IrradianceProbeVolume)
+      .forEach((v) => {
+        this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
+      })
 
     const probeMeshGroup = new ProbeMeshGroup(this.probes)
 
@@ -236,12 +250,30 @@ export class App {
   updateProbeDebug() {
     const foundProbes: ProbeRatio[] = []
 
-    if (this.probeVolumes !== undefined) {
-      this.probeVolumes[0].getSuroundingProbes(
-        this.debugObject.position,
-        foundProbes
-      )
-    }
+    // const ratios = this.irradianceVolumes.getGlobalRatio(
+    //   this.debugObject.position
+    // )
+
+    // console.log('ratios', ratios.map((r) => r[1]))
+
+    this.irradianceVolumes.getSuroundingProbes(
+      this.debugObject.position,
+      foundProbes
+    )
+
+    console.log('foundProbes',foundProbes);
+
+    // if (this.probeVolumes !== undefined) {
+    //   this.probeVolumes[0].getSuroundingProbes(
+    //     this.debugObject.position,
+    //     foundProbes
+    //   )
+    // }
+
+    // console.log(
+    //   'foundProbes',
+    //   this.probeVolumes[0].getGlobalRatio(this.debugObject.position)
+    // )
 
     const ratios = new Float32Array(16)
 
@@ -253,8 +285,9 @@ export class App {
 
     this.debugObject.material.uniforms.mapRatio.value = ratios
 
-    this.debugObject.material.needsUpdate = true;
+    this.debugObject.material.needsUpdate = true
 
+    this._requestRender = true
   }
 
   start() {
@@ -284,7 +317,10 @@ export class App {
   update(deltaTime: number, frameRatio: number) {}
 
   render(deltaTime: number, frameRatio: number) {
-    this.renderer.setRenderTarget(null)
-    this.renderer.render(this.scene, this.camera)
+    if (this._requestRender === true) {
+      this.renderer.setRenderTarget(null)
+      this.renderer.render(this.scene, this.camera)
+      this._requestRender = false
+    }
   }
 }

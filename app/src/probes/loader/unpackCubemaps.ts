@@ -30,25 +30,11 @@ export function unpackCubemaps(
       const width = right - left;
       const height = bottom - top;
 
-
-      // as any TS compiler issue with htmlImage
-
-
-      // flip on x axis for 2 last faces
-      // if (i > 3) {
-      //   ctx.translate(width,height)
-      //   ctx.scale(-1, -1);
-      // }
-
       ctx.drawImage(image as any, left, top, width, height, 0, 0, width, height);
 
       cubemapData.push(ctx.getImageData(0, 0, width, height));
 
-      // if (i > 3) {
-      //   ctx.translate(width,height)
-      //   ctx.scale(-1, -1);
-      // }
-
+      
     }
     const t = new CubeTexture(cubemapData);
     t.needsUpdate = true; 
