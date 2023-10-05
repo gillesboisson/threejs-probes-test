@@ -3,13 +3,14 @@ import {
   AnyProbeVolumeData,
   AnyProbeVolumeDefinition,
   ProbeRatio,
+  ProbeType,
   ProbeVolumeProps,
 } from './type'
 import { Probe } from './Probe'
 
 export abstract class ProbeVolume<
   DataT extends AnyProbeVolumeData,
-  TypeT extends string
+  TypeT extends ProbeType
 > extends Object3D {
   protected _bounds = new Box3()
 
@@ -50,4 +51,4 @@ export abstract class ProbeVolume<
   }
 }
 
-export type AnyProbeVolume = ProbeVolume<AnyProbeVolumeData, string>
+export type AnyProbeVolume = ProbeVolume<AnyProbeVolumeData, ProbeType>

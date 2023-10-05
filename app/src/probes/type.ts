@@ -2,7 +2,9 @@ import { CubeTexture } from 'three'
 import { Probe } from './Probe'
 import { AnyProbeVolume } from './ProbeVolume'
 
-export type ProbeVolumeDefinition<DataT, TypeT extends string> = {
+export type ProbeType = 'irradiance' | 'reflection'
+
+export type ProbeVolumeDefinition<DataT, TypeT extends ProbeType> = {
   name: string
   cubemap_size: number
   texture_size: number
@@ -14,25 +16,28 @@ export type ProbeVolumeDefinition<DataT, TypeT extends string> = {
 
 export type ProbeVolumeJSON<
   DataT,
-  TypeT extends string
+  TypeT extends ProbeType
 > = ProbeVolumeDefinition<DataT, TypeT> & {
   file: string
 }
 
 export type ProbeVolumeProps<
   DataT,
-  TypeT extends string
+  TypeT extends ProbeType
 > = ProbeVolumeDefinition<DataT, TypeT> & {
   textures: CubeTexture[]
 }
 
+export type ProbeInfluenceType = 'BOX' | 'ELIPSOID'
+
 export type ReflectionVolumeData = {
   start_roughness: number
   level_roughness: number
+  intensity: number
   nb_levels: number
-  scale: [number, number, number]
   falloff: number
-  radius: number
+  influence_type: ProbeInfluenceType
+  influence_distance: number
 }
 
 export type IrradianceVolumeData = {

@@ -3,6 +3,8 @@ import { generateProbeGridCubemaps } from './generateProbeGridCubemaps'
 // import { AnyProbeVolume } from '../ProbeVolume'
 import { AnyProbeVolume, ProbeVolume } from '../ProbeVolume'
 import { IrradianceProbeVolume } from '../IrradianceProbeVolume'
+import { generateReflectionProbeCubemap } from './generateReflectionProbeCubemap'
+import { ReflectionProbeVolume } from '../ReflectionProbeVolume'
 
 export class ProbeLoader {
   dir: string = './'
@@ -29,6 +31,16 @@ export class ProbeLoader {
             })
           )
 
+          break
+
+        case 'reflection':
+          const texture = generateReflectionProbeCubemap(json, image)
+          const volume = new ReflectionProbeVolume({
+            ...json,
+            textures: [texture],
+          })
+          console.log('volume',volume);
+          volumes.push(volume)
           break
 
         default:

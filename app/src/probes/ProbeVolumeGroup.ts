@@ -4,6 +4,7 @@ import {
   AnyProbeVolumeData,
   IrradianceVolumeData,
   ProbeRatio,
+  ProbeType,
   ProbeVolumeRatio,
 } from './type'
 import { IrradianceProbeVolume } from './IrradianceProbeVolume'
@@ -11,7 +12,7 @@ import { IrradianceProbeVolume } from './IrradianceProbeVolume'
 export class ProbeVolumeGroup<
   ProbeVolumeT extends ProbeVolume<DataT, TypeT>,
   DataT extends AnyProbeVolumeData,
-  TypeT extends string
+  TypeT extends ProbeType
 > {
   protected _bounds = new Box3()
   protected _boundsDirty = true
@@ -113,7 +114,7 @@ export class ProbeVolumeGroup<
 export type AnyProbeVolumeGroup = ProbeVolumeGroup<
   AnyProbeVolume,
   AnyProbeVolumeData,
-  string
+  ProbeType
 >
 
 export class IrradianceProbeVolumeGroup extends ProbeVolumeGroup<

@@ -1,6 +1,6 @@
 import { CubeTexture } from 'three';
 
-const cubeFaceMapping = [1,0,3,2,5,4]
+const cubeFaceMapping = [0,1,2,3,4,5]
 
 export function unpackCubemaps(
   image: HTMLImageElement,

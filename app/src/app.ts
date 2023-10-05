@@ -37,6 +37,8 @@ import {
   ProbeVolumeGroup,
 } from './probes/ProbeVolumeGroup'
 import { IrradianceProbeVolume } from './probes/IrradianceProbeVolume'
+import { Probe } from './probes/Probe'
+import { ReflectionProbeVolume } from './probes/ReflectionProbeVolume'
 
 const orthoWidth = 60
 export class App {
@@ -62,6 +64,7 @@ export class App {
   protected controls: OrbitControls
 
   protected irradianceVolumes = new IrradianceProbeVolumeGroup()
+  // protected reflectionVolumes = new ProbeVolumeGroup()
 
   private _refreshClosure = () => this.refresh()
   probeDebug: Mesh
@@ -69,11 +72,7 @@ export class App {
   refPlane: Plane
   rayCaster: Raycaster
   debugObject: Mesh<SphereGeometry, ShaderMaterial>
-  probes: Readonly<{
-    position: Vector3
-    infuence: [Vector3, Vector3]
-    texture: CubeTexture
-  }>[]
+  probes: Readonly<Probe>[]
   probeVolumes: AnyProbeVolume[]
   private _requestRender = true
 
@@ -110,8 +109,6 @@ export class App {
       }
     }
 
-    // this.scene.add(gltf.scene);
-
     this.scene.add(this.camera)
 
     this.camera.position.z = 0
@@ -128,9 +125,13 @@ export class App {
 
     this.probeVolumes = await probeLoader.load('probes/probes.json')
 
-    console.log('volumes', this.probeVolumes)
 
-    this.probes = this.probeVolumes.map((v) => v.probes).flat()
+    this.probes = this.probeVolumes
+      .map((v) => v.probes)
+      .flat()
+
+
+    console.log('this.probes',this.probes);
 
     this.probeVolumes
       .filter((v) => v instanceof IrradianceProbeVolume)
@@ -250,30 +251,10 @@ export class App {
   updateProbeDebug() {
     const foundProbes: ProbeRatio[] = []
 
-    // const ratios = this.irradianceVolumes.getGlobalRatio(
-    //   this.debugObject.position
-    // )
-
-    // console.log('ratios', ratios.map((r) => r[1]))
-
     this.irradianceVolumes.getSuroundingProbes(
       this.debugObject.position,
       foundProbes
     )
-
-    console.log('foundProbes',foundProbes);
-
-    // if (this.probeVolumes !== undefined) {
-    //   this.probeVolumes[0].getSuroundingProbes(
-    //     this.debugObject.position,
-    //     foundProbes
-    //   )
-    // }
-
-    // console.log(
-    //   'foundProbes',
-    //   this.probeVolumes[0].getGlobalRatio(this.debugObject.position)
-    // )
 
     const ratios = new Float32Array(16)
 

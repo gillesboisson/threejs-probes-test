@@ -1,5 +1,8 @@
 import { Texture } from 'three'
-import { IrradianceVolumeDefinition } from '../type'
+import {
+  IrradianceVolumeDefinition,
+  ReflectionVolumeData,
+} from '../type'
 import { getCubemapPackCoords } from './getCubemapPackCoords'
 import { unpackCubemaps } from './unpackCubemaps'
 
@@ -21,3 +24,5 @@ export function generateProbeGridCubemaps(
 
   return unpackCubemaps(image, mapCoords)
 }
+
+

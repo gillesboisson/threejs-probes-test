@@ -15,7 +15,7 @@ export class IrradianceProbeVolume extends ProbeVolume<
   readonly probeRadius: Vector3
   readonly gridBounds = new Box3()
 
-  readonly influenceBounds = new Box3()
+  protected influenceBounds = new Box3()
 
   constructor(data: IrradianceVolumeProps) {
     super(data)
@@ -63,21 +63,12 @@ export class IrradianceProbeVolume extends ProbeVolume<
     }
     const positions = generateProbeGridPositions(this.resolution, this.scale)
 
-    // todo use scene raycaster to define probes
-    const probeInfuence: [Vector3, Vector3] = [
-      new Vector3(
-        -this.probeRadius.x,
-        -this.probeRadius.y,
-        -this.probeRadius.z
-      ),
-      new Vector3(this.probeRadius.x, this.probeRadius.y, this.probeRadius.z),
-    ]
-
     for (let i = 0; i < positions.length; i++) {
       this.probes.push({
         position: positions[i].add(this.position),
-        infuence: probeInfuence,
+        // infuence: probeInfuence,
         texture: this.textures[i],
+        type: 'irradiance',
       })
     }
   }
@@ -162,7 +153,6 @@ export class IrradianceProbeVolume extends ProbeVolume<
     const cellY = 1 - Math.max(gridPosY - gridIndexY, 0)
     const cellZ = 1 - Math.max(gridPosZ - gridIndexZ, 0)
 
-
     const resYresZ = resY * resZ
     let totalRatio = 0
     let resultIndex = offset
@@ -232,7 +222,6 @@ export class IrradianceProbeVolume extends ProbeVolume<
       this.position.z + this.scale.z
     )
 
-
     this._bounds.copy(this.gridBounds)
 
     const expand = new Vector3(
@@ -240,7 +229,7 @@ export class IrradianceProbeVolume extends ProbeVolume<
       this.scale.y * this.influenceDistance,
       this.scale.z * this.influenceDistance
     )
-    this._bounds.min.sub(expand);
-    this._bounds.max.add(expand);
+    this._bounds.min.sub(expand)
+    this._bounds.max.add(expand)
   }
 }
