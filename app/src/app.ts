@@ -166,14 +166,8 @@ export class App {
       },
 
       vertexShader: `
-        varying vec3 vNormal;
-    
-        void main() {
-          vNormal = ( normal).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-        }
-      `,
-      fragmentShader: `
+
+        uniform float mapRatio[16];
         uniform samplerCube map0;
         uniform samplerCube map1;
         uniform samplerCube map2;
@@ -191,33 +185,49 @@ export class App {
         uniform samplerCube map14;
         uniform samplerCube map15;
 
-        uniform float mapRatio[16];
+        // varying vec3 vNormal;
+        varying vec3 vProbedColor;
+    
+        void main() {
+          // vNormal = (normal).xyz;
+          vProbedColor = 
+            (texture(map0, normal) * mapRatio[0] +
+            texture(map1, normal) * mapRatio[1] +
+            texture(map2, normal) * mapRatio[2] +
+            texture(map3, normal) * mapRatio[3] +
+            texture(map4, normal) * mapRatio[4] +
+            texture(map5, normal) * mapRatio[5] +
+            texture(map6, normal) * mapRatio[6] +
+            texture(map7, normal) * mapRatio[7] +
+            texture(map8, normal) * mapRatio[8] +
+            texture(map9, normal) * mapRatio[9] +
+            texture(map10, normal) * mapRatio[10] +
+            texture(map11, normal) * mapRatio[11] +
+            texture(map12, normal) * mapRatio[12] +
+            texture(map13, normal) * mapRatio[13] +
+            texture(map14, normal) * mapRatio[14] +
+            texture(map15, normal) * mapRatio[15]).rgb;
 
-        varying vec3 vWorldPosition;
-        varying vec3 vNormal;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+          
+        }
+      `,
+      fragmentShader: `
+        
+
+      
+
+        // varying vec3 vNormal;
+        varying vec3 vProbedColor;
+
     
         void main() {
 
           // gl_FragColor = vec4(mapRatio[0], mapRatio[0], mapRatio[0], 1.0);
 
-          gl_FragColor = 
-            textureCube(map0, vNormal) * mapRatio[0] +
-            textureCube(map1, vNormal) * mapRatio[1] +
-            textureCube(map2, vNormal) * mapRatio[2] +
-            textureCube(map3, vNormal) * mapRatio[3] +
-            textureCube(map4, vNormal) * mapRatio[4] +
-            textureCube(map5, vNormal) * mapRatio[5] +
-            textureCube(map6, vNormal) * mapRatio[6] +
-            textureCube(map7, vNormal) * mapRatio[7] +
-            textureCube(map8, vNormal) * mapRatio[8] +
-            textureCube(map9, vNormal) * mapRatio[9] +
-            textureCube(map10, vNormal) * mapRatio[10] +
-            textureCube(map11, vNormal) * mapRatio[11] +
-            textureCube(map12, vNormal) * mapRatio[12] +
-            textureCube(map13, vNormal) * mapRatio[13] +
-            textureCube(map14, vNormal) * mapRatio[14] +
-            textureCube(map15, vNormal) * mapRatio[15]
-          ;
+          gl_FragColor = vec4(vProbedColor,1.0);
+            
           
         }
       `,
