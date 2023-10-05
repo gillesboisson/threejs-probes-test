@@ -1,0 +1,31 @@
+{
+    "name": "ReflectionCubemap 2",
+    "file": "ReflectionCubemap 2_packed.png",
+    "cubemap_size": 512,
+    "texture_size": 2048,
+    "type": "reflection",
+    "position": [
+        0.0,
+        5.0,
+        -8.0
+    ],
+    "scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "data": {
+        "start_roughness": 0.0,
+        "level_roughness": 0.25,
+        "nb_levels": 3,
+        "scale": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "falloff": 0.3314814865589142,
+        "influence_distance": 9.100000381469727,
+        "intensity": 1.0,
+        "influence_type": "ELIPSOID"
+    }
+}

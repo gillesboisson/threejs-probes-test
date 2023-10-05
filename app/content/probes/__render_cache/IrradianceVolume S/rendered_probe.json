@@ -1,0 +1,44 @@
+{
+    "type": "pano",
+    "probe_type": "irradiance",
+    "name": "IrradianceVolume S",
+    "width": 128,
+    "height": 64,
+    "position": [
+        0.0,
+        5.0,
+        6.948760509490967
+    ],
+    "scale": [
+        14.094822883605957,
+        6.012429237365723,
+        6.948479175567627
+    ],
+    "falloff": 1.0,
+    "resolution": [
+        4,
+        2,
+        2
+    ],
+    "clip_start": 0.0010000000474974513,
+    "clip_end": 40.0,
+    "influence_distance": 0.20000004768371582,
+    "files": [
+        "0_1_0.png",
+        "0_0_0.png",
+        "0_1_1.png",
+        "0_0_1.png",
+        "1_1_0.png",
+        "1_0_0.png",
+        "1_1_1.png",
+        "1_0_1.png",
+        "2_1_0.png",
+        "2_0_0.png",
+        "2_1_1.png",
+        "2_0_1.png",
+        "3_1_0.png",
+        "3_0_0.png",
+        "3_1_1.png",
+        "3_0_1.png"
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "type": "pano",
+    "position": [
+        0.0,
+        5.0,
+        -8.0
+    ],
+    "scale": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "falloff": 0.3314814865589142,
+    "intensity": 1.0,
+    "influence_type": "ELIPSOID",
+    "influence_distance": 9.100000381469727,
+    "probe_type": "reflection",
+    "name": "ReflectionCubemap 2",
+    "width": 1024,
+    "height": 512,
+    "file": "pano.png"
+}

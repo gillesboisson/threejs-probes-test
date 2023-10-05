@@ -1,0 +1,28 @@
+{
+    "name": "IrradianceVolume N",
+    "file": "IrradianceVolume N_packed.png",
+    "cubemap_size": 32,
+    "texture_size": 2048,
+    "type": "irradiance",
+    "position": [
+        0.0,
+        5.0,
+        -7.051239490509033
+    ],
+    "scale": [
+        14.094822883605957,
+        6.012429237365723,
+        6.948479175567627
+    ],
+    "data": {
+        "falloff": 1.0,
+        "resolution": [
+            4,
+            2,
+            2
+        ],
+        "clip_start": 0.0010000000474974513,
+        "clip_end": 40.0,
+        "influence_distance": 0.20000004768371582
+    }
+}
