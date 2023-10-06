@@ -6,8 +6,10 @@ import {
   ProbeRatio,
   ProbeType,
   ProbeVolumeRatio,
+  ReflectionVolumeData,
 } from './type'
 import { IrradianceProbeVolume } from './IrradianceProbeVolume'
+import { ReflectionProbeVolume } from './ReflectionProbeVolume'
 
 export class ProbeVolumeGroup<
   ProbeVolumeT extends ProbeVolume<DataT, TypeT>,
@@ -121,4 +123,10 @@ export class IrradianceProbeVolumeGroup extends ProbeVolumeGroup<
   IrradianceProbeVolume,
   IrradianceVolumeData,
   'irradiance'
+> {}
+
+export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
+ReflectionProbeVolume,
+ReflectionVolumeData,
+'reflection'
 > {}
