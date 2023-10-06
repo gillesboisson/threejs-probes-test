@@ -41,6 +41,7 @@ import { IrradianceProbeVolume } from './probes/IrradianceProbeVolume'
 import { Probe } from './probes/Probe'
 import { ReflectionProbeVolume } from './probes/ReflectionProbeVolume'
 import { IrradianceProbeDebugMaterial } from './probes/IrradianceProbeDebugger'
+import { ReflectionProbeDebugMaterial } from './probes/ReflectionProbeDebugMaterial'
 
 const orthoWidth = 60
 export class App {
@@ -68,7 +69,7 @@ export class App {
   cubemapTextures: CubeTexture[] = []
   refPlane: Plane
   rayCaster: Raycaster
-  debugObject: Mesh<SphereGeometry, IrradianceProbeDebugMaterial>
+  debugObject: Mesh<SphereGeometry, ReflectionProbeDebugMaterial>
   probes: Readonly<Probe>[]
   probeVolumes: AnyProbeVolume[]
   private _requestRender = true
@@ -150,7 +151,7 @@ export class App {
     this.scene.add(probeMeshGroup)
 
 
-    this.debugObject = new Mesh(new SphereGeometry(2, 16, 16), new IrradianceProbeDebugMaterial())
+    this.debugObject = new Mesh(new SphereGeometry(2, 16, 16), new ReflectionProbeDebugMaterial())
 
     this.scene.add(this.debugObject)
 
@@ -176,22 +177,20 @@ export class App {
   }
 
   updateProbeDebug() {
-    const foundProbes: ProbeRatio[] = []
+    const irradianceProbesAround: ProbeRatio[] = []
+    const reflectionProbesAround: ProbeRatio[] = []
 
     this.irradianceVolumes.getSuroundingProbes(
       this.debugObject.position,
-      foundProbes
+      irradianceProbesAround
     )
 
-    // const ratios = new Float32Array(16)
+    this.reflectionVolumes.getSuroundingProbes(
+      this.debugObject.position,
+      reflectionProbesAround
+    )
 
-    // for (let i = 0; i < 16; i++) {
-    //   ratios[i] = foundProbes[i] !== undefined ? foundProbes[i][1] : 0
-    //   this.debugObject.material.uniforms[`map${i}`].value =
-    //     foundProbes[i] !== undefined ? foundProbes[i][0].texture : null
-    // }
-
-    this.debugObject.material.updateProbeRatio(foundProbes);
+    this.debugObject.material.updateProbeRatio(reflectionProbesAround);
 
     this._requestRender = true
   }

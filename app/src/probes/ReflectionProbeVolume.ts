@@ -26,8 +26,6 @@ export class ReflectionProbeVolume extends ProbeVolume<
   constructor(props: ReflectionVolumeProps) {
     super(props)
 
-    this.reflectionProbe = this.probes[0]
-
     this.startRoughness = props.data.start_roughness
     this.levelRoughness = props.data.level_roughness
     this.intensity = props.data.intensity
@@ -57,11 +55,14 @@ export class ReflectionProbeVolume extends ProbeVolume<
       throw new Error('No texture for reflection probe')
     }
 
-    this.probes.push({
+    this.reflectionProbe = {
       position: this.position.clone(),
       texture: this.textures[0],
       type: 'reflection',
-    })
+    }
+    
+
+    this.probes.push(this.reflectionProbe)
   }
 
   protected computeBounds(): void {
@@ -78,6 +79,7 @@ export class ReflectionProbeVolume extends ProbeVolume<
       this.position.y + scale.y,
       this.position.z + scale.z
     )
+
   }
 
   getSuroundingProbes(
@@ -142,20 +144,30 @@ export class ReflectionProbeVolume extends ProbeVolume<
         )
       return Math.min(ratioX, ratioY, ratioZ)
     } else if (this.influenceType === 'ELIPSOID') {
-      relativeX /= this.scale.x
-      relativeY /= this.scale.y
-      relativeZ /= this.scale.z
+      
+      const scaledX = relativeX / this.scale.x / this.influenceDistance
+      const scaledY = relativeY / this.scale.y / this.influenceDistance
+      const scaledZ = relativeZ / this.scale.z / this.influenceDistance
 
-      const relativeLength = Math.sqrt(
-        relativeX * relativeX + relativeY * relativeY + relativeZ * relativeZ
+
+
+
+      const scaledLength = Math.sqrt(
+        scaledX * scaledX + scaledY * scaledY + scaledZ * scaledZ
       )
-      return (
+
+
+      const ratio = (
         1 -
         Math.max(
           0,
-          Math.min(1, (relativeLength - this.falloff) / (1 - this.falloff))
+          Math.min(1, (scaledLength - this.falloff) / (1 - this.falloff))
         )
-      )
+      ) 
+
+
+
+      return ratio;
     } else {
       throw new Error(`Unknown influence type ${this.influenceType}`)
     }

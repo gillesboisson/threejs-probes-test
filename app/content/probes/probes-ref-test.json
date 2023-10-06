@@ -3,8 +3,7 @@
       "name": "IrradianceVolume N",
       "file": "IrradianceVolume N_packed.png",
       "cubemap_size": 32,
-      "texture_width": 2048,
-      "texture_height": 2048,
+      "texture_size": 2048,
       "type": "irradiance",
       "position": [
           0.0,
@@ -32,8 +31,7 @@
       "name": "IrradianceVolume S",
       "file": "IrradianceVolume S_packed.png",
       "cubemap_size": 32,
-      "texture_width": 2048,
-      "texture_height": 2048,
+      "texture_size": 2048,
       "type": "irradiance",
       "position": [
           0.0,

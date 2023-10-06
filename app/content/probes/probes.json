@@ -111,8 +111,8 @@
                 1.0,
                 1.0
             ],
-            "falloff": 0.3314814865589142,
-            "influence_distance": 9.100000381469727,
+            "falloff": 0.3,
+            "influence_distance": 20,
             "intensity": 1.0,
             "influence_type": "ELIPSOID"
         }

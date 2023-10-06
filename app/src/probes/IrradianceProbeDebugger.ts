@@ -105,4 +105,3 @@ export class IrradianceProbeDebugMaterial extends ShaderMaterial {
     this.needsUpdate = true;
   }
 }
-
