@@ -1,5 +1,6 @@
-import { ShaderMaterial } from 'three'
-import { ProbeRatio } from '../type'
+import { ShaderMaterial } from 'three';
+import { ProbeRatio } from '../type';
+
 
 export class IrradianceProbeDebugMaterial extends ShaderMaterial {
   constructor() {
@@ -91,15 +92,15 @@ export class IrradianceProbeDebugMaterial extends ShaderMaterial {
           
         }
       `,
-    })
+    });
   }
 
   updateProbeRatio(probeRatio: ProbeRatio[]) {
     for (let i = 0; i < 16; i++) {
       this.uniforms.mapRatio.value[i] =
-        probeRatio[i] !== undefined ? probeRatio[i][1] : 0
+        probeRatio[i] !== undefined ? probeRatio[i][1] : 0;
       this.uniforms[`map${i}`].value =
-        probeRatio[i] !== undefined ? probeRatio[i][0].texture : null
+        probeRatio[i] !== undefined ? probeRatio[i][0].texture : null;
     }
 
     this.needsUpdate = true;
