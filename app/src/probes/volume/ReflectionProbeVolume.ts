@@ -1,32 +1,44 @@
-import { Box3, Vector3 } from 'three'
-import {
-  ProbeInfluenceType,
-  ProbeRatio,
-  ReflectionVolumeData,
-  ReflectionVolumeProps,
-} from './type'
-import { ProbeVolume } from './ProbeVolume'
-import { Probe } from './Probe'
+import { Box3, Vector3 } from "three"
+import { ReflectionProbe, RoughnessLodMapping } from "../Probe"
+import { ReflectionVolumeData } from "../data"
+import { ReflectionVolumeProps } from "../props"
+import { ProbeInfluenceType, ProbeRatio } from "../type"
+import { ProbeVolume } from "./ProbeVolume"
+
 
 export class ReflectionProbeVolume extends ProbeVolume<
   ReflectionVolumeData,
-  'reflection'
+  'reflection',
+  ReflectionProbe
 > {
-  startRoughness: number
-  levelRoughness: number
-  intensity: number
-  nbLevels: number
-  falloff: number
-  influenceType: ProbeInfluenceType
-  influenceDistance: number
+  readonly startRoughness: number
+  readonly endRoughness: number
+  readonly levelRoughness: number
+  readonly intensity: number
+  readonly nbLevels: number
+  readonly falloff: number
+  readonly influenceType: ProbeInfluenceType
+  readonly influenceDistance: number
 
+  static roughnessToTextureLod(roughness: number, rougnessLod: RoughnessLodMapping): number {
+    return Math.min(
+      Math.max(
+        roughness / (rougnessLod.endRoughness - rougnessLod.startRoughness) -
+        rougnessLod.startRoughness,
+        0
+      ),
+      1
+    ) * rougnessLod.nbLevels;
+  }
+  
   protected influenceBounds = new Box3()
-  readonly reflectionProbe: Probe
+  readonly reflectionProbe: ReflectionProbe
 
   constructor(props: ReflectionVolumeProps) {
     super(props)
 
     this.startRoughness = props.data.start_roughness
+    this.endRoughness = props.data.end_roughness
     this.levelRoughness = props.data.level_roughness
     this.intensity = props.data.intensity
     this.nbLevels = props.data.nb_levels
@@ -59,6 +71,9 @@ export class ReflectionProbeVolume extends ProbeVolume<
       position: this.position.clone(),
       texture: this.textures[0],
       type: 'reflection',
+      startRoughness: this.startRoughness,
+      endRoughness: this.endRoughness,
+      nbLevels: this.nbLevels,
     }
     
 

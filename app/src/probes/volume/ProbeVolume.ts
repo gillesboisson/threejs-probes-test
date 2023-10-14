@@ -1,23 +1,21 @@
-import { Box3, CubeTexture, Object3D, Vector3 } from 'three'
-import {
-  AnyProbeVolumeData,
-  AnyProbeVolumeDefinition,
-  ProbeRatio,
-  ProbeType,
-  ProbeVolumeProps,
-} from './type'
-import { Probe } from './Probe'
+import { Object3D, Box3, CubeTexture, Vector3 } from "three"
+import { Probe } from "../Probe"
+import { AnyProbeVolumeData } from "../data"
+import { ProbeVolumeProps } from "../props"
+import { ProbeType, ProbeRatio } from "../type"
+
 
 export abstract class ProbeVolume<
   DataT extends AnyProbeVolumeData,
-  TypeT extends ProbeType
+  TypeT extends ProbeType,
+  ProbeT extends Probe = Probe,
 > extends Object3D {
   protected _bounds = new Box3()
 
   readonly type: TypeT
-  readonly data: DataT
+  readonly data: Readonly<DataT>
 
-  readonly probes: Probe[] = []
+  readonly probes: Readonly<ProbeT>[] = []
 
   needBoundsUpdate: boolean = true
   readonly textures: CubeTexture[]
@@ -51,4 +49,4 @@ export abstract class ProbeVolume<
   }
 }
 
-export type AnyProbeVolume = ProbeVolume<AnyProbeVolumeData, ProbeType>
+export type AnyProbeVolume = ProbeVolume<AnyProbeVolumeData, ProbeType, any>

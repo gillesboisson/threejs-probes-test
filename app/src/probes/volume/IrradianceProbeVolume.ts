@@ -1,11 +1,15 @@
 import { Box3, Vector3 } from 'three'
-import { IrradianceVolumeData, IrradianceVolumeProps, ProbeRatio } from './type'
-import { generateProbeGridPositions } from './loader/generateProbeGridPositions'
-import { ProbeVolume } from './ProbeVolume'
+import {  ProbeRatio } from '../type'
+import { generateProbeGridPositions } from '../loader/generateProbeGridPositions'
 
+import { Probe } from '../Probe'
+import { IrradianceVolumeData } from '../data'
+import { IrradianceVolumeProps } from '../props'
+import { ProbeVolume } from './ProbeVolume'
 export class IrradianceProbeVolume extends ProbeVolume<
   IrradianceVolumeData,
-  'irradiance'
+  'irradiance',
+  Probe
 > {
   readonly influenceDistance: number
   readonly clipStart: number
@@ -16,6 +20,8 @@ export class IrradianceProbeVolume extends ProbeVolume<
   readonly gridBounds = new Box3()
 
   protected influenceBounds = new Box3()
+
+  
 
   constructor(data: IrradianceVolumeProps) {
     super(data)

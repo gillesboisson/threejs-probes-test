@@ -74,6 +74,7 @@
         "data": {
             "start_roughness": 0.0,
             "level_roughness": 0.25,
+            "end_roughness": 0.75,
             "nb_levels": 3,
             "scale": [
                 2.0053508281707764,
@@ -89,7 +90,7 @@
     {
         "name": "ReflectionCubemap 2",
         "file": "ReflectionCubemap 2_packed.png",
-        "cubemap_size": 512,
+        "cubemap_size": 128,
         "texture_size": 2048,
         "type": "reflection",
         "position": [
@@ -103,16 +104,17 @@
             1.0
         ],
         "data": {
-            "start_roughness": 0.0,
+            "start_roughness": 0.25,
             "level_roughness": 0.25,
+            "end_roughness": 1.0,
             "nb_levels": 3,
             "scale": [
                 1.0,
                 1.0,
                 1.0
             ],
-            "falloff": 0.3,
-            "influence_distance": 20,
+            "falloff": 0.3314814865589142,
+            "influence_distance": 9.100000381469727,
             "intensity": 1.0,
             "influence_type": "ELIPSOID"
         }

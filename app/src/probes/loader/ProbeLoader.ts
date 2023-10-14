@@ -1,10 +1,8 @@
-import { AnyProbeVolumeJSON } from '../type'
-import { generateProbeGridCubemaps } from './generateProbeGridCubemaps'
-// import { AnyProbeVolume } from '../ProbeVolume'
-import { AnyProbeVolume, ProbeVolume } from '../ProbeVolume'
-import { IrradianceProbeVolume } from '../IrradianceProbeVolume'
-import { generateReflectionProbeCubemap } from './generateReflectionProbeCubemap'
-import { ReflectionProbeVolume } from '../ReflectionProbeVolume'
+import { AnyProbeVolumeJSON } from "../data"
+import { AnyProbeVolume, IrradianceProbeVolume, ReflectionProbeVolume } from "../volume"
+import { generateProbeGridCubemaps } from "./generateProbeGridCubemaps"
+import { generateReflectionProbeCubemap } from "./generateReflectionProbeCubemap"
+
 
 export class ProbeLoader {
   dir: string = './'

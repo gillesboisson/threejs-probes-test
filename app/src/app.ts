@@ -1,20 +1,12 @@
 import {
-  BoxGeometry,
   Clock,
   CubeTexture,
-  HemisphereLight,
-  Light,
   Mesh,
   MeshBasicMaterial,
-  MeshPhongMaterial,
-  MeshPhysicalMaterial,
   OrthographicCamera,
-  PerspectiveCamera,
   Plane,
   Raycaster,
   Scene,
-  ShaderMaterial,
-  Sphere,
   SphereGeometry,
   Vector2,
   Vector3,
@@ -25,23 +17,17 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import {
-  ProbeLoader,
-  IrradianceVolumeDefinition,
-  ProbeRatio,
-  // IrradianceProbeHelper,
-} from './probes'
-import { ProbeMeshGroup } from './probes/ProbeMesh'
-import { AnyProbeVolume } from './probes/ProbeVolume'
-import {
   IrradianceProbeVolumeGroup,
-  ProbeVolumeGroup,
   ReflectionProbeVolumeGroup,
-} from './probes/ProbeVolumeGroup'
-import { IrradianceProbeVolume } from './probes/IrradianceProbeVolume'
-import { Probe } from './probes/Probe'
-import { ReflectionProbeVolume } from './probes/ReflectionProbeVolume'
-import { IrradianceProbeDebugMaterial } from './probes/IrradianceProbeDebugger'
-import { ReflectionProbeDebugMaterial } from './probes/ReflectionProbeDebugMaterial'
+  ReflectionProbeDebugMaterial,
+  Probe,
+  AnyProbeVolume,
+  ProbeLoader,
+  IrradianceProbeVolume,
+  ReflectionProbeVolume,
+  ProbeMeshGroup,
+  ProbeRatio,
+} from './probes'
 
 const orthoWidth = 60
 export class App {
@@ -55,7 +41,7 @@ export class App {
     (orthoWidth / 2) * (window.innerHeight / window.innerWidth),
     (-orthoWidth / 2) * (window.innerHeight / window.innerWidth),
     0.01,
-    
+
     1000
   )
 
@@ -123,13 +109,7 @@ export class App {
 
     this.probeVolumes = await probeLoader.load('probes/probes.json')
 
-
-    this.probes = this.probeVolumes
-      .map((v) => v.probes)
-      .flat()
-
-
-    console.log('this.probes',this.probes);
+    this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
     this.probeVolumes
       .filter((v) => v instanceof IrradianceProbeVolume)
@@ -137,21 +117,20 @@ export class App {
         this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
       })
 
-      
     this.probeVolumes
       .filter((v) => v instanceof ReflectionProbeVolume)
       .forEach((v) => {
         this.reflectionVolumes.addVolume(v as ReflectionProbeVolume)
       })
 
-
-
     const probeMeshGroup = new ProbeMeshGroup(this.probes)
 
     this.scene.add(probeMeshGroup)
 
-
-    this.debugObject = new Mesh(new SphereGeometry(2, 16, 16), new ReflectionProbeDebugMaterial())
+    this.debugObject = new Mesh(
+      new SphereGeometry(2, 16, 16),
+      new ReflectionProbeDebugMaterial()
+    )
 
     this.scene.add(this.debugObject)
 
@@ -190,7 +169,7 @@ export class App {
       reflectionProbesAround
     )
 
-    this.debugObject.material.updateProbeRatio(reflectionProbesAround);
+    this.debugObject.material.updateProbeRatio(reflectionProbesAround)
 
     this._requestRender = true
   }

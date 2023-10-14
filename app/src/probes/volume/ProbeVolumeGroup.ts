@@ -1,15 +1,10 @@
-import { Box3, Group, Vector3 } from 'three'
-import { AnyProbeVolume, ProbeVolume } from './ProbeVolume'
-import {
-  AnyProbeVolumeData,
-  IrradianceVolumeData,
-  ProbeRatio,
-  ProbeType,
-  ProbeVolumeRatio,
-  ReflectionVolumeData,
-} from './type'
-import { IrradianceProbeVolume } from './IrradianceProbeVolume'
-import { ReflectionProbeVolume } from './ReflectionProbeVolume'
+import { Box3, Vector3 } from "three"
+import { AnyProbeVolumeData, IrradianceVolumeData, ReflectionVolumeData } from "../data"
+import { ProbeType, ProbeRatio } from "../type"
+import { IrradianceProbeVolume } from "./IrradianceProbeVolume"
+import { ProbeVolume, AnyProbeVolume } from "./ProbeVolume"
+import { ReflectionProbeVolume } from "./ReflectionProbeVolume"
+import { ProbeVolumeRatio } from "./type"
 
 export class ProbeVolumeGroup<
   ProbeVolumeT extends ProbeVolume<DataT, TypeT>,

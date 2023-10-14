@@ -1,5 +1,5 @@
 import { ShaderMaterial } from 'three'
-import { ProbeRatio } from './type'
+import { ProbeRatio } from '../type'
 
 export class IrradianceProbeDebugMaterial extends ShaderMaterial {
   constructor() {

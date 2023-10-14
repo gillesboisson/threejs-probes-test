@@ -1,5 +1,4 @@
 import { Vector3 } from 'three'
-import { IrradianceVolumeDefinition } from '../type'
 
 export function generateProbeGridPositions(
   resolution: Vector3,

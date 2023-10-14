@@ -1,7 +1,7 @@
 import { CubeTexture, LinearFilter, LinearMipMapLinearFilter } from 'three'
-import { ReflectionVolumeDefinition } from '../type'
 import { getCubemapPackCoords } from './getCubemapPackCoords'
 import { unpackCubemaps } from './unpackCubemaps'
+import { ReflectionVolumeDefinition } from '../data'
 
 export function generateReflectionProbeCubemap(
   data: ReflectionVolumeDefinition,

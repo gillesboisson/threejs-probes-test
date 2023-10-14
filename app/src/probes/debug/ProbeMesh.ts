@@ -1,5 +1,5 @@
 import { SphereGeometry, ShaderMaterial, CubeTexture, Mesh, Group } from 'three'
-import { Probe } from './Probe'
+import { Probe } from '../Probe'
 
 const probeMeshGeom = new SphereGeometry(0.5, 16, 16)
 

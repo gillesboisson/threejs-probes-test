@@ -17,6 +17,7 @@
     "data": {
         "start_roughness": 0.0,
         "level_roughness": 0.25,
+        "end_roughness": 0.75,
         "nb_levels": 3,
         "scale": [
             2.0053508281707764,
