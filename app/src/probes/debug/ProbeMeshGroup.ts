@@ -63,5 +63,9 @@ export class ReflectionProbeVolumeMeshGroup extends ProbeVolumeMeshGroup<Reflect
       new LineBasicMaterial({ color: 0x00ffAA, linewidth: 1 }),
       this
     )
+
+    volume.probes.forEach((probe) => {
+      this.add(new ReflectionProbeMesh(probe))
+    })
   }
 }
