@@ -27,6 +27,8 @@ import {
   ReflectionProbeVolume,
   ProbeMeshGroup,
   ProbeRatio,
+  IrradianceProbeVolumeMeshGroup,
+  ReflectionProbeVolumeMeshGroup,
 } from './probes'
 
 const orthoWidth = 60
@@ -114,18 +116,27 @@ export class App {
     this.probeVolumes
       .filter((v) => v instanceof IrradianceProbeVolume)
       .forEach((v) => {
+        const irradianceProbeMeshGroup = new IrradianceProbeVolumeMeshGroup(v as IrradianceProbeVolume);
+        this.scene.add(irradianceProbeMeshGroup)
+
+
         this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
+        
       })
 
     this.probeVolumes
       .filter((v) => v instanceof ReflectionProbeVolume)
       .forEach((v) => {
+        const reflectionProbeMeshGroup = new ReflectionProbeVolumeMeshGroup(v as ReflectionProbeVolume);
+        this.scene.add(reflectionProbeMeshGroup)
+        
         this.reflectionVolumes.addVolume(v as ReflectionProbeVolume)
       })
 
-    const probeMeshGroup = new ProbeMeshGroup(this.probes)
+    // const probeMeshGroup = new ProbeMeshGroup(this.probes)
 
-    this.scene.add(probeMeshGroup)
+
+    
 
     this.debugObject = new Mesh(
       new SphereGeometry(2, 16, 16),
