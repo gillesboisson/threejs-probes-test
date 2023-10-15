@@ -1,10 +1,9 @@
-import { Box3, Vector3 } from "three"
-import { ReflectionProbe, RoughnessLodMapping } from "../Probe"
-import { ReflectionVolumeData } from "../data"
-import { ReflectionVolumeProps } from "../props"
-import { ProbeInfluenceType, ProbeRatio } from "../type"
-import { ProbeVolume } from "./ProbeVolume"
-
+import { Box3, Vector3 } from 'three'
+import { ReflectionProbe, RoughnessLodMapping } from '../Probe'
+import { ReflectionVolumeData } from '../data'
+import { ReflectionVolumeProps } from '../props'
+import { ProbeInfluenceType, ProbeRatio } from '../type'
+import { ProbeVolume } from './ProbeVolume'
 
 export class ReflectionProbeVolume extends ProbeVolume<
   ReflectionVolumeData,
@@ -20,17 +19,22 @@ export class ReflectionProbeVolume extends ProbeVolume<
   readonly influenceType: ProbeInfluenceType
   readonly influenceDistance: number
 
-  static roughnessToTextureLod(roughness: number, rougnessLod: RoughnessLodMapping): number {
-    return Math.min(
-      Math.max(
-        roughness / (rougnessLod.endRoughness - rougnessLod.startRoughness) -
-        rougnessLod.startRoughness,
-        0
-      ),
-      1
-    ) * rougnessLod.nbLevels;
+  static roughnessToTextureLod(
+    roughness: number,
+    rougnessLod: RoughnessLodMapping
+  ): number {
+    return (
+      Math.min(
+        Math.max(
+          roughness / (rougnessLod.endRoughness - rougnessLod.startRoughness) -
+            rougnessLod.startRoughness,
+          0
+        ),
+        1
+      ) * rougnessLod.nbLevels
+    )
   }
-  
+
   protected influenceBounds = new Box3()
   readonly reflectionProbe: ReflectionProbe
 
@@ -75,7 +79,6 @@ export class ReflectionProbeVolume extends ProbeVolume<
       endRoughness: this.endRoughness,
       nbLevels: this.nbLevels,
     }
-    
 
     this.probes.push(this.reflectionProbe)
   }
@@ -94,7 +97,6 @@ export class ReflectionProbeVolume extends ProbeVolume<
       this.position.y + scale.y,
       this.position.z + scale.z
     )
-
   }
 
   getSuroundingProbes(
@@ -117,72 +119,38 @@ export class ReflectionProbeVolume extends ProbeVolume<
       return 0
     }
 
-    let relativeX = Math.abs(position.x - this.position.x)
-    let relativeY = Math.abs(position.y - this.position.y)
-    let relativeZ = Math.abs(position.z - this.position.z)
+    let relativeX =
+      Math.abs(position.x - this.position.x) /
+      this.scale.x /
+      this.influenceDistance
+    let relativeY =
+      Math.abs(position.y - this.position.y) /
+      this.scale.y /
+      this.influenceDistance
+    let relativeZ =
+      Math.abs(position.z - this.position.z) /
+      this.scale.z /
+      this.influenceDistance
 
     if (this.influenceType === 'BOX') {
-      const influenceBoundsMin = this.influenceBounds.min
-      const influenceBoundsMax = this.influenceBounds.max
+      const ratioX = Math.min(1, (1 - relativeX) / this.falloff)
+      const ratioY = Math.min(1, (1 - relativeY) / this.falloff)
+      const ratioZ = Math.min(1, (1 - relativeZ) / this.falloff)
 
-      const ratioX =
-        1 -
-        Math.max(
-          0,
-          Math.min(
-            1,
-            (relativeX - influenceBoundsMin.x) /
-              (influenceBoundsMax.x - influenceBoundsMin.x)
-          )
-        )
+      const ratio = Math.min(ratioX, ratioY, ratioZ)
 
-      const ratioY =
-        1 -
-        Math.max(
-          0,
-          Math.min(
-            1,
-            (relativeY - influenceBoundsMin.y) /
-              (influenceBoundsMax.y - influenceBoundsMin.y)
-          )
-        )
-
-      const ratioZ =
-        1 -
-        Math.max(
-          0,
-          Math.min(
-            1,
-            (relativeZ - influenceBoundsMin.z) /
-              (influenceBoundsMax.z - influenceBoundsMin.z)
-          )
-        )
-      return Math.min(ratioX, ratioY, ratioZ)
+      return ratio
     } else if (this.influenceType === 'ELIPSOID') {
-      
-      const scaledX = relativeX / this.scale.x / this.influenceDistance
-      const scaledY = relativeY / this.scale.y / this.influenceDistance
-      const scaledZ = relativeZ / this.scale.z / this.influenceDistance
-
-
-
 
       const scaledLength = Math.sqrt(
-        scaledX * scaledX + scaledY * scaledY + scaledZ * scaledZ
+        relativeX * relativeX + relativeY * relativeY + relativeZ * relativeZ
       )
 
+      const ratio = Math.min(1, Math.max(0, (1 - scaledLength) / this.falloff)) 
 
-      const ratio = (
-        1 -
-        Math.max(
-          0,
-          Math.min(1, (scaledLength - this.falloff) / (1 - this.falloff))
-        )
-      ) 
+      // console.log('ratio', ratio)
 
-
-
-      return ratio;
+      return ratio
     } else {
       throw new Error(`Unknown influence type ${this.influenceType}`)
     }
