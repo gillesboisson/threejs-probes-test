@@ -1,6 +1,7 @@
 import {
   Clock,
   CubeTexture,
+  Group,
   Mesh,
   MeshBasicMaterial,
   OrthographicCamera,
@@ -25,10 +26,10 @@ import {
   ProbeLoader,
   IrradianceProbeVolume,
   ReflectionProbeVolume,
-  ProbeMeshGroup,
   ProbeRatio,
   IrradianceProbeVolumeMeshGroup,
   ReflectionProbeVolumeMeshGroup,
+  ProbeDebugger,
 } from './probes'
 
 const orthoWidth = 60
@@ -61,6 +62,7 @@ export class App {
   probes: Readonly<Probe>[]
   probeVolumes: AnyProbeVolume[]
   private _requestRender = true
+  probesDebug: ProbeDebugger;
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -113,30 +115,34 @@ export class App {
 
     this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
+    this.probesDebug = new ProbeDebugger(this.probeVolumes)
+    this.scene.add(this.probesDebug)
+
+    this.probesDebug.influenceVisible = false
+
+    
+
     this.probeVolumes
       .filter((v) => v instanceof IrradianceProbeVolume)
       .forEach((v) => {
-        const irradianceProbeMeshGroup = new IrradianceProbeVolumeMeshGroup(v as IrradianceProbeVolume);
-        this.scene.add(irradianceProbeMeshGroup)
-
+        const irradianceProbeMeshGroup = new IrradianceProbeVolumeMeshGroup(
+          v as IrradianceProbeVolume
+        )
 
         this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
-        
       })
 
     this.probeVolumes
       .filter((v) => v instanceof ReflectionProbeVolume)
       .forEach((v) => {
-        const reflectionProbeMeshGroup = new ReflectionProbeVolumeMeshGroup(v as ReflectionProbeVolume);
-        this.scene.add(reflectionProbeMeshGroup)
-        
+        const reflectionProbeMeshGroup = new ReflectionProbeVolumeMeshGroup(
+          v as ReflectionProbeVolume
+        )
+
         this.reflectionVolumes.addVolume(v as ReflectionProbeVolume)
       })
 
     // const probeMeshGroup = new ProbeMeshGroup(this.probes)
-
-
-    
 
     this.debugObject = new Mesh(
       new SphereGeometry(2, 16, 16),
