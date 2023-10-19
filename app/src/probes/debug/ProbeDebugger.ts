@@ -7,21 +7,29 @@ import {
 import { IrradianceProbeVolumeMeshGroup } from './IrradianceProbeVolumeMeshGroup'
 import { ReflectionProbeVolumeMeshGroup } from './ReflectionProbeVolumeMeshGroup'
 import { ProbeVolumeMeshGroup } from './ProbeVolumeMeshGroup'
+import GUI from 'lil-gui'
 
 export class ProbeDebugger extends Group {
   protected probeVolumesGroups: ProbeVolumeMeshGroup[] = []
 
   protected probeVolumesProbesGroups: Group[] = []
-  protected probeVolumesInfluenceGroups: Group[] = []
+  // protected probeVolumesInfluenceGroups: Group[] = []
 
   protected _probesVisible = true
+  protected _reflectionProbesVisible = true
+  protected _irradianceProbesVisible = true
+
   protected _influenceVisible = true
-  protected probeVolumes: AnyProbeVolume[] = [];
+
+
+  protected probeVolumes: AnyProbeVolume[] = []
+
+  public visibilityChanged = (): void => {};
 
   constructor(probeVolumes: AnyProbeVolume[] = []) {
     super()
 
-    this.addProbeVolumes(...probeVolumes);
+    this.addProbeVolumes(...probeVolumes)
   }
 
   get probesVisible() {
@@ -31,9 +39,7 @@ export class ProbeDebugger extends Group {
   set probesVisible(value: boolean) {
     if (value !== this._probesVisible) {
       this._probesVisible = value
-      for (const group of this.probeVolumesProbesGroups) {
-        group.visible = value
-      }
+      this.refreshVisibility()
     }
   }
 
@@ -44,15 +50,82 @@ export class ProbeDebugger extends Group {
   set influenceVisible(value: boolean) {
     if (value !== this._influenceVisible) {
       this._influenceVisible = value
-      for (const group of this.probeVolumesInfluenceGroups) {
-        group.visible = value
-      }
+      this.refreshVisibility()
     }
+  }
+
+  set reflectionProbesVisible(value: boolean) {
+    if (value !== this._reflectionProbesVisible) {
+      this._reflectionProbesVisible = value
+      this.refreshVisibility()
+    }
+  }
+
+  get reflectionProbesVisible() {
+    return this._reflectionProbesVisible
+  }
+
+  set irradianceProbesVisible(value: boolean) {
+    if (value !== this._irradianceProbesVisible) {
+      this._irradianceProbesVisible = value
+      this.refreshVisibility()
+    }
+  }
+
+  get irradianceProbesVisible() {
+    return this._irradianceProbesVisible
+  }
+
+  protected refreshVisibility() {
+    // influence
+
+    for (const group of this.probeVolumesGroups) {
+      const visible =
+        this._probesVisible &&
+        ((group instanceof IrradianceProbeVolumeMeshGroup &&
+          this._irradianceProbesVisible) ||
+          (group instanceof ReflectionProbeVolumeMeshGroup &&
+            this._reflectionProbesVisible))
+
+      const influenceVisible = visible && this._influenceVisible
+      group.influenceGroup.visible = influenceVisible
+
+      group.visible = visible
+    }
+
+    this.visibilityChanged();
+  }
+
+  gui(gui: GUI) {
+    const folder = gui.addFolder('Probe debugger')
+    const mainVisibleProp = folder
+      .add(this, 'probesVisible')
+      .name('Display all Probes')
+
+    const subProps = [
+      folder
+        .add(this, 'reflectionProbesVisible')
+        .name('Display reflection probes only'),
+      folder
+        .add(this, 'irradianceProbesVisible')
+        .name('Display irradiance probes only'),
+      folder.add(this, 'influenceVisible').name('Display Influence'),
+    ]
+    // visible only if probes visible enabled
+    mainVisibleProp.listen().onChange((value) => {
+      for (let prop of subProps) {
+        if (value) {
+          prop.show()
+        } else {
+          prop.hide()
+        }
+      }
+    })
   }
 
   addProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
     let group: ProbeVolumeMeshGroup<AnyProbeVolume> = null
-    
+
     for (let volume of probeVolumes) {
       if (this.probeVolumes.indexOf(volume) === -1) {
         this.probeVolumes.push(volume)
@@ -70,15 +143,13 @@ export class ProbeDebugger extends Group {
         if (group !== null) {
           this.probeVolumesGroups.push(group)
           this.probeVolumesProbesGroups.push(group.probesGroup)
-          this.probeVolumesInfluenceGroups.push(group.influenceGroup)
 
-          group.probesGroup.visible = this._probesVisible
-          group.influenceGroup.visible = this._influenceVisible
-          
           this.add(group)
         }
       }
     }
+
+    this.refreshVisibility()
   }
 
   removeProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
@@ -92,11 +163,10 @@ export class ProbeDebugger extends Group {
 
         this.probeVolumesGroups.splice(index, 1)
         this.probeVolumesProbesGroups.splice(index, 1)
-        this.probeVolumesInfluenceGroups.splice(index, 1)
+        // this.probeVolumesInfluenceGroups.splice(index, 1)
 
         this.remove(group)
       }
     }
   }
-
 }

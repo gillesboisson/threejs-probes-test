@@ -31,6 +31,7 @@ import {
   ReflectionProbeVolumeMeshGroup,
   ProbeDebugger,
 } from './probes'
+import GUI from 'lil-gui'
 
 const orthoWidth = 60
 export class App {
@@ -54,7 +55,7 @@ export class App {
   protected reflectionVolumes = new ReflectionProbeVolumeGroup()
 
   private _refreshClosure = () => this.refresh()
-  probeDebug: Mesh
+  // probeDebug: Mesh
   cubemapTextures: CubeTexture[] = []
   refPlane: Plane
   rayCaster: Raycaster
@@ -62,7 +63,7 @@ export class App {
   probes: Readonly<Probe>[]
   probeVolumes: AnyProbeVolume[]
   private _requestRender = true
-  probesDebug: ProbeDebugger;
+  probesDebug: ProbeDebugger
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -108,6 +109,19 @@ export class App {
     await this.loadProbes()
   }
 
+  protected initDebug() {
+    const gui = new GUI()
+    this.probesDebug = new ProbeDebugger(this.probeVolumes)
+    this.probesDebug.gui(gui)
+
+    // force render when probe visibility change
+    this.probesDebug.visibilityChanged = () => {
+      this._requestRender = true
+    }
+
+    this.scene.add(this.probesDebug)
+  }
+
   async loadProbes() {
     const probeLoader = new ProbeLoader()
 
@@ -115,12 +129,7 @@ export class App {
 
     this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
-    this.probesDebug = new ProbeDebugger(this.probeVolumes)
-    this.scene.add(this.probesDebug)
-
-    this.probesDebug.influenceVisible = false
-
-    
+    this.initDebug()
 
     this.probeVolumes
       .filter((v) => v instanceof IrradianceProbeVolume)
