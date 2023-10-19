@@ -19,7 +19,7 @@ export class ProbeDebugger extends Group {
   protected _reflectionProbesVisible = true
   protected _irradianceProbesVisible = true
 
-  protected _influenceVisible = true
+  protected _influenceVisible = false
 
 
   protected probeVolumes: AnyProbeVolume[] = []
@@ -97,7 +97,7 @@ export class ProbeDebugger extends Group {
   }
 
   gui(gui: GUI) {
-    const folder = gui.addFolder('Probe debugger')
+    const folder = gui.addFolder('Probes')
     const mainVisibleProp = folder
       .add(this, 'probesVisible')
       .name('Display all Probes')

@@ -1,69 +1,46 @@
 import {
   Clock,
-  CubeTexture,
-  Group,
   Mesh,
   MeshBasicMaterial,
-  OrthographicCamera,
-  Plane,
-  Raycaster,
+  PerspectiveCamera,
   Scene,
-  SphereGeometry,
-  Vector2,
-  Vector3,
   WebGLRenderer,
 } from 'three'
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { MapControls } from 'three/examples/jsm/controls/MapControls'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import {
-  IrradianceProbeVolumeGroup,
-  ReflectionProbeVolumeGroup,
-  ReflectionProbeDebugMaterial,
   Probe,
   AnyProbeVolume,
   ProbeLoader,
-  IrradianceProbeVolume,
-  ReflectionProbeVolume,
-  ProbeRatio,
-  IrradianceProbeVolumeMeshGroup,
-  ReflectionProbeVolumeMeshGroup,
   ProbeDebugger,
 } from './probes'
 import GUI from 'lil-gui'
+import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
 
-const orthoWidth = 60
 export class App {
   protected clock = new Clock()
   protected scene = new Scene()
   protected renderer = new WebGLRenderer()
 
-  protected camera = new OrthographicCamera(
-    -orthoWidth / 2,
-    orthoWidth / 2,
-    (orthoWidth / 2) * (window.innerHeight / window.innerWidth),
-    (-orthoWidth / 2) * (window.innerHeight / window.innerWidth),
-    0.01,
-
+  protected camera = new PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
     1000
   )
 
-  protected controls: OrbitControls
-
-  protected irradianceVolumes = new IrradianceProbeVolumeGroup()
-  protected reflectionVolumes = new ReflectionProbeVolumeGroup()
+  protected controls: MapControls
 
   private _refreshClosure = () => this.refresh()
-  // probeDebug: Mesh
-  cubemapTextures: CubeTexture[] = []
-  refPlane: Plane
-  rayCaster: Raycaster
-  debugObject: Mesh<SphereGeometry, ReflectionProbeDebugMaterial>
+
   probes: Readonly<Probe>[]
   probeVolumes: AnyProbeVolume[]
-  private _requestRender = true
+
   probesDebug: ProbeDebugger
+  dynamicProbeDebug: DynamicProbeDebugger
+
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -100,26 +77,31 @@ export class App {
 
     this.scene.add(this.camera)
 
-    this.camera.position.z = 0
-    this.camera.position.y = 30
-    this.camera.position.x = 0
+    this.camera.position.z = 5
+    this.camera.position.y = 10
+    this.camera.position.x = -5
 
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement)
+    this.camera.lookAt(0, 5, 0)
+
+    this.controls = new MapControls(this.camera, this.renderer.domElement)
+    this.controls.target.set(0, 3, 0)
+    this.controls.update()
 
     await this.loadProbes()
   }
 
   protected initDebug() {
     const gui = new GUI()
+
+    gui.title('Three JS Probe Volume Debugger')
+
     this.probesDebug = new ProbeDebugger(this.probeVolumes)
     this.probesDebug.gui(gui)
 
-    // force render when probe visibility change
-    this.probesDebug.visibilityChanged = () => {
-      this._requestRender = true
-    }
+    this.dynamicProbeDebug = new DynamicProbeDebugger(this.probeVolumes)
+    this.dynamicProbeDebug.gui(gui)
 
-    this.scene.add(this.probesDebug)
+    this.scene.add(this.probesDebug, this.dynamicProbeDebug)
   }
 
   async loadProbes() {
@@ -130,74 +112,10 @@ export class App {
     this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
     this.initDebug()
-
-    this.probeVolumes
-      .filter((v) => v instanceof IrradianceProbeVolume)
-      .forEach((v) => {
-        const irradianceProbeMeshGroup = new IrradianceProbeVolumeMeshGroup(
-          v as IrradianceProbeVolume
-        )
-
-        this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
-      })
-
-    this.probeVolumes
-      .filter((v) => v instanceof ReflectionProbeVolume)
-      .forEach((v) => {
-        const reflectionProbeMeshGroup = new ReflectionProbeVolumeMeshGroup(
-          v as ReflectionProbeVolume
-        )
-
-        this.reflectionVolumes.addVolume(v as ReflectionProbeVolume)
-      })
-
-    // const probeMeshGroup = new ProbeMeshGroup(this.probes)
-
-    this.debugObject = new Mesh(
-      new SphereGeometry(2, 16, 16),
-      new ReflectionProbeDebugMaterial()
-    )
-
-    this.scene.add(this.debugObject)
-
-    this.refPlane = new Plane(new Vector3(0, 1, 0), -3)
-    this.rayCaster = new Raycaster()
-
-    this.renderer.domElement.addEventListener('mousemove', (e) => {
-      this.updateRaycaster(
-        (e.clientX / window.innerWidth) * 2 - 1,
-        (-e.clientY / window.innerHeight) * 2 + 1
-      )
-    })
-
-    this.updateRaycaster(window.innerWidth / 2, window.innerHeight / 2)
-  }
-
-  updateRaycaster(x: number, y: number) {
-    this.rayCaster.setFromCamera(new Vector2(x, y), this.camera)
-    this.rayCaster.ray.intersectPlane(this.refPlane, this.debugObject.position)
-
-    // this.debugObject.position.set(10, 7, 10)
-    this.updateProbeDebug()
   }
 
   updateProbeDebug() {
-    const irradianceProbesAround: ProbeRatio[] = []
-    const reflectionProbesAround: ProbeRatio[] = []
-
-    this.irradianceVolumes.getSuroundingProbes(
-      this.debugObject.position,
-      irradianceProbesAround
-    )
-
-    this.reflectionVolumes.getSuroundingProbes(
-      this.debugObject.position,
-      reflectionProbesAround
-    )
-
-    this.debugObject.material.updateProbeRatio(reflectionProbesAround)
-
-    this._requestRender = true
+    this.dynamicProbeDebug.updatePosition(this.controls.target)
   }
 
   start() {
@@ -224,13 +142,16 @@ export class App {
     }
   }
 
-  update(deltaTime: number, frameRatio: number) {}
+  update(deltaTime: number, frameRatio: number) {
+    if (this.dynamicProbeDebug && this.controls) {
+      this.updateProbeDebug()
+    }
+  }
 
   render(deltaTime: number, frameRatio: number) {
-    if (this._requestRender === true) {
-      this.renderer.setRenderTarget(null)
-      this.renderer.render(this.scene, this.camera)
-      this._requestRender = false
-    }
+    // if (this._requestRender === true) {
+    this.renderer.setRenderTarget(null)
+    this.renderer.render(this.scene, this.camera)
+    // }
   }
 }
