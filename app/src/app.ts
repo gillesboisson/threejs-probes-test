@@ -46,6 +46,14 @@ export class App {
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(this.renderer.domElement)
+    
+    const infoPanel = document.createElement('div')
+    infoPanel.id = 'info-panel'
+    document.body.appendChild(infoPanel)
+    
+    infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw with left rotate camera.`
+
+
   }
 
   async init() {

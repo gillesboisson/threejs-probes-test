@@ -17,6 +17,21 @@ canvas {
   
 }
 
+#info-panel{
+  pointer-events: none;
+  position: absolute;
+  color: #FFF;
+  width: 100%;
+  text-align: center;
+  left: 0;
+  top:10px;
+  z-index: 1000;
+  font-size:14px;
+  line-height: 18px;
+}
+
 *:focus {
   outline: none;
 }
+
+

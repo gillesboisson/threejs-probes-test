@@ -19,9 +19,9 @@ export class ReflectionProbeDebugMaterial extends ShaderMaterial {
       varying vec3 vPosition;
   
       void main() {
-        vNormal = ( normal).xyz;
+        vNormal = normal.xyz;
         gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-        vPosition = position;
+        vPosition = (modelMatrix * vec4(position,1.0)).xyz;
       }`,
       fragmentShader: `
         
@@ -43,13 +43,6 @@ export class ReflectionProbeDebugMaterial extends ShaderMaterial {
         vec3 viewDir = normalize(vPosition - cameraPosition);
         vec3 normal = normalize(vNormal);
         vec3 reflexion = reflect(viewDir, normal);
-
-
-        // vec3 probcolor = 
-        //   (texture(map0, reflexion) * mapRatio[0] +
-        //   texture(map1, reflexion) * mapRatio[1] +
-        //   texture(map2, reflexion) * mapRatio[2] +
-        //   texture(map3, reflexion) * mapRatio[3]).rgb;
         
         vec3 probcolor = 
           (textureCubeLodEXT(map0, reflexion,mapLod[0]) * mapRatio[0] +
