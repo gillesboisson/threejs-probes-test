@@ -21,18 +21,31 @@ Demo visible at [https://three-probes.dotify.eu/](https://three-probes.dotify.eu
 - [x] Preview debug tools
 - [ ] Three js materials extension
 - [ ] Integration test with three js framework
+- [ ] Dead probes detection & or occlusion between probes
 - [ ] integration with other baking method (based on blender baking tools )
 - [ ] Three JS baking tools (for now is based on blender plugin exported data)
 
 
-### Tests
-- irradiance grid volume 
+### Features
 
-- reflection cubemaps volume
-    - multilevel roughness texture
-    - [TODO]: parallax correction
 
-- per object probe ponderation
+
+- [ ] reflection cubemaps volume
+  - [ ] multilevel roughness texture
+    - [x] roughness > texture lod
+    - [ ] material > texture lod
+  - [ ] parallax correction
+
+- [ ] irradiance grid
+  - [ ] detect dead probes
+    
+- [ ] ponderation
+    - [x] Reflection box area ponderation
+    - [x] Reflection sphere area ponderation
+    - [ ] Occlusion test between probes
+    - [ ] global fallback mipmap (interpolation only if there is only one probe and have a global ratio of 1)
+
+
 - per vertex probe ponderation
     - !! not supported with webgl2 : cubemaps not available on threejs / Webgl2
 
@@ -44,7 +57,7 @@ Demo visible at [https://three-probes.dotify.eu/](https://three-probes.dotify.eu
 - extends three js PBR materials to support probes volume between irradiance and reflection
 
 
-## Getting started
+## How to build / run the project
 
 This is typescript project, it use lerna to manage multiple packages.
 
@@ -57,4 +70,6 @@ yarn build:dev
 # dev app
 cd ./app
 yarn serve
+# or
+yarn build:dev
 ```
