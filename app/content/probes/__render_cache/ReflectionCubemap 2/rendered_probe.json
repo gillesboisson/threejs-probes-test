@@ -13,7 +13,7 @@
     "falloff": 0.3314814865589142,
     "intensity": 1.0,
     "influence_type": "ELIPSOID",
-    "influence_distance": 9.100000381469727,
+    "influence_distance": 9.0,
     "probe_type": "reflection",
     "name": "ReflectionCubemap 2",
     "width": 1024,
