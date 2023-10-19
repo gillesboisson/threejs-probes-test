@@ -1,10 +1,14 @@
-import { Box3, Vector3 } from "three"
-import { AnyProbeVolumeData, IrradianceVolumeData, ReflectionVolumeData } from "../data"
-import { ProbeType, ProbeRatio } from "../type"
-import { IrradianceProbeVolume } from "./IrradianceProbeVolume"
-import { ProbeVolume, AnyProbeVolume } from "./ProbeVolume"
-import { ReflectionProbeVolume } from "./ReflectionProbeVolume"
-import { ProbeVolumeRatio } from "./type"
+import { Box3, Vector3 } from 'three'
+import {
+  AnyProbeVolumeData,
+  IrradianceVolumeData,
+  ReflectionVolumeData,
+} from '../data'
+import { ProbeType, ProbeRatio, ProbeRatioLod } from '../type'
+import { IrradianceProbeVolume } from './IrradianceProbeVolume'
+import { ProbeVolume, AnyProbeVolume } from './ProbeVolume'
+import { ReflectionProbeVolume } from './ReflectionProbeVolume'
+import { ProbeVolumeRatio } from './type'
 
 export class ProbeVolumeGroup<
   ProbeVolumeT extends ProbeVolume<DataT, TypeT>,
@@ -79,6 +83,7 @@ export class ProbeVolumeGroup<
     this.getGlobalRatio(position, outProbeVolumeRatio)
     for (let i = 0; i < outProbeVolumeRatio.length; i++) {
       const [probeVolume, probeRatio] = outProbeVolumeRatio[i]
+
       resultIndex += probeVolume.getSuroundingProbes(
         position,
         probeRatio,
@@ -86,7 +91,7 @@ export class ProbeVolumeGroup<
         resultIndex
       )
     }
-    
+
     out.splice(resultIndex, out.length - resultIndex)
 
     return out
@@ -121,7 +126,36 @@ export class IrradianceProbeVolumeGroup extends ProbeVolumeGroup<
 > {}
 
 export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
-ReflectionProbeVolume,
-ReflectionVolumeData,
-'reflection'
-> {}
+  ReflectionProbeVolume,
+  ReflectionVolumeData,
+  'reflection'
+> {
+  getSuroundingProbes(
+    position: Vector3,
+    out: ProbeRatioLod[] = [],
+    outProbeVolumeRatio: ProbeVolumeRatio<ReflectionProbeVolume>[] = [],
+    roughness: number = 0
+  ): ProbeRatioLod[] {
+    let resultIndex = 0
+
+    this.getGlobalRatio(position, outProbeVolumeRatio)
+    for (let i = 0; i < outProbeVolumeRatio.length; i++) {
+      const [probeVolume, probeRatio] = outProbeVolumeRatio[i]
+
+      const nbProbes = probeVolume.getSuroundingProbes(
+        position,
+        probeRatio,
+        out,
+        resultIndex
+      )
+
+      probeVolume.probeRatioToProbeRatioLod(roughness, out, nbProbes, out)
+
+      resultIndex += nbProbes
+    }
+
+    out.splice(resultIndex, out.length - resultIndex)
+
+    return out
+  }
+}

@@ -1,5 +1,5 @@
 import { Group, Mesh, SphereGeometry, Vector3 } from 'three'
-import { ProbeRatio } from '../type'
+import { ProbeRatio, ProbeRatioLod } from '../type'
 import {
   AnyProbeVolume,
   IrradianceProbeVolume,
@@ -17,7 +17,7 @@ const sphereGeom = new SphereGeometry(1, 32, 32)
 
 export class DynamicProbeDebugger extends Group {
   private _irradianceProbeRatio: ProbeRatio[] = []
-  private _reflectionProbeRatio: ProbeRatio[] = []
+  private _reflectionProbeRatio: ProbeRatioLod[] = []
 
   protected irradianceVolumes = new IrradianceProbeVolumeGroup()
   protected reflectionVolumes = new ReflectionProbeVolumeGroup()
@@ -37,6 +37,19 @@ export class DynamicProbeDebugger extends Group {
   protected _reflectionVisible = true
   irradianceProbeMeshMaterial: IrradianceProbeDebugMaterial
   reflexionProbeMeshMaterial: ReflectionProbeDebugMaterial
+
+  protected _reflectionRoughness = 1
+
+  get reflectionRoughness() {
+    return this._reflectionRoughness
+  }
+
+  set reflectionRoughness(value: number) {
+    if (value !== this._reflectionRoughness) {
+      this._reflectionRoughness = value
+      this.updateProbeRatio()
+    }
+  }
 
   get irradianceVisible() {
     return this._irradianceVisible
@@ -103,7 +116,10 @@ export class DynamicProbeDebugger extends Group {
     const debugFolder = gui.addFolder('Dynamic probe')
     debugFolder.add(this, 'irradianceVisible').name('Irradiance')
     debugFolder.add(this, 'reflectionVisible').name('Reflection')
-
+    debugFolder
+      .add(this, 'reflectionRoughness', 0, 1)
+      .name('Reflection roughness')
+      .step(0.01)
   }
 
   protected refreshVisibility() {
@@ -125,7 +141,9 @@ export class DynamicProbeDebugger extends Group {
 
     this.reflectionVolumes.getSuroundingProbes(
       this.position,
-      this._reflectionProbeRatio
+      this._reflectionProbeRatio,
+      [],
+      this.reflectionRoughness
     )
 
     this.irradianceProbeMeshMaterial.updateProbeRatio(

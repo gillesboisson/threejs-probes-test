@@ -2,14 +2,13 @@ import { Box3, Vector3 } from 'three'
 import { ReflectionProbe, RoughnessLodMapping } from '../Probe'
 import { ReflectionVolumeData } from '../data'
 import { ReflectionVolumeProps } from '../props'
-import { ProbeInfluenceType, ProbeRatio } from '../type'
+import { ProbeInfluenceType, ProbeRatio, ProbeRatioLod } from '../type'
 import { ProbeVolume } from './ProbeVolume'
 
-export class ReflectionProbeVolume extends ProbeVolume<
-  ReflectionVolumeData,
-  'reflection',
-  ReflectionProbe
-> {
+export class ReflectionProbeVolume
+  extends ProbeVolume<ReflectionVolumeData, 'reflection', ReflectionProbe>
+  implements RoughnessLodMapping
+{
   readonly startRoughness: number
   readonly endRoughness: number
   readonly levelRoughness: number
@@ -19,10 +18,11 @@ export class ReflectionProbeVolume extends ProbeVolume<
   readonly influenceType: ProbeInfluenceType
   readonly influenceDistance: number
 
-  static roughnessToTextureLod(
+  static RoughnessToTextureLod(
     roughness: number,
     rougnessLod: RoughnessLodMapping
   ): number {
+
     return (
       Math.min(
         Math.max(
@@ -33,6 +33,7 @@ export class ReflectionProbeVolume extends ProbeVolume<
         1
       ) * rougnessLod.nbLevels
     )
+
   }
 
   protected influenceBounds = new Box3()
@@ -99,6 +100,42 @@ export class ReflectionProbeVolume extends ProbeVolume<
     )
   }
 
+  roughnessToTextureLod(roughness: number): number {
+    return ReflectionProbeVolume.RoughnessToTextureLod(roughness, this)
+  }
+
+  /**
+   * Populate provided probe ratio with texture lod
+   * It has been implemented for easy use after getting surrounded probes and sending data to shader
+   * @param roughness 
+   * @param probeRatio 
+   * @param affectedLastProbes // number of probes to affect starting from the end of the probeRatio array
+   * @param out // optional array to store result can be the same as probeRatio
+   * @returns
+   */
+  probeRatioToProbeRatioLod(
+    roughness: number,
+    probeRatio: ProbeRatio[],
+    affectedLastProbes = probeRatio.length,
+    out: ProbeRatioLod[] = []
+  ): ProbeRatioLod[] {
+    const textureLod = this.roughnessToTextureLod(roughness)
+
+    const i0 = Math.max(0, probeRatio.length - affectedLastProbes)
+
+    for (let i = i0; i < probeRatio.length; i++) {
+      if (out[i] !== undefined) {
+        out[i][0] = probeRatio[i][0]
+        out[i][1] = probeRatio[i][1]
+        out[i][2] = textureLod
+      } else {
+        out[i] = [probeRatio[i][0], probeRatio[i][1], textureLod]
+      }
+    }
+
+    return out
+  }
+
   getSuroundingProbes(
     position: Vector3,
     volumeRatio: number,
@@ -114,6 +151,7 @@ export class ReflectionProbeVolume extends ProbeVolume<
 
     return 1
   }
+
   getGlobalRatio(position: Vector3): number {
     if (this.bounds.containsPoint(position) === false) {
       return 0
@@ -141,14 +179,11 @@ export class ReflectionProbeVolume extends ProbeVolume<
 
       return ratio
     } else if (this.influenceType === 'ELIPSOID') {
-
       const scaledLength = Math.sqrt(
         relativeX * relativeX + relativeY * relativeY + relativeZ * relativeZ
       )
 
-      const ratio = Math.min(1, Math.max(0, (1 - scaledLength) / this.falloff)) 
-
-      // console.log('ratio', ratio)
+      const ratio = Math.min(1, Math.max(0, (1 - scaledLength) / this.falloff))
 
       return ratio
     } else {
