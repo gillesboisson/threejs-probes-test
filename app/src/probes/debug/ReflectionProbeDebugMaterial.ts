@@ -68,7 +68,6 @@ export class ReflectionProbeDebugMaterial extends ShaderMaterial {
         probeRatio[i] !== undefined ? probeRatio[i][2] : 0
     }
 
-    console.log('probeRatio',probeRatio);
 
     this.needsUpdate = true
   }

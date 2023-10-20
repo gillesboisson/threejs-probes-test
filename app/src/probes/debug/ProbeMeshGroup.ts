@@ -15,7 +15,6 @@ export class ProbeMeshGroup extends Group {
           this.add(new IrradianceProbeMesh(probe))
           break
         case 'reflection':
-          console.log('probe', probe)
           this.add(new ReflectionProbeMesh(probe))
           break
         default:

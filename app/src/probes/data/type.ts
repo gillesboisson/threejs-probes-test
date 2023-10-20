@@ -1,5 +1,5 @@
 import { IrradianceVolumeData } from "./IrradianceVolumeData";
-import { ProbeVolumeDefinition, ProbeVolumeJSON } from "./ProbeVolumeDefinition";
+import { EnvironmentVolumeJSON, ProbeVolumeDefinition, ProbeVolumeJSON } from "./ProbeVolumeDefinition";
 import { ReflectionVolumeData } from "./ReflectionVolumeData";
 
 export type AnyProbeVolumeData = ReflectionVolumeData | IrradianceVolumeData
@@ -27,4 +27,4 @@ IrradianceVolumeData,
 'irradiance'
 >
 
-export type AnyProbeVolumeJSON = ReflectionVolumeJSON | IrradianceVolumeJSON
+export type AnyProbeVolumeJSON = ReflectionVolumeJSON | IrradianceVolumeJSON | EnvironmentVolumeJSON

@@ -1,5 +1,6 @@
 import {
   Clock,
+  DirectionalLight,
   Mesh,
   MeshBasicMaterial,
   PerspectiveCamera,
@@ -10,12 +11,7 @@ import {
 import { MapControls } from 'three/examples/jsm/controls/MapControls'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import {
-  Probe,
-  AnyProbeVolume,
-  ProbeLoader,
-  ProbeDebugger,
-} from './probes'
+import { Probe, AnyProbeVolume, ProbeLoader, ProbeDebugger } from './probes'
 import GUI from 'lil-gui'
 import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
 
@@ -40,24 +36,23 @@ export class App {
 
   probesDebug: ProbeDebugger
   dynamicProbeDebug: DynamicProbeDebugger
-
+  probeScene: import('/home/gillesboisson/Projects/sandbox/threejs-probes/app/src/probes/ProbesScene').ProbesScene
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(this.renderer.domElement)
-    
+
     const infoPanel = document.createElement('div')
     infoPanel.id = 'info-panel'
     document.body.appendChild(infoPanel)
-    
+
     infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw with left rotate camera.`
-
-
   }
 
   async init() {
     await this.initScene()
+    await this.loadProbes()
 
     this.start()
 
@@ -65,15 +60,26 @@ export class App {
 
     const gltf = await loader.loadAsync('models/baking-probs.gltf')
 
-    const whiteDebugMaterial = new MeshBasicMaterial({
-      color: 0xffffff,
-      wireframe: true,
+    const sunPlaceholder = gltf.scene.children.find((c) => {
+      // console.log(c.name)
+      return c.name === 'Sun_Placeholder'
     })
+
+    if (sunPlaceholder) {
+      const light = new DirectionalLight(0xffffff, 1)
+      light.position.set(13, 25, 0)
+      light.rotation.set(0, 0, 0)
+      this.scene.add(light)
+    }
 
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
-        mesh.material = whiteDebugMaterial
+        if (this.probeScene.environment) {
+          mesh.material.envMap = this.probeScene.environment
+          console.log('mesh.material.envMap',mesh.material.envMap);
+        }
+        // mesh.material = whiteDebugMaterial
       }
 
       // if (mesh instanceof Mesh || mesh instanceof Light) {
@@ -94,8 +100,6 @@ export class App {
     this.controls = new MapControls(this.camera, this.renderer.domElement)
     this.controls.target.set(0, 3, 0)
     this.controls.update()
-
-    await this.loadProbes()
   }
 
   protected initDebug() {
@@ -113,10 +117,15 @@ export class App {
   }
 
   async loadProbes() {
-    const probeLoader = new ProbeLoader()
+    const probeLoader = new ProbeLoader(this.renderer)
 
-    this.probeVolumes = await probeLoader.load('probes/probes.json')
+    this.probeScene = await probeLoader.load('probes/probes.json')
 
+    if (this.probeScene.environment) {
+      this.scene.background = this.probeScene.environment
+    }
+
+    this.probeVolumes = this.probeScene.volumes
     this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
     this.initDebug()
