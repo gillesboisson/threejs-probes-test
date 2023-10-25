@@ -22,7 +22,6 @@ export class ReflectionProbeVolume
     roughness: number,
     rougnessLod: RoughnessLodMapping
   ): number {
-
     return (
       Math.min(
         Math.max(
@@ -33,7 +32,6 @@ export class ReflectionProbeVolume
         1
       ) * rougnessLod.nbLevels
     )
-
   }
 
   protected influenceBounds = new Box3()
@@ -107,8 +105,8 @@ export class ReflectionProbeVolume
   /**
    * Populate provided probe ratio with texture lod
    * It has been implemented for easy use after getting surrounded probes and sending data to shader
-   * @param roughness 
-   * @param probeRatio 
+   * @param roughness
+   * @param probeRatio
    * @param affectedLastProbes // number of probes to affect starting from the end of the probeRatio array
    * @param out // optional array to store result can be the same as probeRatio
    * @returns

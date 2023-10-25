@@ -5,7 +5,7 @@ import { getCubemapPackLayout } from './getCubemapPackLayout';
 
 
 export function getCubemapPackCoords(
-  cubemap_size: number,
+  cubemapSize: number,
   subLevel = 0,
   nbCubemap = 1,
   maxTextureSize = 1024,
@@ -17,17 +17,17 @@ export function getCubemapPackCoords(
   const [
     textureWidth, textureHeight, nbClusterX, nbClusterY, clusterWidth, clusterHeight,
   ] = getCubemapPackLayout(
-    cubemap_size,
+    cubemapSize,
     nbCubemap,
     maxTextureSize,
     nbFaceX,
     nbFaceY
   );
 
-  cubemap_size /= Math.pow(2, subLevel);
+  cubemapSize /= Math.pow(2, subLevel);
+  const subLevelPow2 = Math.pow(2, subLevel)
 
-  // const data = new Float32Array(nbCubemap * 6 * 4 * 2)
-  // let dataInd = 0
+
   for (let i = 0; i < nbCubemap; i++) {
     const clusterX = i % nbClusterX;
     const clusterY = Math.floor(i / nbClusterX);
@@ -35,10 +35,9 @@ export function getCubemapPackCoords(
     let left = clusterX * clusterWidth;
     let top = clusterY * clusterHeight;
 
-    for (let f = 0; f < subLevel; f++) {
-      left += clusterWidth / (2 * (f + 1));
-      top += clusterHeight / (2 * (f + 1));
-    }
+    left += clusterWidth - clusterWidth / subLevelPow2
+    top += clusterHeight - clusterHeight / subLevelPow2
+
 
     const mapCoords = [];
 
@@ -46,14 +45,14 @@ export function getCubemapPackCoords(
       const faceX = faceInd % nbFaceX;
       const faceY = Math.floor(faceInd / nbFaceX);
 
-      const faceLeft = left + faceX * cubemap_size;
-      const faceTop = top + faceY * cubemap_size;
+      const faceLeft = left + faceX * cubemapSize;
+      const faceTop = top + faceY * cubemapSize;
 
       mapCoords.push([
         faceLeft,
-        faceLeft + cubemap_size,
+        faceLeft + cubemapSize,
         faceTop,
-        faceTop + cubemap_size,
+        faceTop + cubemapSize,
       ]);
 
       // dataInd += 8
