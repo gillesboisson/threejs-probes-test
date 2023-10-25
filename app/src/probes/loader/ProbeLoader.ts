@@ -20,6 +20,7 @@ import {
 } from '../volume'
 import { generateProbeGridCubemaps } from './generateProbeGridCubemaps'
 import { generateReflectionProbeCubemap } from './generateReflectionProbeCubemap'
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader'
 
 export class ProbeLoader {
   dir: string = './'
@@ -111,6 +112,7 @@ export class ProbeLoader {
 
       const imagerLoader = new ImageLoader(this.loadManager)
       const rgbeLoader = new RGBELoader(this.loadManager)
+      const exrLoader = new EXRLoader(this.loadManager)
 
       const loadNext = () => {
         indexLoaded++
@@ -126,31 +128,75 @@ export class ProbeLoader {
 
         const extension = url.split('.').pop().toLowerCase()
 
-        if (extension !== 'hdr') {
-          imagerLoader.load(
-            url,
-            (image) => {
-              images.push(image)
-              loadNext()
-            },
-            undefined,
-            (e) => {
-              err(e)
-            }
-          )
-        } else {
-          rgbeLoader.load(
-            url,
-            (image) => {
-              images.push(image)
-              loadNext()
-            },
-            undefined,
-            (e) => {
-              err(e)
-            }
-          )
+        switch(extension.toLowerCase()){
+          case 'exr':
+            exrLoader.load(
+              url,
+              (image) => {
+                images.push(image)
+                loadNext()
+              },
+              undefined,
+              (e) => {
+                err(e)
+              }
+            )
+            return;
+          case 'hdr':
+            rgbeLoader.load(
+              url,
+              (image) => {
+                images.push(image)
+                loadNext()
+              },
+              undefined,
+              (e) => {
+                err(e)
+              }
+            )
+            return;
+          default:
+            imagerLoader.load(
+              url,
+              (image) => {
+                images.push(image)
+                loadNext()
+              },
+              undefined,
+              (e) => {
+                err(e)
+              }
+            )
+            return;
+          
+            
         }
+
+        // if (extension !== 'hdr') {
+        //   imagerLoader.load(
+        //     url,
+        //     (image) => {
+        //       images.push(image)
+        //       loadNext()
+        //     },
+        //     undefined,
+        //     (e) => {
+        //       err(e)
+        //     }
+        //   )
+        // } else {
+        //   rgbeLoader.load(
+        //     url,
+        //     (image) => {
+        //       images.push(image)
+        //       loadNext()
+        //     },
+        //     undefined,
+        //     (e) => {
+        //       err(e)
+        //     }
+        //   )
+        // }
       }
 
       loadImage()

@@ -15,6 +15,9 @@ export abstract class ProbeVolume<
   readonly type: TypeT
   readonly data: Readonly<DataT>
 
+  readonly clipStart: number
+  readonly clipEnd: number
+
   readonly probes: Readonly<ProbeT>[] = []
 
   needBoundsUpdate: boolean = true
@@ -24,7 +27,12 @@ export abstract class ProbeVolume<
     super()
     this.position.set(props.position[0], props.position[1], props.position[2])
     this.scale.set(props.scale[0], props.scale[1], props.scale[2])
+    this.rotation.set(props.rotation[0], props.rotation[1], props.rotation[2])
+    
     this.name = props.name
+    this.type = props.type
+    this.clipStart = props.clip_start
+    this.clipEnd = props.clip_end
 
     this.data = props.data
     this.textures = props.textures

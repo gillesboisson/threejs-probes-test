@@ -1,19 +1,24 @@
-import { Box3, Vector3 } from 'three'
-import {  ProbeRatio } from '../type'
+import { Box3, Matrix4, Vector3 } from 'three'
+import { ProbeRatio } from '../type'
 import { generateProbeGridPositions } from '../loader/generateProbeGridPositions'
 
 import { Probe } from '../Probe'
 import { IrradianceVolumeData } from '../data'
 import { IrradianceVolumeProps } from '../props'
 import { ProbeVolume } from './ProbeVolume'
+
+const normalizeToGridSpace = new Matrix4().multiply(
+  new Matrix4().makeScale(0.5, 0, 0)
+)
+// .multiply(new Matrix4().makeTranslation(0.5, 0.5, 0.5))
+
 export class IrradianceProbeVolume extends ProbeVolume<
   IrradianceVolumeData,
   'irradiance',
   Probe
 > {
   readonly influenceDistance: number
-  readonly clipStart: number
-  readonly clipEnd: number
+
   readonly falloff: number
   readonly resolution: Vector3
   readonly probeRadius: Vector3
@@ -21,7 +26,9 @@ export class IrradianceProbeVolume extends ProbeVolume<
 
   protected influenceBounds = new Box3()
 
-  
+  private _tPosition = new Vector3()
+  private _inverseMatrixWorld = new Matrix4()
+  private _gridSpaceMatrix = new Matrix4()
 
   constructor(data: IrradianceVolumeProps) {
     super(data)
@@ -33,8 +40,7 @@ export class IrradianceProbeVolume extends ProbeVolume<
     )
 
     this.influenceDistance = data.data.influence_distance
-    this.clipStart = data.data.clip_start
-    this.clipEnd = data.data.clip_end
+
     this.falloff = data.data.falloff
 
     this.probeRadius = new Vector3(
@@ -62,17 +68,41 @@ export class IrradianceProbeVolume extends ProbeVolume<
     console.warn('disposeProbes not implemented')
   }
 
+  updateMatrixWorld(force?: boolean): void {
+    super.updateMatrixWorld(force)
+    this._inverseMatrixWorld.copy(this.matrixWorld).invert()
+
+    this._gridSpaceMatrix
+      .copy(this.matrixWorld)
+      .multiply(
+        new Matrix4().makeTranslation(
+          1 / this.resolution.x - 1,
+          1 / this.resolution.y - 1,
+          1 / this.resolution.z - 1
+        )
+      )
+      .multiply(
+        new Matrix4().makeScale(
+          2 / this.resolution.x,
+          2 / this.resolution.y,
+          2 / this.resolution.z
+        )
+      )
+      .invert()
+  }
+
   protected buildGrid() {
     if (this.probes.length > 0) {
       this.disposeProbes()
       this.probes.length = 0
     }
-    const positions = generateProbeGridPositions(this.resolution, this.scale)
+
+    const positions = generateProbeGridPositions(this.resolution)
+    this.updateMatrixWorld()
 
     for (let i = 0; i < positions.length; i++) {
       this.probes.push({
-        position: positions[i].add(this.position),
-        // infuence: probeInfuence,
+        position: positions[i].applyMatrix4(this.matrixWorld),
         texture: this.textures[i],
         type: 'irradiance',
       })
@@ -81,46 +111,34 @@ export class IrradianceProbeVolume extends ProbeVolume<
 
   getGlobalRatio(position: Vector3): number {
     const bounds = this.bounds
-    const influenceBoundsMin = this.influenceBounds.min
-    const influenceBoundsMax = this.influenceBounds.max
+    const influenceDistance = this.influenceDistance
 
     if (bounds.containsPoint(position)) {
-      const relativeX = Math.abs(position.x - this.position.x)
-      const relativeY = Math.abs(position.y - this.position.y)
-      const relativeZ = Math.abs(position.z - this.position.z)
+      const tPosition = this._tPosition
+        .copy(position)
+        .applyMatrix4(this._inverseMatrixWorld)
 
       const ratioX =
         1 -
         Math.max(
           0,
-          Math.min(
-            1,
-            (relativeX - influenceBoundsMin.x) /
-              (influenceBoundsMax.x - influenceBoundsMin.x)
-          )
+          Math.min(1, (Math.abs(tPosition.x) - 1) / influenceDistance)
         )
 
       const ratioY =
         1 -
         Math.max(
           0,
-          Math.min(
-            1,
-            (relativeY - influenceBoundsMin.y) /
-              (influenceBoundsMax.y - influenceBoundsMin.y)
-          )
+          Math.min(1, (Math.abs(tPosition.y) - 1) / influenceDistance)
         )
 
       const ratioZ =
         1 -
         Math.max(
           0,
-          Math.min(
-            1,
-            (relativeZ - influenceBoundsMin.z) /
-              (influenceBoundsMax.z - influenceBoundsMin.z)
-          )
+          Math.min(1, (Math.abs(tPosition.z) - 1) / influenceDistance)
         )
+
       return Math.min(ratioX, ratioY, ratioZ)
     }
 
@@ -137,27 +155,19 @@ export class IrradianceProbeVolume extends ProbeVolume<
       this.computeBounds()
       this.needBoundsUpdate = false
     }
-
-    const { x, y, z } = position
+    
     const { x: resX, y: resY, z: resZ } = this.resolution
-    const { x: radiusX, y: radiusY, z: radiusZ } = this.probeRadius
-    // const nbProbes = this.textures.length
+    const tPosition = this._tPosition
+      .copy(position)
+      .applyMatrix4(this._gridSpaceMatrix)
 
-    const relativeX = x - this.gridBounds.min.x
-    const relativeY = y - this.gridBounds.min.y
-    const relativeZ = z - this.gridBounds.min.z
+    const gridIndexX = Math.floor(tPosition.x)
+    const gridIndexY = Math.floor(tPosition.y)
+    const gridIndexZ = Math.floor(tPosition.z)
 
-    const gridPosX = Math.max(-1, Math.min(resX - 1, relativeX / radiusX - 0.5))
-    const gridPosY = Math.max(-1, Math.min(resY - 1, relativeY / radiusY - 0.5))
-    const gridPosZ = Math.max(-1, Math.min(resZ - 1, relativeZ / radiusZ - 0.5))
-
-    const gridIndexX = Math.floor(gridPosX)
-    const gridIndexY = Math.floor(gridPosY)
-    const gridIndexZ = Math.floor(gridPosZ)
-
-    const cellX = 1 - Math.max(gridPosX - gridIndexX, 0)
-    const cellY = 1 - Math.max(gridPosY - gridIndexY, 0)
-    const cellZ = 1 - Math.max(gridPosZ - gridIndexZ, 0)
+    const cellX = tPosition.x - gridIndexX
+    const cellY = tPosition.y - gridIndexY
+    const cellZ = tPosition.z - gridIndexZ
 
     const resYresZ = resY * resZ
     let totalRatio = 0
@@ -186,9 +196,9 @@ export class IrradianceProbeVolume extends ProbeVolume<
 
           const probe = this.probes[probeIndex]
 
-          const cCellX = iX === 1 ? 1 - cellX : cellX
-          const cCellY = iY === 1 ? 1 - cellY : cellY
-          const cCellZ = iZ === 1 ? 1 - cellZ : cellZ
+          const cCellX = iX === 0 ? 1 - cellX : cellX
+          const cCellY = iY === 0 ? 1 - cellY : cellY
+          const cCellZ = iZ === 0 ? 1 - cellZ : cellZ
 
           const ratio = cCellX * cCellY * cCellZ
 
@@ -216,26 +226,16 @@ export class IrradianceProbeVolume extends ProbeVolume<
   }
 
   computeBounds(): void {
-    this.gridBounds.min.set(
-      this.position.x - this.scale.x,
-      this.position.y - this.scale.y,
-      this.position.z - this.scale.z
-    )
+    this.gridBounds.min.set(-1, -1, -1)
 
-    this.gridBounds.max.set(
-      this.position.x + this.scale.x,
-      this.position.y + this.scale.y,
-      this.position.z + this.scale.z
-    )
+    this.gridBounds.max.set(1, 1, 1)
 
     this._bounds.copy(this.gridBounds)
 
-    const expand = new Vector3(
-      this.scale.x * this.influenceDistance,
-      this.scale.y * this.influenceDistance,
-      this.scale.z * this.influenceDistance
-    )
-    this._bounds.min.sub(expand)
-    this._bounds.max.add(expand)
+    this.gridBounds.applyMatrix4(this.matrixWorld)
+
+    this._bounds.min.addScalar(-this.influenceDistance)
+    this._bounds.max.addScalar(this.influenceDistance)
+    this._bounds.applyMatrix4(this.matrixWorld)
   }
 }

@@ -16,6 +16,9 @@ export type ProbeVolumeDefinition<DataT, TypeT extends ProbeType> = {
   type: TypeT
   position: [number, number, number]
   scale: [number, number, number]
+  rotation: [number, number, number]
+  clip_start: number,
+  clip_end: number,
   data: DataT
 }
 
