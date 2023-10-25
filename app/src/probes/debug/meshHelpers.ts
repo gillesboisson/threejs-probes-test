@@ -41,6 +41,8 @@ export function createWireframeMeshFromIrradianceVolume(
 
   outsideMesh.scale.copy(scale).multiplyScalar(2 * size)
   insideMesh.scale.copy(scale).multiplyScalar(2 * insideSize)
+  insideMesh.rotation.copy(volume.rotation)
+  outsideMesh.rotation.copy(volume.rotation)
 
   group.add(outsideMesh)
   group.add(insideMesh)
