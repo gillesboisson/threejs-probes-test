@@ -24,8 +24,6 @@ export class IrradianceProbeVolume extends ProbeVolume<
   readonly probeRadius: Vector3
   readonly gridBounds = new Box3()
 
-  protected influenceBounds = new Box3()
-
   private _tPosition = new Vector3()
   private _inverseMatrixWorld = new Matrix4()
   private _gridSpaceMatrix = new Matrix4()
@@ -48,19 +46,6 @@ export class IrradianceProbeVolume extends ProbeVolume<
       (this.scale.y * 2) / this.resolution.y,
       (this.scale.z * 2) / this.resolution.z
     )
-
-    this.influenceBounds.min.set(
-      this.scale.x + (1 - this.falloff) * this.influenceDistance * this.scale.x,
-      this.scale.y + (1 - this.falloff) * this.influenceDistance * this.scale.y,
-      this.scale.z + (1 - this.falloff) * this.influenceDistance * this.scale.z
-    )
-
-    this.influenceBounds.max.set(
-      this.scale.x + this.influenceDistance * this.scale.x,
-      this.scale.y + this.influenceDistance * this.scale.y,
-      this.scale.z + this.influenceDistance * this.scale.z
-    )
-
     this.buildGrid()
   }
 
