@@ -1,18 +1,21 @@
 import {
+  CubeTexture,
   DataTexture,
+  DataTextureLoader,
   DefaultLoadingManager,
-  ImageLoader,
   LoadingManager,
   PMREMGenerator,
   Renderer,
   Scene,
   Texture,
+  TextureLoader,
+  Vector3,
   WebGLRenderer,
 } from 'three'
 
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { ProbesScene } from '../ProbesScene'
-import { AnyProbeVolumeJSON } from '../data'
+import { AnyProbeVolumeJSON, GlobalEnvJSON } from '../data'
 import {
   AnyProbeVolume,
   IrradianceProbeVolume,
@@ -21,35 +24,64 @@ import {
 import { generateProbeGridCubemaps } from './generateProbeGridCubemaps'
 import { generateReflectionProbeCubemap } from './generateReflectionProbeCubemap'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader'
+import { CubemapWrapper } from './CubemapsWrapper'
+import { Probe } from '../Probe'
+import { GlobalEnvVolume } from '../volume/GlobalEnvVolume'
 
 export class ProbeLoader {
   dir: string = './'
+  protected cubemapWrapper: CubemapWrapper
   constructor(
     readonly renderer: WebGLRenderer,
-    readonly loadManager: LoadingManager = DefaultLoadingManager,
-    
-  ) {}
+    readonly loadManager: LoadingManager = DefaultLoadingManager
+  ) {
+    this.cubemapWrapper = new CubemapWrapper(renderer)
+  }
 
   async load(url: string): Promise<ProbesScene> {
-    const probesJSON = await this.loadJSON(url)
-    const images = await this.loadImages(probesJSON)
+    const sourceData = await this.loadJSON(url)
+
+    // Load probes
+    const probesJSON = sourceData.filter(
+      (probe) => probe.type !== 'global'
+    ) as AnyProbeVolumeJSON[]
+
+    const sourceTextures = await this.loadTextures(
+      probesJSON.map((probe) => this.dir + probe.file)
+    )
 
     const volumes: AnyProbeVolume[] = []
     const gen = new PMREMGenerator(this.renderer)
-    
-    let hdrTexture: Texture;
+
+    const cubemapWrapper = new CubemapWrapper(this.renderer)
 
     for (let i = 0; i < probesJSON.length; i++) {
-      const image = images[i]
+      const sourceTexture = sourceTextures[i]
       const json = probesJSON[i]
 
       switch (json.type) {
         case 'irradiance':
-          if (image instanceof DataTexture) {
-            throw new Error('DataTexture not supported for irradiance probes')
-          }
+          
 
-          const textures = generateProbeGridCubemaps(json, image)
+          const nbCubes =
+            json.data.resolution[0] *
+            json.data.resolution[1] *
+            json.data.resolution[2]
+
+          const irradianceLayouts = CubemapWrapper.gridLayout(
+            sourceTexture.image.width,
+            sourceTexture.image.height,
+            json.cubemap_size,
+            nbCubes
+          )
+
+          // const textures: CubeTexture[] = []
+          const textures: CubeTexture[] =
+            cubemapWrapper.wrapCubeCollectionFromTexture(
+              sourceTexture,
+              json.cubemap_size,
+              irradianceLayouts
+            )
 
           volumes.push(
             new IrradianceProbeVolume({
@@ -61,56 +93,106 @@ export class ProbeLoader {
           break
 
         case 'reflection':
-          if (image instanceof DataTexture) {
-            throw new Error('DataTexture not supported for reflection probes')
-          }
+          
 
-          const texture = generateReflectionProbeCubemap(json, image)
+          const reflectionLayouts = CubemapWrapper.lodLayout(
+            json.cubemap_size,
+            json.data.nb_levels
+          )
+
+          const texture = cubemapWrapper.wrapCubeLodFromTexture(
+            sourceTexture,
+            json.cubemap_size,
+            reflectionLayouts
+          )
+
+          // const texture = generateReflectionProbeCubemap(json, image)
           const volume = new ReflectionProbeVolume({
             ...json,
             textures: [texture],
           })
-          console.log('volume', volume)
           volumes.push(volume)
           break
 
-        case 'global':
-          if (image instanceof HTMLImageElement) {
-            throw new Error('HTMLImageElement not supported for global probes')
-          }
-
-          hdrTexture = gen.fromEquirectangular(image).texture;
-
-          break
-
         default:
-          // throw new Error('unknown probe type')
+          throw new Error('unknown probe type')
 
           break
       }
     }
 
-    gen.dispose();
+    gen.dispose()
 
-    return new ProbesScene(volumes, hdrTexture)
+    let globalEnv: GlobalEnvVolume
+
+    const envsJSON = sourceData.filter(
+      (probe) => probe.type === 'global'
+    ) as GlobalEnvJSON[]
+
+    if (envsJSON.length > 1) {
+      throw new Error('Only one global environment is supported')
+    }
+
+    if (envsJSON.length === 0) {
+      console.warn('No global environment found')
+    } else {
+      const envJSON = envsJSON[0]
+      const { data, irradiance_file, reflectance_file: reflection_file } = envJSON
+      const textures = await this.loadTextures([
+        this.dir + irradiance_file,
+        this.dir + reflection_file,
+      ])
+      const irradianceSourceTexture = textures[0]
+
+      const irradianceLayouts = CubemapWrapper.gridLayout(
+        irradianceSourceTexture.image.width,
+        irradianceSourceTexture.image.height,
+        data.irradiance_export_map_size
+      )
+
+      const irradianceCubeTexture =
+        cubemapWrapper.wrapCubeCollectionFromTexture(
+          irradianceSourceTexture,
+          data.irradiance_export_map_size,
+          irradianceLayouts
+        )[0]
+
+      const reflectionSourceTexture = textures[1]
+
+      const reflectionLayouts = CubemapWrapper.lodLayout(
+        data.reflectance_export_map_size,
+        data.reflectance_nb_levels
+      )
+
+      const reflectionCubeTexture = cubemapWrapper.wrapCubeLodFromTexture(
+        reflectionSourceTexture,
+        data.reflectance_export_map_size,
+        reflectionLayouts
+      )
+
+      globalEnv = new GlobalEnvVolume(envJSON, {
+        irradianceCubeTexture,
+        reflectionCubeTexture,
+      })
+    }
+
+    return new ProbesScene(volumes, globalEnv)
   }
 
-  loadJSON(url: string): Promise<Array<AnyProbeVolumeJSON>> {
+  loadJSON(url: string): Promise<Array<AnyProbeVolumeJSON | GlobalEnvJSON>> {
     this.dir = url.replace(/[^/]+$/, '')
-    return fetch(url).then((res) => res.json() as Promise<AnyProbeVolumeJSON[]>)
+    return fetch(url).then(
+      (res) => res.json() as Promise<Array<AnyProbeVolumeJSON | GlobalEnvJSON>>
+    )
   }
 
-  loadImages(
-    probes: AnyProbeVolumeJSON[]
-  ): Promise<Array<HTMLImageElement | DataTexture>> {
-    const urls = probes.map((probe) => this.dir + probe.file)
-    const t = new ImageLoader()
+  loadTextures(urls: string[]): Promise<Array<Texture>> {
+    // const urls = probes.map((probe) => this.dir + probe.file)
     return new Promise((resolve, err) => {
       let indexLoading = 0
       let indexLoaded = 0
-      const images: Array<HTMLImageElement | DataTexture> = []
+      const images: Array<Texture> = []
 
-      const imagerLoader = new ImageLoader(this.loadManager)
       const rgbeLoader = new RGBELoader(this.loadManager)
       const exrLoader = new EXRLoader(this.loadManager)
 
@@ -118,8 +200,8 @@ export class ProbeLoader {
         indexLoaded++
         if (indexLoaded === urls.length) {
           resolve(images)
-        }else{
-          loadImage();
+        } else {
+          loadImage()
         }
       }
 
@@ -128,7 +210,7 @@ export class ProbeLoader {
 
         const extension = url.split('.').pop().toLowerCase()
 
-        switch(extension.toLowerCase()){
+        switch (extension.toLowerCase()) {
           case 'exr':
             exrLoader.load(
               url,
@@ -141,7 +223,7 @@ export class ProbeLoader {
                 err(e)
               }
             )
-            return;
+            return
           case 'hdr':
             rgbeLoader.load(
               url,
@@ -154,9 +236,10 @@ export class ProbeLoader {
                 err(e)
               }
             )
-            return;
+            return
           default:
-            imagerLoader.load(
+            const textureLoader = new TextureLoader()
+            textureLoader.load(
               url,
               (image) => {
                 images.push(image)
@@ -167,36 +250,8 @@ export class ProbeLoader {
                 err(e)
               }
             )
-            return;
-          
-            
+            return
         }
-
-        // if (extension !== 'hdr') {
-        //   imagerLoader.load(
-        //     url,
-        //     (image) => {
-        //       images.push(image)
-        //       loadNext()
-        //     },
-        //     undefined,
-        //     (e) => {
-        //       err(e)
-        //     }
-        //   )
-        // } else {
-        //   rgbeLoader.load(
-        //     url,
-        //     (image) => {
-        //       images.push(image)
-        //       loadNext()
-        //     },
-        //     undefined,
-        //     (e) => {
-        //       err(e)
-        //     }
-        //   )
-        // }
       }
 
       loadImage()

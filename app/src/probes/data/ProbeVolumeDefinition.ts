@@ -5,9 +5,7 @@ export type EnvironmentVolumeDefinition = {
   type: 'global'
 }
 
-export type EnvironmentVolumeJSON = EnvironmentVolumeDefinition & {
-  file: string
-}
+
 
 export type ProbeVolumeDefinition<DataT, TypeT extends ProbeType> = {
   name: string
@@ -17,8 +15,8 @@ export type ProbeVolumeDefinition<DataT, TypeT extends ProbeType> = {
   position: [number, number, number]
   scale: [number, number, number]
   rotation: [number, number, number]
-  clip_start: number,
-  clip_end: number,
+  clip_start: number
+  clip_end: number
   data: DataT
 }
 

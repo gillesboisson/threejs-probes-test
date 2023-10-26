@@ -1,6 +1,10 @@
-import { IrradianceVolumeData } from "./IrradianceVolumeData";
-import { EnvironmentVolumeJSON, ProbeVolumeDefinition, ProbeVolumeJSON } from "./ProbeVolumeDefinition";
-import { ReflectionVolumeData } from "./ReflectionVolumeData";
+import { GlobalEnvVolumeData } from './GlobalEnvVolumeData'
+import { IrradianceVolumeData } from './IrradianceVolumeData'
+import {
+  ProbeVolumeDefinition,
+  ProbeVolumeJSON,
+} from './ProbeVolumeDefinition'
+import { ReflectionVolumeData } from './ReflectionVolumeData'
 
 export type AnyProbeVolumeData = ReflectionVolumeData | IrradianceVolumeData
 
@@ -13,18 +17,26 @@ export type IrradianceVolumeDefinition = ProbeVolumeDefinition<
   'irradiance'
 >
 
+export type GlobalEnvVolumeDefinition = ProbeVolumeDefinition<
+  GlobalEnvVolumeData,
+  'global'
+>
+
 export type AnyProbeVolumeDefinition =
   | ReflectionVolumeDefinition
   | IrradianceVolumeDefinition
 
-
 export type ReflectionVolumeJSON = ProbeVolumeJSON<
-ReflectionVolumeData,
-'reflection'
+  ReflectionVolumeData,
+  'reflection'
 >
 export type IrradianceVolumeJSON = ProbeVolumeJSON<
-IrradianceVolumeData,
-'irradiance'
+  IrradianceVolumeData,
+  'irradiance'
 >
 
-export type AnyProbeVolumeJSON = ReflectionVolumeJSON | IrradianceVolumeJSON | EnvironmentVolumeJSON
+export type AnyProbeVolumeJSON = ReflectionVolumeJSON | IrradianceVolumeJSON
+export type GlobalEnvJSON = GlobalEnvVolumeDefinition & {
+  irradiance_file: string
+  reflectance_file: string
+}

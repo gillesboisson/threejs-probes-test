@@ -16,9 +16,6 @@ export function unpackCubemaps(
 
   const cubemaps: CubeTexture[] = [];
   
-
-  
-
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
 
   for (let cubeInd = 0; cubeInd < cubemapsCoords.length; cubeInd++) {

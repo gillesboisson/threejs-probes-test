@@ -160,18 +160,18 @@ export class App {
     // })
 
     console.log('this.sourceEnv', this.sourceEnv)
-    this.targetEnv = this.cubemapWrapper.wrapFromTexture(
-      this.sourceEnv,
-      this.sourceEnv.image.width / 3,
-      mapColLayout
-    )
+    // this.targetEnv = this.cubemapWrapper.wrapCubeFromTexture(
+    //   this.sourceEnv,
+    //   this.sourceEnv.image.width / 3,
+    //   mapColLayout
+    // )
 
-    const panoCubemap = new PMREMGenerator(this.renderer).fromCubemap(
-      this.targetEnv
-    ).texture
+    // const panoCubemap = new PMREMGenerator(this.renderer).fromCubemap(
+    //   this.targetEnv
+    // ).texture
 
-    // this.scene.background = this.targetEnv
-    this.scene.background = panoCubemap
+    // // this.scene.background = this.targetEnv
+    // this.scene.background = panoCubemap
 
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
