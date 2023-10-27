@@ -1,17 +1,9 @@
 import { Group, Mesh, SphereGeometry, Vector3 } from 'three'
 import { ProbeRatio, ProbeRatioLod } from '../type'
-import {
-  AnyProbeVolume,
-  GlobalEnvVolume,
-  IrradianceProbeVolume,
-  ReflectionProbeVolume,
-} from '../volume'
 import { IrradianceProbeDebugMaterial } from './IrradianceProbeDebugMaterial'
 import { ReflectionProbeDebugMaterial } from './ReflectionProbeDebugMaterial'
 import GUI from 'lil-gui'
-import { ProbesScene } from '../ProbesScene'
-import { IrradianceProbeVolumeGroup } from '../volume'
-import { ReflectionProbeVolumeGroup } from '../volume'
+import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
 
 const leftHalfSphereGeom = new SphereGeometry(1, 32, 32, 0, Math.PI)
 const rightHalfSphereGeom = new SphereGeometry(1, 32, 32, Math.PI, Math.PI)
@@ -20,9 +12,6 @@ const sphereGeom = new SphereGeometry(1, 32, 32)
 export class DynamicProbeDebugger extends Group {
   private _irradianceProbeRatio: ProbeRatio[] = []
   private _reflectionProbeRatio: ProbeRatioLod[] = []
-
-  protected irradianceVolumes = new IrradianceProbeVolumeGroup()
-  protected reflectionVolumes = new ReflectionProbeVolumeGroup()
 
   protected halfIrradianceMesh: Mesh<
     SphereGeometry,
@@ -41,7 +30,6 @@ export class DynamicProbeDebugger extends Group {
   reflexionProbeMeshMaterial: ReflectionProbeDebugMaterial
 
   protected _reflectionRoughness = 1
-  protected globalEnv: GlobalEnvVolume
 
   get reflectionRoughness() {
     return this._reflectionRoughness
@@ -78,28 +66,8 @@ export class DynamicProbeDebugger extends Group {
 
   // readonly probesVolumes: AnyProbeVolume[]
 
-  constructor(readonly probeScene: ProbesScene) {
+  constructor(readonly volumeHandler: ProbeVolumeHandler) {
     super()
-    probeScene.volumes
-      .filter((v) => v instanceof IrradianceProbeVolume)
-      .forEach((v) => {
-        this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
-      })
-
-    probeScene.volumes
-      .filter((v) => v instanceof ReflectionProbeVolume)
-      .forEach((v) => {
-        this.reflectionVolumes.addVolume(v as ReflectionProbeVolume)
-      })
-
-
-    this.globalEnv = probeScene.environment;
-
-    if(this.globalEnv) {
-      this.reflectionVolumes.fallbackVolume = this.globalEnv;
-      this.irradianceVolumes.fallbackVolume = this.globalEnv;
-
-    }
 
     this.irradianceProbeMeshMaterial = new IrradianceProbeDebugMaterial()
     this.reflexionProbeMeshMaterial = new ReflectionProbeDebugMaterial()
@@ -124,7 +92,7 @@ export class DynamicProbeDebugger extends Group {
     )
 
     this.updateProbeRatio()
-    this.refreshVisibility();
+    this.refreshVisibility()
   }
 
   gui(gui: GUI) {
@@ -149,16 +117,14 @@ export class DynamicProbeDebugger extends Group {
   }
 
   protected updateProbeRatio() {
-    this.irradianceVolumes.getSuroundingProbes(
+    this.volumeHandler.irradianceVolumes.getSuroundingProbes(
       this.position,
       this._irradianceProbeRatio
     )
 
-    this.reflectionVolumes.getSuroundingProbes(
+    this.volumeHandler.reflectionVolumes.getSuroundingProbes(
       this.position,
-      this._reflectionProbeRatio,
-      [],
-      this.reflectionRoughness
+      this._reflectionProbeRatio
     )
 
     this.irradianceProbeMeshMaterial.updateProbeRatio(

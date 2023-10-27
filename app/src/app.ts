@@ -29,7 +29,7 @@ import {
 } from './probes'
 import GUI from 'lil-gui'
 import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
-import { ProbesScene } from './probes/ProbesScene'
+import { ProbeVolumeHandler } from './probes/ProbeVolumeHandler'
 
 const guiParams = {
   exposure: 1.0,
@@ -68,7 +68,7 @@ export class App {
 
   probesDebug: ProbeDebugger
   dynamicProbeDebug: DynamicProbeDebugger
-  probeScene: ProbesScene
+  probeScene: ProbeVolumeHandler
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -106,7 +106,7 @@ export class App {
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
-        if (this.probeScene.environment) {
+        if (this.probeScene.globalEnv) {
           
         }
       }

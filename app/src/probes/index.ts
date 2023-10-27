@@ -7,5 +7,5 @@ export * from './debug'
 export * from './props'
 
 export * from './Probe'
-export * from './ProbesScene'
+export * from './ProbeVolumeHandler'
 

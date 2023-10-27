@@ -14,7 +14,7 @@ import {
 } from 'three'
 
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
-import { ProbesScene } from '../ProbesScene'
+import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
 import { AnyProbeVolumeJSON, GlobalEnvJSON } from '../data'
 import {
   AnyProbeVolume,
@@ -38,7 +38,7 @@ export class ProbeLoader {
     this.cubemapWrapper = new CubemapWrapper(renderer)
   }
 
-  async load(url: string): Promise<ProbesScene> {
+  async load(url: string): Promise<ProbeVolumeHandler> {
     const sourceData = await this.loadJSON(url)
 
     // Load probes
@@ -179,7 +179,7 @@ export class ProbeLoader {
       })
     }
 
-    return new ProbesScene(volumes, globalEnv)
+    return new ProbeVolumeHandler(volumes, globalEnv)
   }
 
   loadJSON(url: string): Promise<Array<AnyProbeVolumeJSON | GlobalEnvJSON>> {

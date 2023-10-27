@@ -38,7 +38,7 @@ export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
 
     if (totalProbeRatio < 1 && this.fallbackVolume !== null) {
       out[resultIndex] = [
-        this.fallbackVolume.irradianceCubeProbe,
+        this.fallbackVolume.reflectionCubeProbe,
         1 - totalProbeRatio,
         this.fallbackVolume.roughnessToTextureLod(roughness),
       ]

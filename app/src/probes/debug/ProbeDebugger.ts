@@ -10,21 +10,19 @@ import { ProbeVolumeMeshGroup } from './ProbeVolumeMeshGroup'
 import GUI from 'lil-gui'
 import { GlobalEnvVolume } from '../volume/GlobalEnvVolume'
 import { GlobalEnvMesh } from './GlobalEnvMesh'
-import { ProbesScene } from '../ProbesScene'
+import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
 
 export class ProbeDebugger extends Group {
   protected probeVolumesGroups: ProbeVolumeMeshGroup[] = []
-
   protected probeVolumesProbesGroups: Group[] = []
-  // protected probeVolumesInfluenceGroups: Group[] = []
 
   protected _probesVisible = true
   protected _reflectionProbesVisible = true
   protected _irradianceProbesVisible = true
 
-  protected _influenceVisible = false
+  protected _influenceVisible = true
 
-  protected probeVolumes: AnyProbeVolume[] = []
+  // protected probeVolumes: AnyProbeVolume[] = []
 
   protected _globalEnvVolume: GlobalEnvVolume | null
 
@@ -32,29 +30,27 @@ export class ProbeDebugger extends Group {
 
   public visibilityChanged = (): void => {}
 
-  constructor(
-    probeScene: ProbesScene,
-  ) {
+  constructor(readonly probeScene: ProbeVolumeHandler) {
     super()
-    this.addProbeVolumes(...probeScene.volumes)
-    this.globalEnvVolume = probeScene.environment || null
-  }
 
-  get globalEnvVolume() {
-    return this._globalEnvVolume
-  }
+    for (let volume of probeScene.irradianceVolumes.volumes) {
+      const group = new IrradianceProbeVolumeMeshGroup(volume)
+      this.probeVolumesGroups.push(group)
+      this.probeVolumesProbesGroups.push(group.probesGroup)
+      this.add(group)
+    }
 
-  set globalEnvVolume(value: GlobalEnvVolume | null) {
-    if (this._globalEnvVolume !== value) {
-      if (value === null) {
-        this.globalEnvMesh = null
-        this.remove(this.globalEnvMesh)
-      } else {
-        this.globalEnvMesh = new GlobalEnvMesh(value)
-        this.add(this.globalEnvMesh)
-      }
+    for (let volume of probeScene.reflectionVolumes.volumes) {
+      const group = new ReflectionProbeVolumeMeshGroup(volume)
+      this.probeVolumesGroups.push(group)
+      this.probeVolumesProbesGroups.push(group.probesGroup)
+      this.add(group)
+    }
 
-      this._globalEnvVolume = value
+    if (probeScene.globalEnv) {
+      this._globalEnvVolume = probeScene.globalEnv
+      this.globalEnvMesh = new GlobalEnvMesh(probeScene.globalEnv)
+      this.add(this.globalEnvMesh)
     }
   }
 
@@ -119,9 +115,11 @@ export class ProbeDebugger extends Group {
       group.visible = visible
     }
 
-    if(this.globalEnvMesh !== null){
-      this.globalEnvMesh.reflectionMesh.visible = this._probesVisible && this._reflectionProbesVisible
-      this.globalEnvMesh.irradianceMesh.visible = this._probesVisible && this._irradianceProbesVisible
+    if (this.globalEnvMesh !== null) {
+      this.globalEnvMesh.reflectionMesh.visible =
+        this._probesVisible && this._reflectionProbesVisible
+      this.globalEnvMesh.irradianceMesh.visible =
+        this._probesVisible && this._irradianceProbesVisible
     }
 
     this.visibilityChanged()
@@ -154,50 +152,50 @@ export class ProbeDebugger extends Group {
     })
   }
 
-  addProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
-    let group: ProbeVolumeMeshGroup<AnyProbeVolume> = null
+  // addProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
+  //   let group: ProbeVolumeMeshGroup<AnyProbeVolume> = null
 
-    for (let volume of probeVolumes) {
-      if (this.probeVolumes.indexOf(volume) === -1) {
-        this.probeVolumes.push(volume)
+  //   for (let volume of probeVolumes) {
+  //     if (this.probeVolumes.indexOf(volume) === -1) {
+  //       this.probeVolumes.push(volume)
 
-        group = null
+  //       group = null
 
-        if (volume instanceof IrradianceProbeVolume) {
-          group = new IrradianceProbeVolumeMeshGroup(volume)
-        } else if (volume instanceof ReflectionProbeVolume) {
-          group = new ReflectionProbeVolumeMeshGroup(volume)
-        } else {
-          throw new Error('Invalid probe volume type')
-        }
+  //       if (volume instanceof IrradianceProbeVolume) {
+  //         group = new IrradianceProbeVolumeMeshGroup(volume)
+  //       } else if (volume instanceof ReflectionProbeVolume) {
+  //         group = new ReflectionProbeVolumeMeshGroup(volume)
+  //       } else {
+  //         throw new Error('Invalid probe volume type')
+  //       }
 
-        if (group !== null) {
-          this.probeVolumesGroups.push(group)
-          this.probeVolumesProbesGroups.push(group.probesGroup)
+  //       if (group !== null) {
+  //         this.probeVolumesGroups.push(group)
+  //         this.probeVolumesProbesGroups.push(group.probesGroup)
 
-          this.add(group)
-        }
-      }
-    }
+  //         this.add(group)
+  //       }
+  //     }
+  //   }
 
-    this.refreshVisibility()
-  }
+  //   this.refreshVisibility()
+  // }
 
-  removeProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
-    for (let volume of probeVolumes) {
-      const index = this.probeVolumes.indexOf(volume)
+  // removeProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
+  //   for (let volume of probeVolumes) {
+  //     const index = this.probeVolumes.indexOf(volume)
 
-      if (index !== -1) {
-        this.probeVolumes.splice(index, 1)
+  //     if (index !== -1) {
+  //       this.probeVolumes.splice(index, 1)
 
-        const group = this.probeVolumesGroups[index]
+  //       const group = this.probeVolumesGroups[index]
 
-        this.probeVolumesGroups.splice(index, 1)
-        this.probeVolumesProbesGroups.splice(index, 1)
-        // this.probeVolumesInfluenceGroups.splice(index, 1)
+  //       this.probeVolumesGroups.splice(index, 1)
+  //       this.probeVolumesProbesGroups.splice(index, 1)
+  //       // this.probeVolumesInfluenceGroups.splice(index, 1)
 
-        this.remove(group)
-      }
-    }
-  }
+  //       this.remove(group)
+  //     }
+  //   }
+  // }
 }
