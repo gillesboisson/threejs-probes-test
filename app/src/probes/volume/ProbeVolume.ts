@@ -1,15 +1,17 @@
-import { Object3D, Box3, CubeTexture, Vector3 } from "three"
-import { Probe } from "../Probe"
-import { AnyProbeVolumeData } from "../data"
-import { ProbeVolumeProps } from "../props"
-import { ProbeType, ProbeRatio } from "../type"
+import { Object3D, Box3, CubeTexture, Vector3 } from 'three'
+import { Probe } from '../Probe'
+import { AnyProbeVolumeData } from '../data'
+import { ProbeVolumeProps } from '../props'
+import { ProbeType, ProbeRatio } from '../type'
+import { UseGetSuroundingProbes } from './type'
+
 
 
 export abstract class ProbeVolume<
   DataT extends AnyProbeVolumeData,
   TypeT extends ProbeType,
-  ProbeT extends Probe = Probe,
-> extends Object3D {
+  ProbeT extends Probe = Probe
+> extends Object3D implements UseGetSuroundingProbes{
   protected _bounds = new Box3()
 
   readonly type: TypeT
@@ -28,7 +30,7 @@ export abstract class ProbeVolume<
     this.position.set(props.position[0], props.position[1], props.position[2])
     this.scale.set(props.scale[0], props.scale[1], props.scale[2])
     this.rotation.set(props.rotation[0], props.rotation[1], props.rotation[2])
-    
+
     this.name = props.name
     this.type = props.type
     this.clipStart = props.clip_start

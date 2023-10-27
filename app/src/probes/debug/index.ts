@@ -10,4 +10,6 @@ export * from './ReflectionProbeVolumeMeshGroup'
 export * from './ReflectionProbeMesh'
 export * from './ReflectionProbeMeshMaterial'
 export * from './ReflectionProbeDebugMaterial'
+export * from './GlobalEnvMesh'
+
 export * from './ProbeDebugger'

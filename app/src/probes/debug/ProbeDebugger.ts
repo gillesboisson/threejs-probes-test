@@ -8,6 +8,9 @@ import { IrradianceProbeVolumeMeshGroup } from './IrradianceProbeVolumeMeshGroup
 import { ReflectionProbeVolumeMeshGroup } from './ReflectionProbeVolumeMeshGroup'
 import { ProbeVolumeMeshGroup } from './ProbeVolumeMeshGroup'
 import GUI from 'lil-gui'
+import { GlobalEnvVolume } from '../volume/GlobalEnvVolume'
+import { GlobalEnvMesh } from './GlobalEnvMesh'
+import { ProbesScene } from '../ProbesScene'
 
 export class ProbeDebugger extends Group {
   protected probeVolumesGroups: ProbeVolumeMeshGroup[] = []
@@ -21,15 +24,38 @@ export class ProbeDebugger extends Group {
 
   protected _influenceVisible = false
 
-
   protected probeVolumes: AnyProbeVolume[] = []
 
-  public visibilityChanged = (): void => {};
+  protected _globalEnvVolume: GlobalEnvVolume | null
 
-  constructor(probeVolumes: AnyProbeVolume[] = []) {
+  protected globalEnvMesh: GlobalEnvMesh | null = null
+
+  public visibilityChanged = (): void => {}
+
+  constructor(
+    probeScene: ProbesScene,
+  ) {
     super()
+    this.addProbeVolumes(...probeScene.volumes)
+    this.globalEnvVolume = probeScene.environment || null
+  }
 
-    this.addProbeVolumes(...probeVolumes)
+  get globalEnvVolume() {
+    return this._globalEnvVolume
+  }
+
+  set globalEnvVolume(value: GlobalEnvVolume | null) {
+    if (this._globalEnvVolume !== value) {
+      if (value === null) {
+        this.globalEnvMesh = null
+        this.remove(this.globalEnvMesh)
+      } else {
+        this.globalEnvMesh = new GlobalEnvMesh(value)
+        this.add(this.globalEnvMesh)
+      }
+
+      this._globalEnvVolume = value
+    }
   }
 
   get probesVisible() {
@@ -93,7 +119,12 @@ export class ProbeDebugger extends Group {
       group.visible = visible
     }
 
-    this.visibilityChanged();
+    if(this.globalEnvMesh !== null){
+      this.globalEnvMesh.reflectionMesh.visible = this._probesVisible && this._reflectionProbesVisible
+      this.globalEnvMesh.irradianceMesh.visible = this._probesVisible && this._irradianceProbesVisible
+    }
+
+    this.visibilityChanged()
   }
 
   gui(gui: GUI) {
@@ -105,10 +136,10 @@ export class ProbeDebugger extends Group {
     const subProps = [
       folder
         .add(this, 'reflectionProbesVisible')
-        .name('Display reflection probes only'),
+        .name('Display reflection probes'),
       folder
         .add(this, 'irradianceProbesVisible')
-        .name('Display irradiance probes only'),
+        .name('Display irradiance probes'),
       folder.add(this, 'influenceVisible').name('Display Influence'),
     ]
     // visible only if probes visible enabled

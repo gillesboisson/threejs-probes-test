@@ -3,23 +3,17 @@ import {
   CineonToneMapping,
   ClampToEdgeWrapping,
   Clock,
-  CubeTexture,
   CustomToneMapping,
   DirectionalLight,
-  ImageLoader,
   LinearFilter,
   LinearToneMapping,
   Mesh,
-  MeshBasicMaterial,
   NearestFilter,
   NoToneMapping,
-  PMREMGenerator,
   PerspectiveCamera,
-  PlaneGeometry,
   ReinhardToneMapping,
   Scene,
   Texture,
-  TextureLoader,
   Vector2,
   WebGLRenderer,
 } from 'three'
@@ -28,8 +22,6 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import {
-  Probe,
-  AnyProbeVolume,
   ProbeLoader,
   ProbeDebugger,
   CubemapWrapper,
@@ -37,20 +29,7 @@ import {
 } from './probes'
 import GUI from 'lil-gui'
 import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
-import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader'
-
-const mapColLayout: CubemapWrapperLayout = {
-  coords: [
-    new Vector2(0, 0),
-    new Vector2(1 / 3, 0),
-    new Vector2(2 / 3, 0),
-    new Vector2(0, 1 / 2),
-    new Vector2(1 / 3, 1 / 2),
-    new Vector2(2 / 3, 1 / 2),
-  ],
-  size: new Vector2(1 / 3, 1 / 2),
-}
+import { ProbesScene } from './probes/ProbesScene'
 
 const guiParams = {
   exposure: 1.0,
@@ -84,15 +63,12 @@ export class App {
 
   private _refreshClosure = () => this.refresh()
 
-  probes: Readonly<Probe>[]
-  probeVolumes: AnyProbeVolume[]
+  // probes: Readonly<Probe>[]
+  // probeVolumes: AnyProbeVolume[]
 
   probesDebug: ProbeDebugger
   dynamicProbeDebug: DynamicProbeDebugger
-  probeScene: import('/home/gillesboisson/Projects/sandbox/threejs-probes/app/src/probes/ProbesScene').ProbesScene
-  cubemapWrapper: CubemapWrapper
-  sourceEnv: any
-  targetEnv: CubeTexture
+  probeScene: ProbesScene
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -127,57 +103,11 @@ export class App {
       this.scene.add(light)
     }
 
-    this.cubemapWrapper = new CubemapWrapper(this.renderer, {
-      minFilter: NearestFilter,
-      magFilter: LinearFilter,
-      wrapS: ClampToEdgeWrapping,
-      wrapT: ClampToEdgeWrapping,
-    })
-
-    const hdrLoader = new RGBELoader()
-    const exrLoader = new EXRLoader()
-    const textureLoader = new TextureLoader()
-
-    // this.sourceEnv = await new Promise<Texture>(function (resolve) {
-    //   hdrLoader.load('./probes/Global probe.hdr', resolve)
-    // })
-
-    this.sourceEnv = await new Promise<Texture>(function (resolve,err) {
-      exrLoader.load('./probes/Global probe.exr', resolve, undefined, err)
-    })
-    this.sourceEnv = await new Promise<Texture>(function (resolve,err) {
-      exrLoader.load('./probes/Global probe.exr', resolve, undefined, err)
-    })
-
-    // const panoEnv = await new Promise<Texture>(function (resolve) {
-    //   hdrLoader.load('./probes/pano.hdr', resolve)
-    // })
-
-    // const panoCubemap =  new PMREMGenerator(this.renderer).fromEquirectangular(panoEnv).texture;
-
-    // this.sourceEnv = await new Promise<Texture>(function (resolve) {
-    //   textureLoader.load('./probes/Global probe.png', resolve)
-    // })
-
-    console.log('this.sourceEnv', this.sourceEnv)
-    // this.targetEnv = this.cubemapWrapper.wrapCubeFromTexture(
-    //   this.sourceEnv,
-    //   this.sourceEnv.image.width / 3,
-    //   mapColLayout
-    // )
-
-    // const panoCubemap = new PMREMGenerator(this.renderer).fromCubemap(
-    //   this.targetEnv
-    // ).texture
-
-    // // this.scene.background = this.targetEnv
-    // this.scene.background = panoCubemap
-
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
         if (this.probeScene.environment) {
-          // mesh.material.envMap = this.probeScene.environment
+          
         }
       }
 
@@ -205,10 +135,10 @@ export class App {
 
     gui.title('Three JS Probe Volume Debugger')
 
-    this.probesDebug = new ProbeDebugger(this.probeVolumes)
+    this.probesDebug = new ProbeDebugger(this.probeScene)
     this.probesDebug.gui(gui)
 
-    this.dynamicProbeDebug = new DynamicProbeDebugger(this.probeVolumes)
+    this.dynamicProbeDebug = new DynamicProbeDebugger(this.probeScene)
     this.dynamicProbeDebug.gui(gui)
 
     // tone mapping gui
@@ -235,8 +165,8 @@ export class App {
 
     this.probeScene = await probeLoader.load('probes/probes.json')
 
-    this.probeVolumes = this.probeScene.volumes
-    this.probes = this.probeVolumes.map((v) => v.probes).flat()
+    // this.probeVolumes = this.probeScene.volumes
+    // this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
     this.initDebug()
   }

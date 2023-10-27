@@ -133,6 +133,8 @@ export class ProbeLoader {
       throw new Error('Only one global environment is supported')
     }
 
+    console.log('envsJSON',envsJSON);
+
     if (envsJSON.length === 0) {
       console.warn('No global environment found')
     } else {
@@ -156,6 +158,7 @@ export class ProbeLoader {
           data.irradiance_export_map_size,
           irradianceLayouts
         )[0]
+
 
       const reflectionSourceTexture = textures[1]
 

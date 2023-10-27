@@ -327,8 +327,6 @@ export class CubemapWrapper {
         depthBuffer: false,
       })
 
-      console.log(source.format, source.type, source.colorSpace)
-
       const layout = cubeLayouts[lod]
 
 

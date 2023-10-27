@@ -76,7 +76,7 @@ export class ReflectionProbeMeshMaterial extends ProbeMeshMaterial {
         void main() {
           vNormal = ( normal).xyz;
           gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-          vPosition = position;
+          vPosition = (modelMatrix * vec4(position,1.0)).xyz;
         }
       `,
       fragmentShader: `

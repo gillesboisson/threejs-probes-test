@@ -2,14 +2,16 @@ import { Group, Mesh, SphereGeometry, Vector3 } from 'three'
 import { ProbeRatio, ProbeRatioLod } from '../type'
 import {
   AnyProbeVolume,
+  GlobalEnvVolume,
   IrradianceProbeVolume,
-  IrradianceProbeVolumeGroup,
   ReflectionProbeVolume,
-  ReflectionProbeVolumeGroup,
 } from '../volume'
 import { IrradianceProbeDebugMaterial } from './IrradianceProbeDebugMaterial'
 import { ReflectionProbeDebugMaterial } from './ReflectionProbeDebugMaterial'
 import GUI from 'lil-gui'
+import { ProbesScene } from '../ProbesScene'
+import { IrradianceProbeVolumeGroup } from '../volume'
+import { ReflectionProbeVolumeGroup } from '../volume'
 
 const leftHalfSphereGeom = new SphereGeometry(1, 32, 32, 0, Math.PI)
 const rightHalfSphereGeom = new SphereGeometry(1, 32, 32, Math.PI, Math.PI)
@@ -39,6 +41,7 @@ export class DynamicProbeDebugger extends Group {
   reflexionProbeMeshMaterial: ReflectionProbeDebugMaterial
 
   protected _reflectionRoughness = 1
+  protected globalEnv: GlobalEnvVolume
 
   get reflectionRoughness() {
     return this._reflectionRoughness
@@ -73,19 +76,30 @@ export class DynamicProbeDebugger extends Group {
     }
   }
 
-  constructor(readonly probesVolumes: AnyProbeVolume[]) {
+  // readonly probesVolumes: AnyProbeVolume[]
+
+  constructor(readonly probeScene: ProbesScene) {
     super()
-    probesVolumes
+    probeScene.volumes
       .filter((v) => v instanceof IrradianceProbeVolume)
       .forEach((v) => {
         this.irradianceVolumes.addVolume(v as IrradianceProbeVolume)
       })
 
-    probesVolumes
+    probeScene.volumes
       .filter((v) => v instanceof ReflectionProbeVolume)
       .forEach((v) => {
         this.reflectionVolumes.addVolume(v as ReflectionProbeVolume)
       })
+
+
+    this.globalEnv = probeScene.environment;
+
+    if(this.globalEnv) {
+      this.reflectionVolumes.fallbackVolume = this.globalEnv;
+      this.irradianceVolumes.fallbackVolume = this.globalEnv;
+
+    }
 
     this.irradianceProbeMeshMaterial = new IrradianceProbeDebugMaterial()
     this.reflexionProbeMeshMaterial = new ReflectionProbeDebugMaterial()
@@ -110,6 +124,7 @@ export class DynamicProbeDebugger extends Group {
     )
 
     this.updateProbeRatio()
+    this.refreshVisibility();
   }
 
   gui(gui: GUI) {

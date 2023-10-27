@@ -1,18 +1,20 @@
-import { SphereGeometry, Mesh } from 'three';
-import { Probe } from '../Probe';
-import { ReflectionProbeMeshMaterial } from './ReflectionProbeMeshMaterial';
-import { probeMeshGeom } from './ProbeMesh';
-
+import { SphereGeometry, Mesh } from 'three'
+import { Probe } from '../Probe'
+import { ReflectionProbeMeshMaterial } from './ReflectionProbeMeshMaterial'
+import { probeMeshGeom } from './ProbeMesh'
 
 export class ReflectionProbeMesh extends Mesh<
-  SphereGeometry, ReflectionProbeMeshMaterial
+  SphereGeometry,
+  ReflectionProbeMeshMaterial
 > {
   constructor(readonly probe: Probe) {
-    const mat = new ReflectionProbeMeshMaterial();
-    mat.envMap = probe.texture;
-    super(probeMeshGeom, mat);
-    this.scale.multiplyScalar(3);
+    const mat = new ReflectionProbeMeshMaterial()
+    mat.envMap = probe.texture
+    super(probeMeshGeom, mat)
+    this.scale.multiplyScalar(3)
 
-    this.position.copy(probe.position);
+    this.position.copy(probe.position)
   }
 }
+
+

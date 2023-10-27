@@ -1,14 +1,10 @@
 import { Box3, Vector3 } from 'three'
-import {
-  AnyProbeVolumeData,
-  IrradianceVolumeData,
-  ReflectionVolumeData,
-} from '../data'
-import { ProbeType, ProbeRatio, ProbeRatioLod } from '../type'
-import { IrradianceProbeVolume } from './IrradianceProbeVolume'
+import { AnyProbeVolumeData } from '../data'
+import { ProbeType, ProbeRatio } from '../type'
 import { ProbeVolume, AnyProbeVolume } from './ProbeVolume'
-import { ReflectionProbeVolume } from './ReflectionProbeVolume'
 import { ProbeVolumeRatio } from './type'
+import { Probe } from '../Probe'
+import { GlobalEnvVolume } from './GlobalEnvVolume'
 
 export class ProbeVolumeGroup<
   ProbeVolumeT extends ProbeVolume<DataT, TypeT>,
@@ -17,6 +13,9 @@ export class ProbeVolumeGroup<
 > {
   protected _bounds = new Box3()
   protected _boundsDirty = true
+
+  fallbackVolume: GlobalEnvVolume | null = null
+  // fallbackProbe: Probe | null = null
 
   readonly volumes: ProbeVolumeT[] = []
 
@@ -65,6 +64,11 @@ export class ProbeVolumeGroup<
 
     out.splice(matchedVolumes, out.length - matchedVolumes)
 
+    // if ratio < 1, total ratio need to take fallback probe into account
+    if (totalRatio < 1 && this.fallbackVolume !== null) {
+      totalRatio = 1
+    }
+
     // normalize the ratios
     for (let i = 0; i < matchedVolumes; i++) {
       out[i][1] /= totalRatio
@@ -81,15 +85,27 @@ export class ProbeVolumeGroup<
     let resultIndex = 0
 
     this.getGlobalRatio(position, outProbeVolumeRatio)
+    let totalProbeRatio = 0
     for (let i = 0; i < outProbeVolumeRatio.length; i++) {
       const [probeVolume, probeRatio] = outProbeVolumeRatio[i]
-
       resultIndex += probeVolume.getSuroundingProbes(
         position,
         probeRatio,
         out,
         resultIndex
       )
+
+      totalProbeRatio += probeRatio
+    }
+
+    // console.log('totalProbeRatio',totalProbeRatio);
+
+    if (totalProbeRatio < 1 && this.fallbackVolume !== null) {
+      out[resultIndex] = [
+        this.fallbackVolume.irradianceCubeProbe,
+        1 - totalProbeRatio,
+      ]
+      resultIndex++
     }
 
     out.splice(resultIndex, out.length - resultIndex)
@@ -118,44 +134,3 @@ export type AnyProbeVolumeGroup = ProbeVolumeGroup<
   AnyProbeVolumeData,
   ProbeType
 >
-
-export class IrradianceProbeVolumeGroup extends ProbeVolumeGroup<
-  IrradianceProbeVolume,
-  IrradianceVolumeData,
-  'irradiance'
-> {}
-
-export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
-  ReflectionProbeVolume,
-  ReflectionVolumeData,
-  'reflection'
-> {
-  getSuroundingProbes(
-    position: Vector3,
-    out: ProbeRatioLod[] = [],
-    outProbeVolumeRatio: ProbeVolumeRatio<ReflectionProbeVolume>[] = [],
-    roughness: number = 0
-  ): ProbeRatioLod[] {
-    let resultIndex = 0
-
-    this.getGlobalRatio(position, outProbeVolumeRatio)
-    for (let i = 0; i < outProbeVolumeRatio.length; i++) {
-      const [probeVolume, probeRatio] = outProbeVolumeRatio[i]
-
-      const nbProbes = probeVolume.getSuroundingProbes(
-        position,
-        probeRatio,
-        out,
-        resultIndex
-      )
-
-      probeVolume.probeRatioToProbeRatioLod(roughness, out, nbProbes, out)
-
-      resultIndex += nbProbes
-    }
-
-    out.splice(resultIndex, out.length - resultIndex)
-
-    return out
-  }
-}
