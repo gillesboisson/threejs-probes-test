@@ -52,6 +52,8 @@ export class ReflectionProbeDebugMaterial extends ShaderMaterial {
   
 
         gl_FragColor = vec4(probcolor,1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
       }
       `,
     })

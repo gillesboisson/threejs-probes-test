@@ -100,6 +100,8 @@ export class ReflectionProbeMeshMaterial extends ProbeMeshMaterial {
           // gl_FragColor = vec4(vNormal / 2.0 + 0.5, 1.0);
           // gl_FragColor = vec4(1.0,0.0,0.0,1.0);
           gl_FragColor = textureCubeLodEXT(envMap, reflexion,uRoughnessLod);
+          #include <tonemapping_fragment>
+	        #include <colorspace_fragment>
           
         }
       `,
