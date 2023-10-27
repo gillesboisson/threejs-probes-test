@@ -68,7 +68,7 @@ export class App {
 
   probesDebug: ProbeDebugger
   dynamicProbeDebug: DynamicProbeDebugger
-  probeScene: ProbeVolumeHandler
+  probeHandler: ProbeVolumeHandler
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -106,7 +106,7 @@ export class App {
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
-        if (this.probeScene.globalEnv) {
+        if (this.probeHandler.globalEnv) {
           
         }
       }
@@ -135,10 +135,10 @@ export class App {
 
     gui.title('Three JS Probe Volume Debugger')
 
-    this.probesDebug = new ProbeDebugger(this.probeScene)
+    this.probesDebug = new ProbeDebugger(this.probeHandler)
     this.probesDebug.gui(gui)
 
-    this.dynamicProbeDebug = new DynamicProbeDebugger(this.probeScene)
+    this.dynamicProbeDebug = new DynamicProbeDebugger(this.probeHandler)
     this.dynamicProbeDebug.gui(gui)
 
     // tone mapping gui
@@ -163,7 +163,11 @@ export class App {
   async loadProbes() {
     const probeLoader = new ProbeLoader(this.renderer)
 
-    this.probeScene = await probeLoader.load('probes/probes.json')
+    this.probeHandler = await probeLoader.load('probes/probes.json')
+
+    if(this.probeHandler.globalEnv){
+      this.scene.background = this.probeHandler.globalEnv.irradianceCubeProbe.texture
+    }
 
     // this.probeVolumes = this.probeScene.volumes
     // this.probes = this.probeVolumes.map((v) => v.probes).flat()
