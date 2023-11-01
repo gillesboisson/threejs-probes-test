@@ -30,6 +30,7 @@ import {
 import GUI from 'lil-gui'
 import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
 import { ProbeVolumeHandler } from './probes/ProbeVolumeHandler'
+import { MeshProbeStandardMaterial } from './probes/materials'
 
 const guiParams = {
   exposure: 1.0,
@@ -106,9 +107,19 @@ export class App {
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
+        const mat = new MeshProbeStandardMaterial(mesh.material)
+
+
         if (this.probeHandler.globalEnv) {
-          
+          mat.envMap = this.probeHandler.globalEnv.reflectionCubeProbe.texture
         }
+
+        
+        
+        
+        
+        
+        mesh.material = mat
       }
 
       if (mesh instanceof Mesh) {
@@ -165,8 +176,9 @@ export class App {
 
     this.probeHandler = await probeLoader.load('probes/probes.json')
 
-    if(this.probeHandler.globalEnv){
-      this.scene.background = this.probeHandler.globalEnv.irradianceCubeProbe.texture
+    if (this.probeHandler.globalEnv) {
+      this.scene.background =
+        this.probeHandler.globalEnv.irradianceCubeProbe.texture
     }
 
     // this.probeVolumes = this.probeScene.volumes
