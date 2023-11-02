@@ -9,10 +9,6 @@ export class ReflectionProbeMeshMaterial extends ProbeMeshMaterial {
 
   envMapUpdated() {
     this.uniforms.uRoughnessLevel.value[3] = this.envMap.mipmaps.length + 1;
-    console.log(
-      'this.uniforms.uRoughnessLevel[3]',
-      this.uniforms.uRoughnessLevel[3]
-    );
     this.needsUpdate = true;
   }
 

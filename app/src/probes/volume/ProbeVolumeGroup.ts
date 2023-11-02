@@ -88,7 +88,7 @@ export class ProbeVolumeGroup<
     let totalProbeRatio = 0
     for (let i = 0; i < outProbeVolumeRatio.length; i++) {
       const [probeVolume, probeRatio] = outProbeVolumeRatio[i]
-      resultIndex += probeVolume.getSuroundingProbes(
+      resultIndex = probeVolume.getSuroundingProbes(
         position,
         probeRatio,
         out,
@@ -98,6 +98,7 @@ export class ProbeVolumeGroup<
       totalProbeRatio += probeRatio
     }
 
+    
     // console.log('totalProbeRatio',totalProbeRatio);
 
     if (totalProbeRatio < 1 && this.fallbackVolume !== null) {
@@ -108,7 +109,7 @@ export class ProbeVolumeGroup<
       resultIndex++
     }
 
-    out.splice(resultIndex, out.length - resultIndex)
+    out.length = resultIndex
 
     return out
   }

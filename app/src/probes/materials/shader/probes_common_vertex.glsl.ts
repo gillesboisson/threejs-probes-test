@@ -3,33 +3,27 @@ import { vertexUniforms } from "./probes_uniforms_parts.glsl";
 import { varying } from "./probes_varying_parts.glsl";
 
 export default /* glsl */`
-  #include <common>
 
-  #ifdef USE_PROBES
-    
+#if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG ) || defined( LAMBERT )
 
-    #if defined( USE_BUMPMAP ) || defined( USE_NORMALMAP ) || defined( PHONG ) || defined( LAMBERT )
+  #define ENV_WORLDPOS
 
-      #define ENV_WORLDPOS
+#endif
 
-    #endif
+${vertexUniforms}
 
-    ${vertexUniforms}
-    
-    #ifdef ENV_WORLDPOS
-      
-      varying vec3 vWorldPosition;
+#ifdef ENV_WORLDPOS
+  
+  varying vec3 vWorldPosition;
 
-    #else
+#else
 
-      varying vec3 vReflect;
-      uniform float refractionRatio;
+  varying vec3 vReflect;
+  uniform float refractionRatio;
 
-    #endif
-    
-    ${varying}
+#endif
 
-    ${vertexFunctions}
+${varying}
+${vertexFunctions}
 
-  #endif
 `

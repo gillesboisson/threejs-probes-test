@@ -67,28 +67,4 @@ export class ProbeVolumeHandler {
         this.reflectionVolumes.removeVolume(v as ReflectionProbeVolume)
       })
   }
-
-  // get irradianceProbeRatio() {
-  //   return this._irradianceProbeRatio
-  // }
-
-  // get reflectionProbeRatio() {
-  //   return this._reflectionProbeRatio
-  // }
-
-  // getProbesArroundPosition(
-  //   position: Vector3,
-  //   roughness: number,
-  //   outIrradianceProbRatio: ProbeRatio[] = this._irradianceProbeRatio,
-  //   outReflectionProbeRatio: ProbeRatioLod[] = this._reflectionProbeRatio
-  // ): void {
-  //   this.irradianceVolumes.getSuroundingProbes(position, outIrradianceProbRatio)
-
-  //   this.reflectionVolumes.getSuroundingProbes(
-  //     position,
-  //     outReflectionProbeRatio,
-  //     [],
-  //     roughness
-  //   )
-  // }
 }

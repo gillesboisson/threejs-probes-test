@@ -1,20 +1,18 @@
 import {
   ACESFilmicToneMapping,
   CineonToneMapping,
-  ClampToEdgeWrapping,
   Clock,
   CustomToneMapping,
   DirectionalLight,
-  LinearFilter,
   LinearToneMapping,
+  Material,
   Mesh,
-  NearestFilter,
   NoToneMapping,
+  PCFSoftShadowMap,
   PerspectiveCamera,
   ReinhardToneMapping,
   Scene,
-  Texture,
-  Vector2,
+  SphereGeometry,
   WebGLRenderer,
 } from 'three'
 
@@ -24,8 +22,6 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import {
   ProbeLoader,
   ProbeDebugger,
-  CubemapWrapper,
-  CubemapWrapperLayout,
 } from './probes'
 import GUI from 'lil-gui'
 import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
@@ -70,6 +66,8 @@ export class App {
   probesDebug: ProbeDebugger
   dynamicProbeDebug: DynamicProbeDebugger
   probeHandler: ProbeVolumeHandler
+  testProbeMeshMat: MeshProbeStandardMaterial
+  testProbeMesh: any
 
   protected async initScene() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -97,33 +95,51 @@ export class App {
       return c.name === 'Sun_Placeholder'
     })
 
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = PCFSoftShadowMap; 
+
     if (sunPlaceholder) {
       const light = new DirectionalLight(0xffffff, 1)
-      light.position.set(13, 25, 0)
-      light.rotation.set(0, 0, 0)
+
+      light.castShadow = true
+
+      light.shadow.mapSize.width = 2048
+      light.shadow.mapSize.height = 2048
+      light.shadow.camera.near = 0.5
+      light.shadow.camera.far = 500
+      light.shadow.bias = -0.0002
+      light.shadow.camera.left = -30
+      light.shadow.camera.right = 30
+      light.shadow.camera.top = 30
+      light.shadow.camera.bottom = -30
+
+      light.position.set(30,30,30)
+      light.rotation.copy(sunPlaceholder.rotation)
       this.scene.add(light)
     }
 
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
-        const mat = new MeshProbeStandardMaterial(mesh.material)
 
+       
+        
 
-        if (this.probeHandler.globalEnv) {
-          mat.envMap = this.probeHandler.globalEnv.reflectionCubeProbe.texture
-        }
+        // const mat = new MeshProbeStandardMaterial(this.probeHandler)
+        // mat.copy(mesh.material)
 
-        
-        
-        
-        
-        
-        mesh.material = mat
+        // if (this.probeHandler.globalEnv) {
+        //   mat.envMap = this.probeHandler.globalEnv.reflectionCubeProbe.texture
+        // }
+
+        // mesh.material = mat
       }
 
       if (mesh instanceof Mesh) {
         this.scene.add(mesh)
+        mesh.castShadow = true
+        mesh.receiveShadow = true
+
         i--
       }
     }
@@ -157,6 +173,31 @@ export class App {
     this.renderer.toneMapping = toneMappingOptions[guiParams.toneMapping]
     this.renderer.toneMappingExposure = guiParams.exposure
 
+    this.testProbeMeshMat = new MeshProbeStandardMaterial(this.probeHandler)
+    this.testProbeMeshMat
+    // this.testProbeMeshMat = new MeshStandardMaterial({
+    //   // color: 0xff0000,
+    // })
+
+    this.testProbeMesh = new Mesh(
+      new SphereGeometry(1, 32, 32),
+      this.testProbeMeshMat
+    )
+
+    this.testProbeMesh.castShadow = true
+    this.testProbeMesh.receiveShadow = true
+
+    const folder = gui.addFolder('Test Probe')
+    folder.addColor(this.testProbeMeshMat, 'color')
+    folder.addColor(this.testProbeMeshMat, 'emissive')
+    folder.add(this.testProbeMeshMat, 'roughness', 0.01, 0.95)
+    folder.add(this.testProbeMeshMat, 'metalness', 0, 1)
+    folder.add(this.testProbeMeshMat, 'envMapIntensity', 0, 1)
+
+    this.scene.add(this.testProbeMesh)
+
+    this.scene.add(this.probesDebug, this.dynamicProbeDebug)
+
     const toneMappingFolder = gui.addFolder('Tone Mapping')
     toneMappingFolder
       .add(guiParams, 'toneMapping', Object.keys(toneMappingOptions))
@@ -167,8 +208,6 @@ export class App {
     toneMappingFolder.add(guiParams, 'exposure', 0, 10).onChange((value) => {
       this.renderer.toneMappingExposure = value
     })
-
-    this.scene.add(this.probesDebug, this.dynamicProbeDebug)
   }
 
   async loadProbes() {
@@ -177,18 +216,15 @@ export class App {
     this.probeHandler = await probeLoader.load('probes/probes.json')
 
     if (this.probeHandler.globalEnv) {
-      this.scene.background =
-        this.probeHandler.globalEnv.irradianceCubeProbe.texture
+      // this.scene.background =
+      //   this.probeHandler.globalEnv.irradianceCubeProbe.texture
     }
-
-    // this.probeVolumes = this.probeScene.volumes
-    // this.probes = this.probeVolumes.map((v) => v.probes).flat()
 
     this.initDebug()
   }
 
   updateProbeDebug() {
-    this.dynamicProbeDebug.updatePosition(this.controls.target)
+    this.testProbeMesh.position.copy(this.controls.target)
   }
 
   start() {
@@ -198,7 +234,7 @@ export class App {
   }
 
   stop() {
-    this.clock.start()
+    this.clock.stop()
   }
 
   refresh(forcedDeltaTime: number = -1) {
@@ -226,5 +262,6 @@ export class App {
 
     this.renderer.setRenderTarget(null)
     this.renderer.render(this.scene, this.camera)
+    // this.stop();
   }
 }
