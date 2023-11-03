@@ -9,7 +9,6 @@ import {
   Shader,
   WebGLRenderer,
   UniformsUtils,
-  cloneUniforms,
 } from 'three'
 import { replaceShaderSourceIncludes } from './utils'
 import {
@@ -66,7 +65,7 @@ export function extendProbesMaterial<
       []
     private _reflectionGlobalProbeRatio: ProbeVolumeRatio<ReflectionProbeVolume>[] =
       []
-    
+
     protected _probesIntensity: number = 1
 
     get probesIntensity(): number {
@@ -187,10 +186,11 @@ export function extendProbesMaterial<
     }
 
     customProgramCacheKey(): string {
-      return this.name + super.customProgramCacheKey()
+      return this.name
     }
 
     onBeforeCompile(shader: Shader, renderer: WebGLRenderer): void {
+      console.log("-> onBeforeCompile");
       super.onBeforeCompile(shader, renderer)
       
       for (let key in this.uniforms) {
