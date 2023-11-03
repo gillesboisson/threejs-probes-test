@@ -1,4 +1,4 @@
-import { MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
+import { MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
 import { shaderReplaceInclude } from './utils'
 import { extendProbesMaterial } from './extendProbesMaterial'
 import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
@@ -7,9 +7,10 @@ export class MeshProbeStandardMaterial extends extendProbesMaterial<MeshStandard
   MeshStandardMaterial
 ) {
   name = 'MeshProbeStandardMaterial'
-
-  // protect params from being changed ignoring in super constructor
-  // constructor(probeVolumeHander: ProbeVolumeHandler, pa) {
-  //   super(probeVolumeHander)
-  // }
+}
+// Not suported as envmap constant condition is implemented in meshbasic itself 
+class MeshProbeBasicMaterial extends extendProbesMaterial<MeshBasicMaterial>(
+  MeshBasicMaterial
+) {
+  name = 'MeshProbeBasicMaterial'
 }

@@ -21,11 +21,17 @@ import {
 import { MapControls } from 'three/examples/jsm/controls/MapControls'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { ProbeLoader, ProbeDebugger } from './probes'
+import {
+  ProbeLoader,
+  ProbeDebugger,
+  DynamicProbeDebugger,
+  ProbeVolumeHandler,
+  MeshProbeLambertMaterial,
+  MeshProbePhongMaterial,
+  MeshProbePhysicalMaterial,
+  MeshProbeStandardMaterial,
+} from './probes'
 import GUI from 'lil-gui'
-import { DynamicProbeDebugger } from './probes/debug/DynamicProbeDebugger'
-import { ProbeVolumeHandler } from './probes/ProbeVolumeHandler'
-import { MeshProbeStandardMaterial } from './probes/materials'
 
 const guiParams = {
   exposure: 1.0,
@@ -43,10 +49,18 @@ const toneMappingOptions = {
   Custom: CustomToneMapping,
 }
 
+type AppDebugMaterials = {
+  phong: MeshProbePhongMaterial
+  standard: MeshProbeStandardMaterial
+  lambert: MeshProbeLambertMaterial
+  physical: MeshProbePhysicalMaterial
+}
+
 export class App {
   protected clock = new Clock()
   protected scene = new Scene()
   protected renderer = new WebGLRenderer()
+  protected materials: AppDebugMaterials
 
   protected camera = new PerspectiveCamera(
     75,
@@ -58,13 +72,17 @@ export class App {
   protected controls: MapControls
   private _refreshClosure = () => this.refresh()
 
-  probesDebug: ProbeDebugger
-  dynamicProbeDebug: DynamicProbeDebugger
-  probeHandler: ProbeVolumeHandler
-  testProbeMeshMat: MeshProbeStandardMaterial
-  testProbeMesh: any
-  staticObjectsGroup: any
-  probedObjectsGroup: any
+  protected probesDebug: ProbeDebugger
+  protected dynamicProbeDebug: DynamicProbeDebugger
+  protected probeHandler: ProbeVolumeHandler
+  protected probeDebugMesh: Mesh
+  protected staticObjectsGroup: Group
+  protected probedObjectsGroup: Group
+  protected currentDebugMaterialKey: keyof AppDebugMaterials = 'standard'
+
+  get currentDebugMaterial() {
+    return this.materials[this.currentDebugMaterialKey]
+  }
 
   protected async setupRenderer() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
@@ -118,15 +136,20 @@ export class App {
     this.probedObjectsGroup = new Group()
     this.scene.add(this.staticObjectsGroup, this.probedObjectsGroup)
 
+    this.materials = {
+      phong: new MeshProbePhongMaterial(this.probeHandler),
+      standard: new MeshProbeStandardMaterial(this.probeHandler),
+      lambert: new MeshProbeLambertMaterial(this.probeHandler),
+      physical: new MeshProbePhysicalMaterial(this.probeHandler),
+      // basic: new MeshProbeBasicMaterial(this.probeHandler),
+    }
+
     // filter / map loaded scene objects / materials -----------------------------------------------
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
         if (mesh.name.toLowerCase().includes('suza')) {
-          const oldMat = mesh.material
-          const mat = new MeshProbeStandardMaterial(this.probeHandler)
-          mat.copy(oldMat)
-          mesh.material = mat
+          mesh.material = new MeshProbeStandardMaterial(this.probeHandler)
           this.probedObjectsGroup.add(mesh)
         } else {
           if (this.probeHandler.globalEnv) {
@@ -163,7 +186,7 @@ export class App {
 
   async init() {
     const loadingCaption = document.getElementById('loading_caption')
-
+    const loading = document.getElementById('loading')
 
     await this.setupRenderer()
     loadingCaption.innerHTML = 'probes'
@@ -173,8 +196,9 @@ export class App {
     loadingCaption.innerHTML = 'setup'
     this.setupCamera()
     this.initDebug()
-    document.getElementById('loading').remove()
     this.start()
+
+    loading.remove()
   }
 
   protected initDebug() {
@@ -209,17 +233,15 @@ export class App {
     // this.scene.add(this.dynamicProbeDebug)
 
     // sphere following camera with standard material
-    this.testProbeMeshMat = new MeshProbeStandardMaterial(this.probeHandler)
-    this.testProbeMeshMat
 
-    this.testProbeMesh = new Mesh(
+    this.probeDebugMesh = new Mesh(
       new SphereGeometry(1, 32, 32),
-      this.testProbeMeshMat
+      this.currentDebugMaterial
     )
 
-    this.testProbeMesh.castShadow = true
-    this.testProbeMesh.receiveShadow = true
-    this.probedObjectsGroup.add(this.testProbeMesh)
+    this.probeDebugMesh.castShadow = true
+    this.probeDebugMesh.receiveShadow = true
+    this.probedObjectsGroup.add(this.probeDebugMesh)
 
     const groupVisibilityFolder = gui.addFolder('Objects Groups')
     groupVisibilityFolder
@@ -230,12 +252,101 @@ export class App {
       .name('Probed objects')
 
     // material GUI
-    const targetObjectGUIFolder = gui.addFolder('Target object material')
-    targetObjectGUIFolder.addColor(this.testProbeMeshMat, 'color')
-    targetObjectGUIFolder.addColor(this.testProbeMeshMat, 'emissive')
-    targetObjectGUIFolder.add(this.testProbeMeshMat, 'roughness', 0.01, 0.95)
-    targetObjectGUIFolder.add(this.testProbeMeshMat, 'metalness', 0, 1)
-    targetObjectGUIFolder.add(this.testProbeMeshMat, 'probesIntensity', 0, 1)
+
+    const targetObjectGUIFolders: Record<keyof AppDebugMaterials, GUI> =
+      {} as any
+
+    let targetObjectMaterialGUIFolder = gui.addFolder('Target object material')
+    // const materialOptions: Record<keyof AppDebugMaterials, Material> = {} as any
+
+    // Object.keys(this.materials).forEach((key) => {
+    //   materialOptions[key] = this.materials[key as keyof AppDebugMaterials]
+    // })
+
+    const updateMaterialFolderVisibility = (value: string) => {
+      this.probeDebugMesh.material = this.materials[value]
+      for (let key in targetObjectGUIFolders) {
+        if (value === key) {
+          targetObjectGUIFolders[key].show()
+        } else {
+          targetObjectGUIFolders[key].hide()
+        }
+      }
+    }
+
+    targetObjectMaterialGUIFolder
+      .add(this, 'currentDebugMaterialKey', Object.keys(this.materials))
+      .onChange(updateMaterialFolderVisibility)
+      .name('Material')
+
+    // targetObjectMaterialGUIFolder.add
+
+    let targetObjectGUIFolder =
+      targetObjectMaterialGUIFolder.addFolder('Standard material')
+    targetObjectGUIFolder.add(this.materials.standard, 'probesIntensity', 0, 1)
+    targetObjectGUIFolder.addColor(this.materials.standard, 'color')
+    targetObjectGUIFolder.add(this.materials.standard, 'roughness', 0.01, 0.95)
+    targetObjectGUIFolder.add(this.materials.standard, 'metalness', 0, 1)
+    targetObjectGUIFolders.standard = targetObjectGUIFolder
+
+    targetObjectGUIFolder =
+      targetObjectMaterialGUIFolder.addFolder('Physical material')
+    targetObjectGUIFolder.add(this.materials.physical, 'probesIntensity', 0, 1)
+    targetObjectGUIFolder.addColor(this.materials.physical, 'color')
+    targetObjectGUIFolder.add(this.materials.physical, 'roughness', 0.01, 0.95)
+    targetObjectGUIFolder.add(this.materials.physical, 'metalness', 0, 1)
+    targetObjectGUIFolder.addColor(this.materials.physical, 'specularColor')
+    targetObjectGUIFolder.add(
+      this.materials.physical,
+      'specularIntensity',
+      0,
+      1
+    )
+    targetObjectGUIFolder.add(this.materials.physical, 'iridescence', 0, 1)
+    targetObjectGUIFolder.add(this.materials.physical, 'anisotropy', 0, 1)
+    targetObjectGUIFolder.add(
+      this.materials.physical,
+      'anisotropyRotation',
+      0,
+      Math.PI * 2
+    )
+    targetObjectGUIFolder.addColor(this.materials.physical, 'sheenColor')
+    targetObjectGUIFolder.add(this.materials.physical, 'sheen', 0, 1)
+    targetObjectGUIFolder.add(this.materials.physical, 'sheenRoughness', 0, 1)
+    targetObjectGUIFolder.add(this.materials.physical, 'thickness', 0, 10)
+    targetObjectGUIFolder.add(
+      this.materials.physical,
+      'attenuationDistance',
+      0,
+      50
+    )
+    targetObjectGUIFolder.addColor(this.materials.physical, 'attenuationColor')
+    targetObjectGUIFolders.physical = targetObjectGUIFolder
+
+    targetObjectGUIFolder =
+      targetObjectMaterialGUIFolder.addFolder('Lambert material')
+    targetObjectGUIFolder.addColor(this.materials.lambert, 'color')
+    targetObjectGUIFolder.add(this.materials.lambert, 'reflectivity', 0, 1)
+    targetObjectGUIFolder.add(this.materials.lambert, 'refractionRatio', 0, 1)
+    targetObjectGUIFolders.lambert = targetObjectGUIFolder
+
+    targetObjectGUIFolder =
+      targetObjectMaterialGUIFolder.addFolder('Phong material')
+    targetObjectGUIFolder.addColor(this.materials.phong, 'color')
+    targetObjectGUIFolder.addColor(this.materials.phong, 'specular')
+    targetObjectGUIFolder.add(this.materials.phong, 'shininess', 0, 100)
+    targetObjectGUIFolder.add(this.materials.phong, 'reflectivity', 0, 1)
+    targetObjectGUIFolder.add(this.materials.phong, 'refractionRatio', 0, 1)
+    targetObjectGUIFolders.phong = targetObjectGUIFolder
+
+    // targetObjectGUIFolder =
+    //   targetObjectMaterialGUIFolder.addFolder('Basic material')
+    // targetObjectGUIFolder.addColor(this.materials.basic, 'color')
+    // targetObjectGUIFolder.add(this.materials.basic, 'reflectivity', 0, 1)
+    // targetObjectGUIFolder.add(this.materials.basic, 'refractionRatio', 0, 1)
+    // targetObjectGUIFolders.basic = targetObjectGUIFolder
+
+    updateMaterialFolderVisibility(this.currentDebugMaterialKey)
   }
 
   async loadProbes() {
@@ -250,8 +361,8 @@ export class App {
   }
 
   updateProbeDebug() {
-    if (this.testProbeMesh) {
-      this.testProbeMesh.position.copy(this.controls.target)
+    if (this.probeDebugMesh) {
+      this.probeDebugMesh.position.copy(this.controls.target)
     }
   }
 

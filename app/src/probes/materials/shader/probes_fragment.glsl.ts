@@ -42,19 +42,19 @@ export default /* glsl */`
     outgoingLight += getIBLIrradiance( worldNormal );
 //endif
 
-vec4 reflectionEnvMapColor = getReflectionEnvColor( reflectVec )) 
+vec3 reflectionEnvMapColor = getReflectionEnvColor( reflectVec );
 
 #ifdef ENVMAP_BLENDING_MULTIPLY
 
-  outgoingLight = mix( outgoingLight, outgoingLight * reflectionEnvMapColor.xyz, specularStrength * reflectivity );
+  outgoingLight = mix( outgoingLight, outgoingLight * reflectionEnvMapColor, specularStrength * reflectivity );
 
 #elif defined( ENVMAP_BLENDING_MIX )
 
-  outgoingLight = mix( outgoingLight, reflectionEnvMapColor.xyz, specularStrength * reflectivity );
+  outgoingLight = mix( outgoingLight, reflectionEnvMapColor, specularStrength * reflectivity );
 
 #elif defined( ENVMAP_BLENDING_ADD )
 
-  outgoingLight += reflectionEnvMapColor.xyz * specularStrength * reflectivity;
+  outgoingLight += reflectionEnvMapColor * specularStrength * reflectivity;
 
 #endif
     

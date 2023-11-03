@@ -7,33 +7,9 @@ import probes_lights_fragment_maps from './shader/probes_lights_fragment_maps.gl
 import probes_common_vertex from './shader/probes_common_vertex.glsl'
 
 import { ShaderChunk } from 'three'
+import { ssIfNdefInclude, ssIfDefInclude, ssInclude } from './utils'
 
-function ssInclude(name: string) {
-  return `#include <${name}>`
-}
 
-function ssIfDefInclude(
-  constant: string,
-  include: string,
-  elseInclude: string = null
-) {
-  return `#ifdef ${constant}
-    ${ssInclude(include)}
-  ${
-    elseInclude !== null
-      ? `#else
-    ${ssInclude(elseInclude)}`
-      : ''
-  }
-  #endif`
-}
-
-function ssIfNdefInclude(constant: string, include: string) {
-  return `#ifndef ${constant}
-    ${ssInclude(include)}
- 
-  #endif`
-}
 
 const probesMaterialShunksOverrides = {
    // ignored if USE_PROBES is defined
@@ -43,8 +19,9 @@ const probesMaterialShunksOverrides = {
     'USE_PROBES',
     'envmap_physical_pars_fragment'
   ),
-  envmap_pars_fragment: ssIfNdefInclude(
+  envmap_pars_fragment: ssIfDefInclude(
     'USE_PROBES',
+    'probes_pars_fragment',
     'envmap_pars_fragment'
   ),
   

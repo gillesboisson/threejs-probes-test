@@ -13,3 +13,4 @@ export * from './ReflectionProbeDebugMaterial'
 export * from './GlobalEnvMesh'
 
 export * from './ProbeDebugger'
+export * from './DynamicProbeDebugger'
