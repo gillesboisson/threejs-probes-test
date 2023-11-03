@@ -9,6 +9,7 @@ import {
   Shader,
   WebGLRenderer,
   UniformsUtils,
+  cloneUniforms,
 } from 'three'
 import { replaceShaderSourceIncludes } from './utils'
 import {
@@ -32,6 +33,10 @@ import {
   ProbeVolumeRatio,
   ReflectionProbeVolume,
 } from '../volume'
+
+const irradianceRatioVarname = ratioVar('irradiance')
+const reflectionRatioVarname = ratioVar('reflection')
+const reflectionLodVarname = reflectionLodVar()
 
 export function extendProbesMaterial<
   MaterialT extends Material = Material,
@@ -61,17 +66,15 @@ export function extendProbesMaterial<
       []
     private _reflectionGlobalProbeRatio: ProbeVolumeRatio<ReflectionProbeVolume>[] =
       []
-
-    private _irradianceRatioBufferData: Float32Array
-    private _reflectionRatioBufferData: Float32Array
-    private _reflectionLodBufferData: Float32Array
+    
+    protected _probesIntensity: number = 1
 
     get probesIntensity(): number {
-      return this.uniforms.probesIntensity.value
+      return this._probesIntensity
     }
 
     set probesIntensity(value: number) {
-      this.uniforms.probesIntensity.value = value
+      this._probesIntensity = value
     }
 
     constructor(
@@ -101,31 +104,21 @@ export function extendProbesMaterial<
         uniforms[name] = uniform
       })
 
-      this._irradianceRatioBufferData = new Float32Array(maxIrradianceMaps)
-
-      uniforms[ratioVar('irradiance')] = {
-        value: this._irradianceRatioBufferData,
+      uniforms[irradianceRatioVarname] = {
+        value: new Float32Array(maxIrradianceMaps),
       }
 
-      this._reflectionRatioBufferData = new Float32Array(maxReflectionMaps)
-      uniforms[ratioVar('reflection')] = {
-        value: this._reflectionRatioBufferData,
+      uniforms[reflectionLodVarname] = {
+        value: new Float32Array(maxReflectionMaps),
       }
 
-      this._reflectionLodBufferData = new Float32Array(maxReflectionMaps)
-      uniforms[reflectionLodVar()] = {
-        value: this._reflectionLodBufferData,
+      uniforms[reflectionRatioVarname] = {
+        value: new Float32Array(maxReflectionMaps),
       }
 
-      uniforms.probesIntensity = { value: 1 }
+      uniforms.probesIntensity = { value: this._probesIntensity }
 
-
-      // this.uniforms = UniformsUtils.merge([
-      //   uniforms,
-      //   shaderDefinition?.uniforms,
-      // ])
-
-      this.uniforms = uniforms
+      this.uniforms = UniformsUtils.clone(uniforms)
       // debugger
       this.setValues({
         ...defaultParams,
@@ -142,15 +135,16 @@ export function extendProbesMaterial<
       object: Object3D,
       group: Object3D
     ) {
+      // console.log('object',object);
+      const uniforms = this.uniforms
+
       const irradianceProbeRatio = this._irradianceProbeRatio
       const reflectionProbeRatio = this._reflectionProbeRatio
 
-      const irradianceRatioBufferData = this._irradianceRatioBufferData
-      const reflectionRatioBufferData = this._reflectionRatioBufferData
-      const reflectionLodBufferData = this._reflectionLodBufferData
-
-      const uniforms = this.uniforms
-
+      const irradianceRatioBufferData = uniforms[irradianceRatioVarname].value as Float32Array
+      const reflectionRatioBufferData = uniforms[reflectionRatioVarname].value as Float32Array
+      const reflectionLodBufferData = uniforms[reflectionLodVarname].value as Float32Array
+      
       this.probeVolumeHander.irradianceVolumes.getSuroundingProbes(
         object.position,
         irradianceProbeRatio,
@@ -170,7 +164,7 @@ export function extendProbesMaterial<
             irradianceProbeRatio[i][0].texture
         } else {
           irradianceRatioBufferData[i] = 0
-          // uniforms[irradianceMapNames[i]].value = null
+          uniforms[irradianceMapNames[i]].value = null
         }
       }
 
@@ -184,25 +178,26 @@ export function extendProbesMaterial<
         } else {
           reflectionRatioBufferData[i] = 0
           reflectionLodBufferData[i] = 0
+          uniforms[reflectionMapNames[i]].value = null
         }
       }
+
+      this.uniforms.probesIntensity.value = this._probesIntensity
+      this.needsUpdate = true
     }
+
+    customProgramCacheKey(): string {
+      return this.name + super.customProgramCacheKey()
+    }
+
     onBeforeCompile(shader: Shader, renderer: WebGLRenderer): void {
       super.onBeforeCompile(shader, renderer)
-
+      
       for (let key in this.uniforms) {
         shader.uniforms[key] = this.uniforms[key]
       }
+
       this.uniforms = shader.uniforms
-
-      this._irradianceRatioBufferData = this.uniforms[ratioVar('irradiance')]
-        .value as Float32Array
-
-      this._reflectionRatioBufferData = this.uniforms[ratioVar('reflection')]
-        .value as Float32Array
-
-      this._reflectionLodBufferData = this.uniforms[reflectionLodVar()]
-        .value as Float32Array
 
       shader.vertexShader = shaderDefinition?.vertexShader
         ? shaderDefinition.vertexShader(shader.vertexShader)

@@ -9,6 +9,7 @@ import {
   Material,
   Mesh,
   NoToneMapping,
+  OrthographicCamera,
   PCFSoftShadowMap,
   PerspectiveCamera,
   ReinhardToneMapping,
@@ -69,6 +70,15 @@ export class App {
     1000
   )
 
+  // protected camera = new OrthographicCamera(
+  //   -30,
+  //   30,
+  //   30 * (window.innerHeight / window.innerWidth),
+  //   -30 * (window.innerHeight / window.innerWidth),
+  //   0.1,
+  //   1000
+  // )
+
   protected controls: MapControls
   private _refreshClosure = () => this.refresh()
 
@@ -84,6 +94,23 @@ export class App {
     return this.materials[this.currentDebugMaterialKey]
   }
 
+  async init() {
+    const loadingCaption = document.getElementById('loading_caption')
+    const loading = document.getElementById('loading')
+
+    await this.setupRenderer()
+    loadingCaption.innerHTML = 'probes'
+    await this.loadProbes()
+    loadingCaption.innerHTML = 'scene'
+    await this.loadScene()
+    loadingCaption.innerHTML = 'setup'
+    this.setupCamera()
+    this.initDebug()
+    this.start()
+
+    loading.remove()
+  }
+
   protected async setupRenderer() {
     this.renderer.setPixelRatio(window.devicePixelRatio)
     this.renderer.setSize(window.innerWidth, window.innerHeight)
@@ -94,6 +121,17 @@ export class App {
     document.body.appendChild(infoPanel)
 
     infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw with left rotate camera.`
+  }
+
+  async loadProbes() {
+    const probeLoader = new ProbeLoader(this.renderer)
+
+    this.probeHandler = await probeLoader.load('probes/probes.json')
+
+    if (this.probeHandler.globalEnv) {
+      this.scene.background =
+        this.probeHandler.globalEnv.reflectionCubeProbe.texture
+    }
   }
 
   async loadScene() {
@@ -184,23 +222,6 @@ export class App {
     this.controls.update()
   }
 
-  async init() {
-    const loadingCaption = document.getElementById('loading_caption')
-    const loading = document.getElementById('loading')
-
-    await this.setupRenderer()
-    loadingCaption.innerHTML = 'probes'
-    await this.loadProbes()
-    loadingCaption.innerHTML = 'scene'
-    await this.loadScene()
-    loadingCaption.innerHTML = 'setup'
-    this.setupCamera()
-    this.initDebug()
-    this.start()
-
-    loading.remove()
-  }
-
   protected initDebug() {
     const gui = new GUI()
 
@@ -241,7 +262,17 @@ export class App {
 
     this.probeDebugMesh.castShadow = true
     this.probeDebugMesh.receiveShadow = true
-    this.probedObjectsGroup.add(this.probeDebugMesh)
+    
+    const onotherProbeDebugMeshMat = new MeshProbeStandardMaterial(this.probeHandler);
+    onotherProbeDebugMeshMat.copy(this.currentDebugMaterial);
+
+    // const onotherProbeDebugMesh = new Mesh(new SphereGeometry(1, 32, 32),onotherProbeDebugMeshMat);
+    const onotherProbeDebugMesh = new Mesh(new SphereGeometry(1, 32, 32),this.probeDebugMesh.material);
+    onotherProbeDebugMesh.name = 'onotherProbeDebugMesh';
+    this.probeDebugMesh.name = 'probeDebugMesh';
+    
+    this.probedObjectsGroup.add(this.probeDebugMesh, onotherProbeDebugMesh)
+
 
     const groupVisibilityFolder = gui.addFolder('Objects Groups')
     groupVisibilityFolder
@@ -349,23 +380,6 @@ export class App {
     updateMaterialFolderVisibility(this.currentDebugMaterialKey)
   }
 
-  async loadProbes() {
-    const probeLoader = new ProbeLoader(this.renderer)
-
-    this.probeHandler = await probeLoader.load('probes/probes.json')
-
-    if (this.probeHandler.globalEnv) {
-      this.scene.background =
-        this.probeHandler.globalEnv.reflectionCubeProbe.texture
-    }
-  }
-
-  updateProbeDebug() {
-    if (this.probeDebugMesh) {
-      this.probeDebugMesh.position.copy(this.controls.target)
-    }
-  }
-
   start() {
     this.clock.start()
     this.refresh(0)
@@ -393,6 +407,12 @@ export class App {
   update(deltaTime: number, frameRatio: number) {
     if (this.controls) {
       this.updateProbeDebug()
+    }
+  }
+
+  updateProbeDebug() {
+    if (this.probeDebugMesh) {
+      this.probeDebugMesh.position.copy(this.controls.target)
     }
   }
 
