@@ -27,7 +27,11 @@ import {
 } from './shaderConstants'
 import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
 import { ProbeRatio, ProbeRatioLod } from '../type'
-import { IrradianceProbeVolume, ProbeVolumeRatio, ReflectionProbeVolume } from '../volume'
+import {
+  IrradianceProbeVolume,
+  ProbeVolumeRatio,
+  ReflectionProbeVolume,
+} from '../volume'
 
 export function extendProbesMaterial<
   MaterialT extends Material = Material,
@@ -52,13 +56,23 @@ export function extendProbesMaterial<
 
     private _irradianceProbeRatio: ProbeRatio[] = []
     private _reflectionProbeRatio: ProbeRatioLod[] = []
-    
-    private _irradianceGlobalProbeRatio: ProbeVolumeRatio<IrradianceProbeVolume>[] = []
-    private _reflectionGlobalProbeRatio: ProbeVolumeRatio<ReflectionProbeVolume>[] = []
+
+    private _irradianceGlobalProbeRatio: ProbeVolumeRatio<IrradianceProbeVolume>[] =
+      []
+    private _reflectionGlobalProbeRatio: ProbeVolumeRatio<ReflectionProbeVolume>[] =
+      []
 
     private _irradianceRatioBufferData: Float32Array
     private _reflectionRatioBufferData: Float32Array
     private _reflectionLodBufferData: Float32Array
+
+    get probesIntensity(): number {
+      return this.uniforms.probesIntensity.value
+    }
+
+    set probesIntensity(value: number) {
+      this.uniforms.probesIntensity.value = value
+    }
 
     constructor(
       readonly probeVolumeHander: ProbeVolumeHandler,
@@ -102,6 +116,9 @@ export function extendProbesMaterial<
       uniforms[reflectionLodVar()] = {
         value: this._reflectionLodBufferData,
       }
+
+      uniforms.probesIntensity = { value: 1 }
+
 
       // this.uniforms = UniformsUtils.merge([
       //   uniforms,

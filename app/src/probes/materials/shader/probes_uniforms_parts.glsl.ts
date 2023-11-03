@@ -6,12 +6,12 @@ import {
 } from '../shaderConstants'
 
 const commonUniforms = `
-  uniform float envMapIntensity;
+  uniform float probesIntensity;
 `
 
 const irradianceUniforms = `
   uniform float ${ratioVar('irradiance')}[MAX_IRRADIANCE_MAPS];
-
+  
   ${irradianceMapNames.map((name) => `uniform samplerCube ${name};`).join('\n')}
 `
 

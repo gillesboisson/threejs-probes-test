@@ -24,7 +24,7 @@ vec3 getIBLIrradiance( const in vec3 normal ) {
     })
     .join('\n')};
 
-  return PI * envMapColor.rgb;
+  return PI * envMapColor.rgb * probesIntensity;
 
 }
 `
@@ -61,23 +61,23 @@ vec3 getIBLRadiance( const in vec3 viewDir, const in vec3 normal, const in float
     .join('\n')}
   
 
-  return envMapColor;
+  return envMapColor * probesIntensity;
   
 }`
 
 const getReflectionEnvColor = `
 vec3 getReflectionEnvColor( const in vec3 reflectVec) {
 
-  vec4 envMapColor = ${reflectionMapNames
+  vec3 envMapColor = ${reflectionMapNames
     .map((name, index) => {
-      return `textureCube(${name}, reflectVec) * ${ratioVar(
+      return `textureCube(${name}, reflectVec).rgb * ${ratioVar(
         'reflection',
         index.toString()
       )}`
     })
     .join('+\n\t\t\t')};
 
-  return envMapColor.rgb;
+  return envMapColor * probesIntensity;
   
 }`
 

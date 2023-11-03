@@ -46,9 +46,9 @@
             0.0
         ],
         "scale": [
-            4.0,
-            2.0,
-            2.0
+            7.889846324920654,
+            3.944922924041748,
+            3.944923162460327
         ],
         "clip_start": 0.0010000000474974513,
         "clip_end": 15.0,
@@ -56,8 +56,7 @@
             "h--wall.001",
             "h---wall.002",
             "h---wall.003",
-            "h---wall.004",
-            "Sphere"
+            "h---wall.004"
         ],
         "data": {
             "falloff": 1.0,
@@ -66,7 +65,7 @@
                 2,
                 2
             ],
-            "influence_distance": 1.0
+            "influence_distance": 0.30000007152557373
         }
     },
     {
@@ -94,13 +93,11 @@
         "clip_end": 30.0,
         "baked_objects": [
             "west--wall",
-            "west-cube",
             "floor",
             "north-int-wall",
             "south-int-wall",
             "south-wall",
-            "north-wall",
-            "floor.001"
+            "north-wall"
         ],
         "data": {
             "falloff": 1.0,
@@ -141,13 +138,7 @@
             "north-int-wall",
             "north-wall",
             "south-int-wall",
-            "south-wall",
-            "west-cube.002",
-            "Suzanne",
-            "Suzanne.001",
-            "Suzanne.002",
-            "Suzanne.003",
-            "floor.001"
+            "south-wall"
         ],
         "data": {
             "falloff": 1.0,
@@ -182,13 +173,11 @@
         ],
         "baked_objects": [
             "west--wall",
-            "west-cube",
             "floor",
             "north-int-wall",
             "south-int-wall",
             "south-wall",
-            "north-wall",
-            "floor.001"
+            "north-wall"
         ],
         "clip_start": 0.800000011920929,
         "clip_end": 20.0,
@@ -235,13 +224,7 @@
             "north-int-wall",
             "north-wall",
             "south-int-wall",
-            "south-wall",
-            "west-cube.002",
-            "Suzanne",
-            "Suzanne.001",
-            "Suzanne.002",
-            "Suzanne.003",
-            "floor.001"
+            "south-wall"
         ],
         "clip_start": 0.800000011920929,
         "clip_end": 20.0,

@@ -34,4 +34,19 @@ canvas {
   outline: none;
 }
 
+#loading{
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #000;
+  background-color: #AAA;
+
+  font-size: 18px;
+  text-align: center;
+  display: inline-block;
+  padding: 15px;
+}
+
 
