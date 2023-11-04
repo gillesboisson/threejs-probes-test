@@ -68,14 +68,15 @@ vec3 getIBLRadiance( const in vec3 viewDir, const in vec3 normal, const in float
 const getReflectionEnvColor = `
 vec3 getReflectionEnvColor( const in vec3 reflectVec) {
 
-  vec3 envMapColor = ${reflectionMapNames
+  vec3 envMapColor;
+  
+  ${reflectionMapNames
     .map((name, index) => {
-      return `textureCube(${name}, reflectVec).rgb * ${ratioVar(
-        'reflection',
-        index.toString()
-      )}`
+      return `if (${ratioVar('reflection', index.toString())} > 0.0) {
+        envMapColor += textureCubeLodEXT(${name}, reflectVec, 0.0).rgb * ${ratioVar('reflection', index.toString())};
+      }`
     })
-    .join('+\n\t\t\t')};
+    .join('\n')}
 
   return envMapColor * probesIntensity;
   

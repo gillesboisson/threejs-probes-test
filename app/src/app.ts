@@ -1,13 +1,18 @@
 import {
   ACESFilmicToneMapping,
+  AddOperation,
   CineonToneMapping,
   Clock,
+  CubeReflectionMapping,
+  CubeRefractionMapping,
   CustomToneMapping,
   DirectionalLight,
   Group,
   LinearToneMapping,
   Material,
   Mesh,
+  MixOperation,
+  MultiplyOperation,
   NoToneMapping,
   OrthographicCamera,
   PCFSoftShadowMap,
@@ -196,9 +201,7 @@ export class App {
           }
           this.staticObjectsGroup.add(mesh)
         }
-      }
 
-      if (mesh instanceof Mesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
 
@@ -262,17 +265,21 @@ export class App {
 
     this.probeDebugMesh.castShadow = true
     this.probeDebugMesh.receiveShadow = true
-    
-    const onotherProbeDebugMeshMat = new MeshProbeStandardMaterial(this.probeHandler);
-    onotherProbeDebugMeshMat.copy(this.currentDebugMaterial);
+
+    const onotherProbeDebugMeshMat = new MeshProbeStandardMaterial(
+      this.probeHandler
+    )
+    onotherProbeDebugMeshMat.copy(this.currentDebugMaterial)
 
     // const onotherProbeDebugMesh = new Mesh(new SphereGeometry(1, 32, 32),onotherProbeDebugMeshMat);
-    const onotherProbeDebugMesh = new Mesh(new SphereGeometry(1, 32, 32),this.probeDebugMesh.material);
-    onotherProbeDebugMesh.name = 'onotherProbeDebugMesh';
-    this.probeDebugMesh.name = 'probeDebugMesh';
-    
-    this.probedObjectsGroup.add(this.probeDebugMesh, onotherProbeDebugMesh)
+    const onotherProbeDebugMesh = new Mesh(
+      new SphereGeometry(1, 32, 32),
+      this.probeDebugMesh.material
+    )
+    onotherProbeDebugMesh.name = 'onotherProbeDebugMesh'
+    this.probeDebugMesh.name = 'probeDebugMesh'
 
+    this.probedObjectsGroup.add(this.probeDebugMesh, onotherProbeDebugMesh)
 
     const groupVisibilityFolder = gui.addFolder('Objects Groups')
     groupVisibilityFolder
@@ -359,6 +366,18 @@ export class App {
     targetObjectGUIFolder.addColor(this.materials.lambert, 'color')
     targetObjectGUIFolder.add(this.materials.lambert, 'reflectivity', 0, 1)
     targetObjectGUIFolder.add(this.materials.lambert, 'refractionRatio', 0, 1)
+    targetObjectGUIFolder.add(this.materials.lambert, 'combine', [
+      0,
+      MultiplyOperation,
+      AddOperation,
+      MixOperation,
+    ])
+    targetObjectGUIFolder.add(this.materials.lambert, 'probeMapMode', [
+      CubeReflectionMapping,
+      CubeRefractionMapping,
+    ]);
+
+
     targetObjectGUIFolders.lambert = targetObjectGUIFolder
 
     targetObjectGUIFolder =
@@ -368,6 +387,16 @@ export class App {
     targetObjectGUIFolder.add(this.materials.phong, 'shininess', 0, 100)
     targetObjectGUIFolder.add(this.materials.phong, 'reflectivity', 0, 1)
     targetObjectGUIFolder.add(this.materials.phong, 'refractionRatio', 0, 1)
+    targetObjectGUIFolder.add(this.materials.phong, 'combine', [
+      0,
+      MultiplyOperation,
+      AddOperation,
+      MixOperation,
+    ])
+    targetObjectGUIFolder.add(this.materials.phong, 'probeMapMode', [
+      CubeReflectionMapping,
+      CubeRefractionMapping,
+    ]);
     targetObjectGUIFolders.phong = targetObjectGUIFolder
 
     // targetObjectGUIFolder =
@@ -421,6 +450,7 @@ export class App {
 
     this.renderer.setRenderTarget(null)
     this.renderer.render(this.scene, this.camera)
+    // debugger
     // this.stop();
   }
 }

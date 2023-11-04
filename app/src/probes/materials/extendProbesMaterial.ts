@@ -9,6 +9,12 @@ import {
   Shader,
   WebGLRenderer,
   UniformsUtils,
+  UniformsGroup,
+  MultiplyOperation,
+  AddOperation,
+  MixOperation,
+  MeshLambertMaterial,
+  CubeReflectionMapping,
 } from 'three'
 import { replaceShaderSourceIncludes } from './utils'
 import {
@@ -57,9 +63,36 @@ export function extendProbesMaterial<
 } {
   return class ExtendedProbeMaterial extends SuperMaterial {
     protected uniforms: Record<string, IUniform>
-
+    protected uniformsGroups: UniformsGroup[] = []
+    readonly isShaderMaterial = true
+    protected uniformsNeedUpdate = false
     private _irradianceProbeRatio: ProbeRatio[] = []
     private _reflectionProbeRatio: ProbeRatioLod[] = []
+
+    protected _combine: number = MultiplyOperation
+    protected _probeMapMode: number = CubeReflectionMapping
+
+    get probeMapMode(): number {
+      return this._probeMapMode
+    }
+
+    set probeMapMode(value: number) {
+      if (this._probeMapMode !== value) {
+        this._probeMapMode = value
+        this.needsUpdate = true
+      }
+    }
+
+    get combine(): number {
+      return this._combine
+    }
+
+    set combine(value: number) {
+      if (this._combine !== value) {
+        this._combine = value
+        this.needsUpdate = true
+      }
+    }
 
     private _irradianceGlobalProbeRatio: ProbeVolumeRatio<IrradianceProbeVolume>[] =
       []
@@ -134,16 +167,22 @@ export function extendProbesMaterial<
       object: Object3D,
       group: Object3D
     ) {
+      // super.onBeforeRender(renderer, scene, camera, geometry, object, group)
       // console.log('object',object);
       const uniforms = this.uniforms
 
       const irradianceProbeRatio = this._irradianceProbeRatio
       const reflectionProbeRatio = this._reflectionProbeRatio
 
-      const irradianceRatioBufferData = uniforms[irradianceRatioVarname].value as Float32Array
-      const reflectionRatioBufferData = uniforms[reflectionRatioVarname].value as Float32Array
-      const reflectionLodBufferData = uniforms[reflectionLodVarname].value as Float32Array
-      
+      let objectUniformsNeedsUpdate = false
+
+      const irradianceRatioBufferData = uniforms[irradianceRatioVarname]
+        .value as Float32Array
+      const reflectionRatioBufferData = uniforms[reflectionRatioVarname]
+        .value as Float32Array
+      const reflectionLodBufferData = uniforms[reflectionLodVarname]
+        .value as Float32Array
+
       this.probeVolumeHander.irradianceVolumes.getSuroundingProbes(
         object.position,
         irradianceProbeRatio,
@@ -157,46 +196,90 @@ export function extendProbesMaterial<
       )
 
       for (let i = 0; i < irradianceRatioBufferData.length; i++) {
+        const ut = uniforms[irradianceMapNames[i]]
+
         if (i < irradianceProbeRatio.length) {
-          irradianceRatioBufferData[i] = irradianceProbeRatio[i][1]
-          uniforms[irradianceMapNames[i]].value =
-            irradianceProbeRatio[i][0].texture
+          if (
+            irradianceRatioBufferData[i] !== irradianceProbeRatio[i][1] ||
+            ut.value !== irradianceProbeRatio[i][0].texture
+          ) {
+            irradianceRatioBufferData[i] = irradianceProbeRatio[i][1]
+            ut.value = irradianceProbeRatio[i][0].texture
+            objectUniformsNeedsUpdate = true
+          }
         } else {
-          irradianceRatioBufferData[i] = 0
-          uniforms[irradianceMapNames[i]].value = null
+          if (irradianceRatioBufferData[i] !== 0 || ut.value !== null) {
+            objectUniformsNeedsUpdate = true
+            irradianceRatioBufferData[i] = 0
+            ut.value = null
+          }
         }
       }
 
       for (let i = 0; i < reflectionRatioBufferData.length; i++) {
         if (i < reflectionProbeRatio.length) {
-          reflectionRatioBufferData[i] = reflectionProbeRatio[i][1]
-          reflectionLodBufferData[i] = reflectionProbeRatio[i][2]
-          uniforms[reflectionMapNames[i]].value =
-            reflectionProbeRatio[i][0].texture
-          // ;(reflectionTextureUniforms[i] as any).needsUpdate = true
+          if (
+            reflectionRatioBufferData[i] !== reflectionProbeRatio[i][1] ||
+            reflectionLodBufferData[i] !== reflectionProbeRatio[i][2] ||
+            uniforms[reflectionMapNames[i]].value !==
+              reflectionProbeRatio[i][0].texture
+          ) {
+            reflectionRatioBufferData[i] = reflectionProbeRatio[i][1]
+            reflectionLodBufferData[i] = reflectionProbeRatio[i][2]
+            uniforms[reflectionMapNames[i]].value =
+              reflectionProbeRatio[i][0].texture
+            objectUniformsNeedsUpdate = true
+          }
         } else {
-          reflectionRatioBufferData[i] = 0
-          reflectionLodBufferData[i] = 0
-          uniforms[reflectionMapNames[i]].value = null
+          if (
+            reflectionRatioBufferData[i] !== 0 ||
+            reflectionLodBufferData[i] !== 0 ||
+            uniforms[reflectionMapNames[i]].value !== null
+          ) {
+            reflectionRatioBufferData[i] = 0
+            reflectionLodBufferData[i] = 0
+            uniforms[reflectionMapNames[i]].value = null
+            objectUniformsNeedsUpdate = true
+          }
         }
       }
 
-      this.uniforms.probesIntensity.value = this._probesIntensity
-      this.needsUpdate = true
+      if (
+        (this as any).reflectivity !== undefined &&
+        uniforms.reflectivity !== undefined
+      ) {
+        uniforms.reflectivity.value = (this as any).reflectivity
+      }
+
+      if ((this as any).ior !== undefined && uniforms.ior !== undefined) {
+        uniforms.ior.value = (this as any).ior
+      }
+
+      if (
+        (this as any).refractionRatio !== undefined &&
+        uniforms.refractionRatio !== undefined
+      ) {
+        uniforms.refractionRatio.value = (this as any).refractionRatio
+      }
+
+      uniforms.probesIntensity.value = this._probesIntensity
+      this.uniformsNeedUpdate = objectUniformsNeedsUpdate
     }
 
     customProgramCacheKey(): string {
-      return this.name
+      return 'probes,' + this._combine+','+this._probeMapMode
     }
 
     onBeforeCompile(shader: Shader, renderer: WebGLRenderer): void {
-      console.log("-> onBeforeCompile");
-      super.onBeforeCompile(shader, renderer)
-      
-      for (let key in this.uniforms) {
-        shader.uniforms[key] = this.uniforms[key]
-      }
+      console.log('-> onBeforeCompile')
 
+      for (let key in this.uniforms) {
+        if (shader.uniforms[key]) {
+          shader.uniforms[key].value = this.uniforms[key].value
+        } else {
+          shader.uniforms[key] = this.uniforms[key]
+        }
+      }
       this.uniforms = shader.uniforms
 
       shader.vertexShader = shaderDefinition?.vertexShader
@@ -216,6 +299,44 @@ export function extendProbesMaterial<
         ...(shader as any).defines,
         ...defines,
       }
+
+      // override probe operation for lambert, phong based material
+      // in order to replicate envmap behaviour
+      if (this._combine === MultiplyOperation) {
+        ;(shader as any).defines.PROBE_BLENDING_MULTIPLY = true
+      } else if (this._combine === AddOperation) {
+        ;(shader as any).defines.PROBE_BLENDING_ADD = true
+      } else if (this._combine === MixOperation) {
+        ;(shader as any).defines.PROBE_BLENDING_MIX = true
+      }
+
+      if(this._probeMapMode === CubeReflectionMapping){
+        ;(shader as any).defines.PROBE_MODE_REFLECTION = true
+      }else{
+        ;(shader as any).defines.PROBE_MODE_REFRACTION = true
+      }
+
+      console.log(';(shader as any).defines',(shader as any).defines);
+      super.onBeforeCompile(shader, renderer)
+    }
+
+    copy(material: this): this {
+      super.copy(material)
+      this._probesIntensity = material.probesIntensity
+
+      return this
+    }
+
+    clone(): this {
+      return new (this.constructor as any)(this.probeVolumeHander).copy(this)
+    }
+
+    toJSON(meta?: any) {
+      const data = super.toJSON(meta)
+
+      data.probesIntensity = this._probesIntensity
+
+      return data
     }
   } as any
 }

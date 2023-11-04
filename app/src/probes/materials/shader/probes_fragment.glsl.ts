@@ -20,7 +20,7 @@ export default /* glsl */`
   // Transforming Normal Vectors with the Inverse Transformation
   vec3 worldNormal = inverseTransformDirection( normal, viewMatrix );
 
-  #ifdef ENVMAP_MODE_REFLECTION
+  #ifdef PROBE_MODE_REFLECTION
 
     vec3 reflectVec = reflect( cameraToFrag, worldNormal );
 
@@ -44,15 +44,15 @@ export default /* glsl */`
 
 vec3 reflectionEnvMapColor = getReflectionEnvColor( reflectVec );
 
-#ifdef ENVMAP_BLENDING_MULTIPLY
+#ifdef PROBE_BLENDING_MULTIPLY
 
   outgoingLight = mix( outgoingLight, outgoingLight * reflectionEnvMapColor, specularStrength * reflectivity );
 
-#elif defined( ENVMAP_BLENDING_MIX )
+#elif defined( PROBE_BLENDING_MIX )
 
   outgoingLight = mix( outgoingLight, reflectionEnvMapColor, specularStrength * reflectivity );
 
-#elif defined( ENVMAP_BLENDING_ADD )
+#elif defined( PROBE_BLENDING_ADD )
 
   outgoingLight += reflectionEnvMapColor * specularStrength * reflectivity;
 

@@ -8,7 +8,6 @@ export const defines = {
   MAX_IRRADIANCE_MAPS: maxIrradianceMaps,
   MAX_REFLECTION_MAPS: maxReflectionMaps,
   USE_PROBES: true,
-  // PROBES_GET_IRRADIANCE_IN_VERTEX_SHADER: computeRadianceInVertex,
 }
 
 export function mapVar(
