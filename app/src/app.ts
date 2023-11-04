@@ -358,6 +358,7 @@ export class App {
       0,
       50
     )
+    
     targetObjectGUIFolder.addColor(this.materials.physical, 'attenuationColor')
     targetObjectGUIFolders.physical = targetObjectGUIFolder
 
