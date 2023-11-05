@@ -65,6 +65,18 @@ vec3 getIBLRadiance( const in vec3 viewDir, const in vec3 normal, const in float
   
 }`
 
+// copy as original without USE_ENVMAP condition
+const getIBLAnisotropyRadiance = `
+vec3 getIBLAnisotropyRadiance( const in vec3 viewDir, const in vec3 normal, const in float roughness, const in vec3 bitangent, const in float anisotropy ) {
+  // https://google.github.io/filament/Filament.md.html#lighting/imagebasedlights/anisotropy
+  vec3 bentNormal = cross( bitangent, viewDir );
+  bentNormal = normalize( cross( bentNormal, bitangent ) );
+  bentNormal = normalize( mix( bentNormal, normal, pow2( pow2( 1.0 - anisotropy * ( 1.0 - roughness ) ) ) ) );
+
+  return getIBLRadiance( viewDir, bentNormal, roughness );
+}
+`
+
 const getReflectionEnvColor = `
 vec3 getReflectionEnvColor( const in vec3 reflectVec) {
 
@@ -73,7 +85,10 @@ vec3 getReflectionEnvColor( const in vec3 reflectVec) {
   ${reflectionMapNames
     .map((name, index) => {
       return `if (${ratioVar('reflection', index.toString())} > 0.0) {
-        envMapColor += textureCubeLodEXT(${name}, reflectVec, 0.0).rgb * ${ratioVar('reflection', index.toString())};
+        envMapColor += textureCubeLodEXT(${name}, reflectVec, 0.0).rgb * ${ratioVar(
+        'reflection',
+        index.toString()
+      )};
       }`
     })
     .join('\n')}
@@ -112,6 +127,7 @@ export const fragmentFunctions = `
   ${getIBLIrradiance}
   #ifdef STANDARD
   ${getIBLRadiance}
+  ${getIBLAnisotropyRadiance}
   #else
   ${getReflectionEnvColor}
   #endif
