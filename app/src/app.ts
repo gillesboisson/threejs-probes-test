@@ -266,20 +266,22 @@ export class App {
     this.probeDebugMesh.castShadow = true
     this.probeDebugMesh.receiveShadow = true
 
-    const onotherProbeDebugMeshMat = new MeshProbeStandardMaterial(
-      this.probeHandler
-    )
-    onotherProbeDebugMeshMat.copy(this.currentDebugMaterial)
+    // 1 material for two mesh test -----------------------------
+    // const onotherProbeDebugMeshMat = new MeshProbeStandardMaterial(
+    //   this.probeHandler
+    // )
+    // onotherProbeDebugMeshMat.copy(this.currentDebugMaterial)
 
-    // const onotherProbeDebugMesh = new Mesh(new SphereGeometry(1, 32, 32),onotherProbeDebugMeshMat);
-    const onotherProbeDebugMesh = new Mesh(
-      new SphereGeometry(1, 32, 32),
-      this.probeDebugMesh.material
-    )
-    onotherProbeDebugMesh.name = 'onotherProbeDebugMesh'
-    this.probeDebugMesh.name = 'probeDebugMesh'
+    // // const onotherProbeDebugMesh = new Mesh(new SphereGeometry(1, 32, 32),onotherProbeDebugMeshMat);
+    // const onotherProbeDebugMesh = new Mesh(
+    //   new SphereGeometry(1, 32, 32),
+    //   this.probeDebugMesh.material
+    // )
+    // onotherProbeDebugMesh.name = 'onotherProbeDebugMesh'
+    // this.probeDebugMesh.name = 'probeDebugMesh'
+    // ----------------------------------------------------------
 
-    this.probedObjectsGroup.add(this.probeDebugMesh, onotherProbeDebugMesh)
+    this.probedObjectsGroup.add(this.probeDebugMesh)
 
     const groupVisibilityFolder = gui.addFolder('Objects Groups')
     groupVisibilityFolder
@@ -295,11 +297,6 @@ export class App {
       {} as any
 
     let targetObjectMaterialGUIFolder = gui.addFolder('Target object material')
-    // const materialOptions: Record<keyof AppDebugMaterials, Material> = {} as any
-
-    // Object.keys(this.materials).forEach((key) => {
-    //   materialOptions[key] = this.materials[key as keyof AppDebugMaterials]
-    // })
 
     const updateMaterialFolderVisibility = (value: string) => {
       this.probeDebugMesh.material = this.materials[value]

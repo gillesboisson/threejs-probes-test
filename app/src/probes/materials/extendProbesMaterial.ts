@@ -15,6 +15,7 @@ import {
   MixOperation,
   MeshLambertMaterial,
   CubeReflectionMapping,
+  Vector3,
 } from 'three'
 import { replaceShaderSourceIncludes } from './utils'
 import {
@@ -71,6 +72,10 @@ export function extendProbesMaterial<
 
     protected _combine: number = MultiplyOperation
     protected _probeMapMode: number = CubeReflectionMapping
+
+    protected lastObject: Object3D | null = null
+    protected lastObjectPosition = new Vector3()
+    protected objectPosition = new Vector3()
 
     get probeMapMode(): number {
       return this._probeMapMode
@@ -171,75 +176,84 @@ export function extendProbesMaterial<
       // console.log('object',object);
       const uniforms = this.uniforms
 
-      const irradianceProbeRatio = this._irradianceProbeRatio
-      const reflectionProbeRatio = this._reflectionProbeRatio
-
       let objectUniformsNeedsUpdate = false
+      this.objectPosition.setFromMatrixPosition(object.matrixWorld)
 
-      const irradianceRatioBufferData = uniforms[irradianceRatioVarname]
-        .value as Float32Array
-      const reflectionRatioBufferData = uniforms[reflectionRatioVarname]
-        .value as Float32Array
-      const reflectionLodBufferData = uniforms[reflectionLodVarname]
-        .value as Float32Array
+      const objectProbesNeedsUpdate =
+        this.lastObject !== object ||
+        !this.lastObjectPosition.equals(this.objectPosition)
 
-      this.probeVolumeHander.irradianceVolumes.getSuroundingProbes(
-        object.position,
-        irradianceProbeRatio,
-        this._irradianceGlobalProbeRatio
-      )
-      this.probeVolumeHander.reflectionVolumes.getSuroundingProbes(
-        object.position,
-        reflectionProbeRatio,
-        this._reflectionGlobalProbeRatio,
-        (this as any).roughness
-      )
+      if (objectProbesNeedsUpdate) {
+        this.lastObject = object
+        this.lastObjectPosition.copy(object.position)
+        const irradianceProbeRatio = this._irradianceProbeRatio
+        const reflectionProbeRatio = this._reflectionProbeRatio
 
-      for (let i = 0; i < irradianceRatioBufferData.length; i++) {
-        const ut = uniforms[irradianceMapNames[i]]
+        const irradianceRatioBufferData = uniforms[irradianceRatioVarname]
+          .value as Float32Array
+        const reflectionRatioBufferData = uniforms[reflectionRatioVarname]
+          .value as Float32Array
+        const reflectionLodBufferData = uniforms[reflectionLodVarname]
+          .value as Float32Array
 
-        if (i < irradianceProbeRatio.length) {
-          if (
-            irradianceRatioBufferData[i] !== irradianceProbeRatio[i][1] ||
-            ut.value !== irradianceProbeRatio[i][0].texture
-          ) {
-            irradianceRatioBufferData[i] = irradianceProbeRatio[i][1]
-            ut.value = irradianceProbeRatio[i][0].texture
-            objectUniformsNeedsUpdate = true
-          }
-        } else {
-          if (irradianceRatioBufferData[i] !== 0 || ut.value !== null) {
-            objectUniformsNeedsUpdate = true
-            irradianceRatioBufferData[i] = 0
-            ut.value = null
+        this.probeVolumeHander.irradianceVolumes.getSuroundingProbes(
+          object.position,
+          irradianceProbeRatio,
+          this._irradianceGlobalProbeRatio
+        )
+        this.probeVolumeHander.reflectionVolumes.getSuroundingProbes(
+          object.position,
+          reflectionProbeRatio,
+          this._reflectionGlobalProbeRatio,
+          (this as any).roughness
+        )
+
+        for (let i = 0; i < irradianceRatioBufferData.length; i++) {
+          const ut = uniforms[irradianceMapNames[i]]
+
+          if (i < irradianceProbeRatio.length) {
+            if (
+              irradianceRatioBufferData[i] !== irradianceProbeRatio[i][1] ||
+              ut.value !== irradianceProbeRatio[i][0].texture
+            ) {
+              irradianceRatioBufferData[i] = irradianceProbeRatio[i][1]
+              ut.value = irradianceProbeRatio[i][0].texture
+              objectUniformsNeedsUpdate = true
+            }
+          } else {
+            if (irradianceRatioBufferData[i] !== 0 || ut.value !== null) {
+              objectUniformsNeedsUpdate = true
+              irradianceRatioBufferData[i] = 0
+              ut.value = null
+            }
           }
         }
-      }
 
-      for (let i = 0; i < reflectionRatioBufferData.length; i++) {
-        if (i < reflectionProbeRatio.length) {
-          if (
-            reflectionRatioBufferData[i] !== reflectionProbeRatio[i][1] ||
-            reflectionLodBufferData[i] !== reflectionProbeRatio[i][2] ||
-            uniforms[reflectionMapNames[i]].value !==
-              reflectionProbeRatio[i][0].texture
-          ) {
-            reflectionRatioBufferData[i] = reflectionProbeRatio[i][1]
-            reflectionLodBufferData[i] = reflectionProbeRatio[i][2]
-            uniforms[reflectionMapNames[i]].value =
-              reflectionProbeRatio[i][0].texture
-            objectUniformsNeedsUpdate = true
-          }
-        } else {
-          if (
-            reflectionRatioBufferData[i] !== 0 ||
-            reflectionLodBufferData[i] !== 0 ||
-            uniforms[reflectionMapNames[i]].value !== null
-          ) {
-            reflectionRatioBufferData[i] = 0
-            reflectionLodBufferData[i] = 0
-            uniforms[reflectionMapNames[i]].value = null
-            objectUniformsNeedsUpdate = true
+        for (let i = 0; i < reflectionRatioBufferData.length; i++) {
+          if (i < reflectionProbeRatio.length) {
+            if (
+              reflectionRatioBufferData[i] !== reflectionProbeRatio[i][1] ||
+              reflectionLodBufferData[i] !== reflectionProbeRatio[i][2] ||
+              uniforms[reflectionMapNames[i]].value !==
+                reflectionProbeRatio[i][0].texture
+            ) {
+              reflectionRatioBufferData[i] = reflectionProbeRatio[i][1]
+              reflectionLodBufferData[i] = reflectionProbeRatio[i][2]
+              uniforms[reflectionMapNames[i]].value =
+                reflectionProbeRatio[i][0].texture
+              objectUniformsNeedsUpdate = true
+            }
+          } else {
+            if (
+              reflectionRatioBufferData[i] !== 0 ||
+              reflectionLodBufferData[i] !== 0 ||
+              uniforms[reflectionMapNames[i]].value !== null
+            ) {
+              reflectionRatioBufferData[i] = 0
+              reflectionLodBufferData[i] = 0
+              uniforms[reflectionMapNames[i]].value = null
+              objectUniformsNeedsUpdate = true
+            }
           }
         }
       }
@@ -267,7 +281,7 @@ export function extendProbesMaterial<
     }
 
     customProgramCacheKey(): string {
-      return 'probes,' + this._combine+','+this._probeMapMode
+      return 'probes,' + this._combine + ',' + this._probeMapMode
     }
 
     onBeforeCompile(shader: Shader, renderer: WebGLRenderer): void {
@@ -310,13 +324,13 @@ export function extendProbesMaterial<
         ;(shader as any).defines.PROBE_BLENDING_MIX = true
       }
 
-      if(this._probeMapMode === CubeReflectionMapping){
+      if (this._probeMapMode === CubeReflectionMapping) {
         ;(shader as any).defines.PROBE_MODE_REFLECTION = true
-      }else{
+      } else {
         ;(shader as any).defines.PROBE_MODE_REFRACTION = true
       }
 
-      console.log(';(shader as any).defines',(shader as any).defines);
+      console.log(';(shader as any).defines', (shader as any).defines)
       super.onBeforeCompile(shader, renderer)
     }
 
