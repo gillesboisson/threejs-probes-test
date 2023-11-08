@@ -12,7 +12,7 @@ import {
   WireframeGeometry,
 } from 'three'
 import { IrradianceProbeVolume, ReflectionProbeVolume } from '../volume'
-import { BoxLineGeometry, SphereLineGeometry } from '../../three-utils'
+import { BoxLineGeometry, SphereLineGeometry } from '../geometry'
 
 const boxGeom = new BoxLineGeometry()
 const sphereGeo = new SphereLineGeometry(0.5)

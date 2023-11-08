@@ -1,0 +1,30 @@
+{
+  "name": "@libs/probes",
+  "version": "0.0.1",
+  "private": true,
+  "contributors": [
+    "Gilles Boisson <gillesboisson@gmail.com>"
+  ],
+  "main": "build/index.js",
+  "typings": "build/index.d.ts",
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "start:dev": "tsc -p ./tsconfig.dev.json -w",
+    "build:dev": "tsc -p ./tsconfig.dev.json",
+    "build:production": "tsc",
+    "clean": "rm -fr build"
+  },
+  "peerDependencies": {
+  },
+  "devDependencies": {
+    "typescript": "^4.0.2",
+    "@libs/config":"0.0.1",
+    "@types/three": "^0.157"
+    
+  },
+  "dependencies": {
+    "three": "^0.157"
+  }
+}

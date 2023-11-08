@@ -1,0 +1,12 @@
+{
+  "exclude": [ "node_modules", "build"],
+  "extends": "@libs/config/tsconfig.base.json",
+  "include": [
+    "src",
+    "types"
+, "../common/src/material/IMaterial.ts", "../common/src/primitive/AMultiInstancePrimitive.ts"  ],
+  "compilerOptions": {
+    "outDir": "build",
+  }
+  
+}

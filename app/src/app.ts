@@ -9,13 +9,11 @@ import {
   DirectionalLight,
   Group,
   LinearToneMapping,
-  Material,
   Mesh,
   MeshStandardMaterial,
   MixOperation,
   MultiplyOperation,
   NoToneMapping,
-  OrthographicCamera,
   PCFSoftShadowMap,
   PerspectiveCamera,
   PointLight,
@@ -40,9 +38,8 @@ import {
   MeshProbePhongMaterial,
   MeshProbePhysicalMaterial,
   MeshProbeStandardMaterial,
-} from './probes'
+} from '@libs/probes'
 import GUI from 'lil-gui'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader'
 
 const guiParams = {

@@ -26,7 +26,8 @@
     "webpack": "^4.44.2",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2",
-    "webpack-node-externals": "^2.5.2"
+    "webpack-node-externals": "^2.5.2",
+    "@libs/probes": "^0.0.1"
   },
   "browser": {
     "fs": false,
