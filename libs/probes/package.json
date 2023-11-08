@@ -16,15 +16,14 @@
     "build:production": "tsc",
     "clean": "rm -fr build"
   },
-  "peerDependencies": {
-  },
+  "peerDependencies": {},
   "devDependencies": {
     "typescript": "^4.0.2",
-    "@libs/config":"0.0.1",
+    "@libs/config": "0.0.1",
     "@types/three": "^0.157"
-    
   },
   "dependencies": {
-    "three": "^0.157"
+    "three": "^0.157",
+    "@libs/utils": "^0.0.1"
   }
 }

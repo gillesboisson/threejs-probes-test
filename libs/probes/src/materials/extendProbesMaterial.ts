@@ -336,7 +336,7 @@ export function extendProbesMaterial<
 
     copy(material: this): this {
       super.copy(material)
-      this._probesIntensity = material.probesIntensity
+      this._probesIntensity = material.probesIntensity !== undefined ? material.probesIntensity : 1
 
       return this
     }

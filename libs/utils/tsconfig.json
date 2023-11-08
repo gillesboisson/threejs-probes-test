@@ -1,0 +1,14 @@
+{
+  "exclude": [
+    "node_modules",
+    "build"
+  ],
+  "extends": "@libs/config/tsconfig.base.json",
+  "include": [
+    "src",
+    "types"
+  ],
+  "compilerOptions": {
+    "outDir": "build",
+  }
+}

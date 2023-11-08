@@ -17,7 +17,7 @@
   },
   "workspaces": {
     "packages": [
-      "app",
+      "apps/**",
       "libs/**"
     ]
   },
