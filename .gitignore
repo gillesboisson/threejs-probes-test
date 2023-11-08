@@ -5,4 +5,4 @@ node_modules
 .vscode
 remote-profile
 app/src/**/*.d.ts
-app/content/probes/__render_cache
+**/__render_cache

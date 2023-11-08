@@ -11,15 +11,19 @@ import {
   LinearToneMapping,
   Material,
   Mesh,
+  MeshStandardMaterial,
   MixOperation,
   MultiplyOperation,
   NoToneMapping,
   OrthographicCamera,
   PCFSoftShadowMap,
   PerspectiveCamera,
+  PointLight,
   ReinhardToneMapping,
   Scene,
   SphereGeometry,
+  Texture,
+  TextureLoader,
   Vector3,
   WebGLRenderer,
 } from 'three'
@@ -38,6 +42,8 @@ import {
   MeshProbeStandardMaterial,
 } from './probes'
 import GUI from 'lil-gui'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
+import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader'
 
 const guiParams = {
   exposure: 1.0,
@@ -75,15 +81,6 @@ export class App {
     1000
   )
 
-  // protected camera = new OrthographicCamera(
-  //   -30,
-  //   30,
-  //   30 * (window.innerHeight / window.innerWidth),
-  //   -30 * (window.innerHeight / window.innerWidth),
-  //   0.1,
-  //   1000
-  // )
-
   protected controls: MapControls
   private _refreshClosure = () => this.refresh()
 
@@ -94,6 +91,14 @@ export class App {
   protected staticObjectsGroup: Group
   protected probedObjectsGroup: Group
   protected currentDebugMaterialKey: keyof AppDebugMaterials = 'standard'
+
+  protected roofMeshName = 'Room-roof'
+  protected wallsMeshName = 'Room-walls'
+  protected sunPlaceholderName = 'Sun_Placeholder'
+
+  protected roofMesh?: Mesh
+  protected wallsMesh?: Mesh
+  sunLight: DirectionalLight
 
   get currentDebugMaterial() {
     return this.materials[this.currentDebugMaterialKey]
@@ -131,7 +136,7 @@ export class App {
   async loadProbes() {
     const probeLoader = new ProbeLoader(this.renderer)
 
-    this.probeHandler = await probeLoader.load('probes/probes.json')
+    this.probeHandler = await probeLoader.load('bench-probes/probes.json')
 
     if (this.probeHandler.globalEnv) {
       this.scene.background =
@@ -142,34 +147,43 @@ export class App {
   async loadScene() {
     const loader = new GLTFLoader()
 
-    const gltf = await loader.loadAsync('models/baking-probs.gltf')
+    const gltf = await loader.loadAsync('models/room-bake-bench.gltf')
 
     // Setup main light -----------------------------------------------
 
     // a light placeholder is taken from the gltf as directionnal light are not exported by blender
     const sunPlaceholder = gltf.scene.children.find((c) => {
-      return c.name === 'Sun_Placeholder'
+      return c.name === this.sunPlaceholderName
     })
+
+    this.roofMesh = gltf.scene.children.find((c) => {
+      return c.name === this.roofMeshName
+    }) as Mesh
+
+    this.wallsMesh = gltf.scene.children.find((c) => {
+      return c.name === this.wallsMeshName
+    }) as Mesh
 
     if (sunPlaceholder) {
       // light setup
-      const light = new DirectionalLight(0xffffff, 1)
-      light.position.set(30, 30, 30)
-      light.rotation.copy(sunPlaceholder.rotation)
-      this.scene.add(light)
+
+      const sunLight = (this.sunLight = new DirectionalLight(0xffffff, 1))
+      sunLight.position.set(30, 30, 30)
+      sunLight.rotation.copy(sunPlaceholder.rotation)
+      this.scene.add(sunLight)
 
       // shadow setup
-      light.castShadow = true
-      light.shadow.mapSize.width = 2048
-      light.shadow.mapSize.height = 2048
-      light.shadow.camera.near = 0.5
-      light.shadow.camera.far = 100
-      light.shadow.bias = -0.001
-      light.shadow.radius = 1
-      light.shadow.camera.left = -30
-      light.shadow.camera.right = 30
-      light.shadow.camera.top = 30
-      light.shadow.camera.bottom = -30
+      sunLight.castShadow = true
+      sunLight.shadow.mapSize.width = 2048
+      sunLight.shadow.mapSize.height = 2048
+      sunLight.shadow.camera.near = 0.5
+      sunLight.shadow.camera.far = 100
+      sunLight.shadow.bias = -0.001
+      sunLight.shadow.radius = 1
+      sunLight.shadow.camera.left = -30
+      sunLight.shadow.camera.right = 30
+      sunLight.shadow.camera.top = 30
+      sunLight.shadow.camera.bottom = -30
 
       this.renderer.shadowMap.enabled = true
       this.renderer.shadowMap.type = PCFSoftShadowMap
@@ -187,18 +201,37 @@ export class App {
       // basic: new MeshProbeBasicMaterial(this.probeHandler),
     }
 
+    const diffuseMapsMat: [MeshStandardMaterial, string][] = []
+
+    console.log('gltf.scene',gltf.scene);
+
     // filter / map loaded scene objects / materials -----------------------------------------------
     for (let i = 0; i < gltf.scene.children.length; i++) {
       const mesh = gltf.scene.children[i]
       if (mesh instanceof Mesh) {
         if (mesh.name.toLowerCase().includes('suza')) {
           mesh.material = new MeshProbeStandardMaterial(this.probeHandler)
+
           this.probedObjectsGroup.add(mesh)
         } else {
-          if (this.probeHandler.globalEnv) {
+          if (mesh.material.userData.diffuse_map) {
+            console.log('Diffuse map found for ' + mesh.material.name)
+
+            const asStandardMat = mesh.material.isMeshStandardMaterial
+              ? (mesh.material as MeshStandardMaterial)
+              : undefined
+            if (asStandardMat) {
+              
+              diffuseMapsMat.push([
+                asStandardMat as MeshStandardMaterial,
+                asStandardMat.userData.diffuse_map,
+              ])
+            }
+          } else if (this.probeHandler.globalEnv) {
             mesh.material.envMap =
               this.probeHandler.globalEnv.reflectionCubeProbe.texture
           }
+
           this.staticObjectsGroup.add(mesh)
         }
 
@@ -207,16 +240,74 @@ export class App {
 
         i--
       }
+
+      console.log('mesh.name',mesh.name);
+
+      if (mesh instanceof PointLight) {
+        console.log('mesh', mesh)
+        const light = mesh as PointLight
+        light.intensity /= 1000
+        light.decay = 5
+        
+
+        this.staticObjectsGroup.add(mesh)
+      }
     }
+    const lightMapDirectory = 'models/'
+    const exrLoader = new EXRLoader()
+    const textureLoader = new TextureLoader()
+    await new Promise<void>((resolve) => {
+      let loadedDiffuseMaps = 0
+      let currentDiffuseMaps = 0
+
+      const loaded = (mapIndex: number, mat: MeshStandardMaterial, texture: Texture) => {
+        loadedDiffuseMaps++
+        console.log('loadedDiffuseMaps', loadedDiffuseMaps)
+        mat.lightMap = texture
+        texture.flipY = true
+        if (loadedDiffuseMaps === diffuseMapsMat.length) {
+          resolve()
+        } else {
+          loadMap()
+        }
+      }
+
+      const loadMap = () => {
+        console.log(
+          'loadMap',
+          currentDiffuseMaps,
+          diffuseMapsMat[currentDiffuseMaps]
+        )
+        const [mat, filename] = diffuseMapsMat[currentDiffuseMaps]
+        const ext = filename.split('.').pop().toLowerCase()
+        currentDiffuseMaps++
+        const mapIndex = currentDiffuseMaps
+        if (ext === 'exr') {
+          exrLoader.load(lightMapDirectory + filename, (texture) => {
+            loaded(mapIndex,mat, texture)
+          })
+        } else {
+          textureLoader.load(lightMapDirectory + filename, (texture) => {
+            loaded(mapIndex, mat,texture)
+          })
+        }
+      }
+
+      if (diffuseMapsMat.length > 0) {
+        loadMap()
+      } else {
+        resolve()
+      }
+    })
   }
 
   protected setupCamera() {
     // Setup camera and controls -----------------------------------------------
     this.scene.add(this.camera)
 
-    const targetPos = new Vector3(0, 5, 5)
+    const targetPos = new Vector3(0, 3, 0)
 
-    this.camera.position.copy(targetPos).add(new Vector3(5, 10, 10))
+    this.camera.position.copy(targetPos).add(new Vector3(0, 5, 5))
 
     this.camera.lookAt(targetPos)
 
@@ -355,7 +446,7 @@ export class App {
       0,
       50
     )
-    
+
     targetObjectGUIFolder.addColor(this.materials.physical, 'attenuationColor')
     targetObjectGUIFolders.physical = targetObjectGUIFolder
 
@@ -373,8 +464,7 @@ export class App {
     targetObjectGUIFolder.add(this.materials.lambert, 'probeMapMode', [
       CubeReflectionMapping,
       CubeRefractionMapping,
-    ]);
-
+    ])
 
     targetObjectGUIFolders.lambert = targetObjectGUIFolder
 
@@ -394,7 +484,7 @@ export class App {
     targetObjectGUIFolder.add(this.materials.phong, 'probeMapMode', [
       CubeReflectionMapping,
       CubeRefractionMapping,
-    ]);
+    ])
     targetObjectGUIFolders.phong = targetObjectGUIFolder
 
     // targetObjectGUIFolder =
@@ -403,6 +493,33 @@ export class App {
     // targetObjectGUIFolder.add(this.materials.basic, 'reflectivity', 0, 1)
     // targetObjectGUIFolder.add(this.materials.basic, 'refractionRatio', 0, 1)
     // targetObjectGUIFolders.basic = targetObjectGUIFolder
+
+    if (this.roofMesh || this.wallsMesh) {
+      const roomFolder = gui.addFolder('Room')
+
+      if (this.roofMesh) {
+        roomFolder.add(this.roofMesh, 'visible').name('Roof')
+      }
+
+      if (this.wallsMesh) {
+        roomFolder.add(this.wallsMesh, 'visible').name('Walls')
+      }
+    }
+
+    if (this.sunLight) {
+      const lightFolder = gui.addFolder('Sun')
+
+      lightFolder.add(this.sunLight, 'intensity', 0, 3)
+      lightFolder.add(this.sunLight, 'castShadow')
+      lightFolder.add(this.sunLight.shadow, 'radius', 0, 10)
+      lightFolder.add(this.sunLight.shadow, 'bias', -1, 1)
+      // lightFolder.add(this.sunLight.shadow.camera, 'near', 0, 100)
+      // lightFolder.add(this.sunLight.shadow.camera, 'far', 0, 100)
+      // lightFolder.add(this.sunLight.shadow.camera, 'left', -100, 100)
+      // lightFolder.add(this.sunLight.shadow.camera, 'right', -100, 100)
+      // lightFolder.add(this.sunLight.shadow.camera, 'top', -100, 100)
+      // lightFolder.add(this.sunLight.shadow.camera, 'bottom', -100, 100)
+    }
 
     updateMaterialFolderVisibility(this.currentDebugMaterialKey)
   }
