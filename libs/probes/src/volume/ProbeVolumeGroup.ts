@@ -1,36 +1,37 @@
-import { Box3, Vector3 } from 'three'
-import { AnyProbeVolumeData } from '../data'
-import { ProbeType, ProbeRatio } from '../type'
-import { ProbeVolume, AnyProbeVolume } from './ProbeVolume'
-import { ProbeVolumeRatio } from './type'
-import { Probe } from '../Probe'
-import { GlobalEnvVolume } from './GlobalEnvVolume'
+import { Box3, Vector3 } from 'three';
+import { AnyProbeVolumeBaking, AnyProbeVolumeData } from '../data';
+import { ProbeType, ProbeRatio } from '../type';
+import { ProbeVolume, AnyProbeVolume } from './ProbeVolume';
+import { ProbeVolumeRatio } from './type';
+import { Probe } from '../Probe';
+import { GlobalEnvVolume } from './GlobalEnvVolume';
 
 export class ProbeVolumeGroup<
-  ProbeVolumeT extends ProbeVolume<DataT, TypeT>,
+  ProbeVolumeT extends ProbeVolume<DataT, BakingT, TypeT>,
   DataT extends AnyProbeVolumeData,
+  BakingT extends AnyProbeVolumeBaking,
   TypeT extends ProbeType
 > {
-  protected _bounds = new Box3()
-  protected _boundsDirty = true
+  protected _bounds = new Box3();
+  protected _boundsDirty = true;
 
-  fallbackVolume: GlobalEnvVolume | null = null
+  fallbackVolume: GlobalEnvVolume | null = null;
   // fallbackProbe: Probe | null = null
 
-  readonly volumes: ProbeVolumeT[] = []
+  readonly volumes: ProbeVolumeT[] = [];
 
   get bounds(): Box3 {
     if (this._boundsDirty) {
-      this.computeBounds()
-      this._boundsDirty = false
+      this.computeBounds();
+      this._boundsDirty = false;
     }
-    return this._bounds
+    return this._bounds;
   }
 
   addVolume(volume: ProbeVolumeT) {
     if (!this.volumes.includes(volume)) {
-      this.volumes.push(volume)
-      this._boundsDirty = true
+      this.volumes.push(volume);
+      this._boundsDirty = true;
     }
   }
 
@@ -39,42 +40,42 @@ export class ProbeVolumeGroup<
     out: ProbeVolumeRatio<ProbeVolumeT>[] = []
   ): ProbeVolumeRatio<ProbeVolumeT>[] {
     if (this.bounds.containsPoint(position) === false) {
-      out.length = 0
-      return out
+      out.length = 0;
+      return out;
     }
 
-    let matchedVolumes = 0
-    let totalRatio = 0
+    let matchedVolumes = 0;
+    let totalRatio = 0;
 
     // get all the volumes that match
     for (let i = 0; i < this.volumes.length; i++) {
-      const volume = this.volumes[i]
-      const ratio = volume.getGlobalRatio(position)
+      const volume = this.volumes[i];
+      const ratio = volume.getGlobalRatio(position);
       if (ratio > 0) {
-        totalRatio += ratio
+        totalRatio += ratio;
         if (out[matchedVolumes] === undefined) {
-          out[matchedVolumes] = [volume, ratio]
+          out[matchedVolumes] = [volume, ratio];
         } else {
-          out[matchedVolumes][0] = volume
-          out[matchedVolumes][1] = ratio
+          out[matchedVolumes][0] = volume;
+          out[matchedVolumes][1] = ratio;
         }
-        matchedVolumes++
+        matchedVolumes++;
       }
     }
 
-    out.splice(matchedVolumes, out.length - matchedVolumes)
+    out.splice(matchedVolumes, out.length - matchedVolumes);
 
     // if ratio < 1, total ratio need to take fallback probe into account
     if (totalRatio < 1 && this.fallbackVolume !== null) {
-      totalRatio = 1
+      totalRatio = 1;
     }
 
     // normalize the ratios
     for (let i = 0; i < matchedVolumes; i++) {
-      out[i][1] /= totalRatio
+      out[i][1] /= totalRatio;
     }
 
-    return out
+    return out;
   }
 
   getSuroundingProbes(
@@ -82,50 +83,49 @@ export class ProbeVolumeGroup<
     out: ProbeRatio[] = [],
     outProbeVolumeRatio: ProbeVolumeRatio<ProbeVolumeT>[] = []
   ): ProbeRatio[] {
-    let resultIndex = 0
+    let resultIndex = 0;
 
-    this.getGlobalRatio(position, outProbeVolumeRatio)
-    let totalProbeRatio = 0
+    this.getGlobalRatio(position, outProbeVolumeRatio);
+    let totalProbeRatio = 0;
     for (let i = 0; i < outProbeVolumeRatio.length; i++) {
-      const [probeVolume, probeRatio] = outProbeVolumeRatio[i]
+      const [probeVolume, probeRatio] = outProbeVolumeRatio[i];
       resultIndex = probeVolume.getSuroundingProbes(
         position,
         probeRatio,
         out,
         resultIndex
-      )
+      );
 
-      totalProbeRatio += probeRatio
+      totalProbeRatio += probeRatio;
     }
 
-    
     // console.log('totalProbeRatio',totalProbeRatio);
 
     if (totalProbeRatio < 1 && this.fallbackVolume !== null) {
       out[resultIndex] = [
         this.fallbackVolume.irradianceCubeProbe,
         1 - totalProbeRatio,
-      ]
-      resultIndex++
+      ];
+      resultIndex++;
     }
 
-    out.length = resultIndex
+    out.length = resultIndex;
 
-    return out
+    return out;
   }
 
   removeVolume(volume: ProbeVolumeT) {
-    const index = this.volumes.indexOf(volume)
+    const index = this.volumes.indexOf(volume);
     if (index !== -1) {
-      this.volumes.splice(index, 1)
-      this._boundsDirty = true
+      this.volumes.splice(index, 1);
+      this._boundsDirty = true;
     }
   }
 
   protected computeBounds() {
-    this._bounds.makeEmpty()
+    this._bounds.makeEmpty();
     for (const volume of this.volumes) {
-      this._bounds.union(volume.bounds)
+      this._bounds.union(volume.bounds);
     }
   }
 }
@@ -133,5 +133,6 @@ export class ProbeVolumeGroup<
 export type AnyProbeVolumeGroup = ProbeVolumeGroup<
   AnyProbeVolume,
   AnyProbeVolumeData,
+  AnyProbeVolumeBaking,
   ProbeType
->
+>;

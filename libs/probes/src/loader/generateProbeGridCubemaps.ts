@@ -1,23 +1,22 @@
 import { Texture } from 'three'
 import {
 } from '../type'
-import { ReflectionVolumeData } from '../data/ReflectionVolumeData'
 import { getCubemapPackCoords } from './getCubemapPackCoords'
 import { unpackCubemaps } from './unpackCubemaps'
-import { IrradianceVolumeDefinition } from '../data'
+import { IrradianceProbeVolumeDefinition } from '../data'
 
 export function generateProbeGridCubemaps(
-  data: IrradianceVolumeDefinition,
+  volumeDefinition: IrradianceProbeVolumeDefinition,
   image: HTMLImageElement
 ) {
   const res: Texture[] = []
   const nbCubemap =
-    data.data.resolution[0] * data.data.resolution[1] * data.data.resolution[2]
+    volumeDefinition.data.resolution[0] * volumeDefinition.data.resolution[1] * volumeDefinition.data.resolution[2]
   const mapCoords = getCubemapPackCoords(
-    data.cubemap_size,
+    volumeDefinition.baking.cubemap_face_size,
     0,
     nbCubemap,
-    data.texture_size,
+    volumeDefinition.baking.max_texture_size,
     6,
     1
   )

@@ -1,59 +1,57 @@
-import { CubeTexture, Vector3 } from 'three'
-import { GlobalEnvVolumeDefinition } from '../data'
-import { GlobalEnvVolumeData } from '../data/GlobalEnvVolumeData'
-import { Probe, RoughnessLodMapping } from '../Probe'
-import { ReflectionProbeVolume } from './ReflectionProbeVolume'
+import { CubeTexture, Vector3 } from 'three';
+import { GlobalEnvProbeVolumeData, GlobalEnvProbeVolumeDefinition } from '../data';
+import { Probe, RoughnessLodMapping } from '../Probe';
+import { ReflectionProbeVolume } from './ReflectionProbeVolume';
 
 export class GlobalEnvVolume {
-  readonly data: Readonly<GlobalEnvVolumeData>
+  readonly data: Readonly<GlobalEnvProbeVolumeData>;
 
-  position: Vector3
+  position: Vector3;
 
-  readonly irradianceCubeProbe: Probe
-  readonly reflectionCubeProbe: Probe
+  readonly irradianceCubeProbe: Probe;
+  readonly reflectionCubeProbe: Probe;
 
-  reflectionRoughnessMapping: RoughnessLodMapping
+  reflectionRoughnessMapping: RoughnessLodMapping;
 
   constructor(
-    definition: GlobalEnvVolumeDefinition,
+    { baking, data, transform }: GlobalEnvProbeVolumeDefinition,
     {
       irradianceCubeTexture,
       reflectionCubeTexture,
     }: {
-      irradianceCubeTexture: CubeTexture
-      reflectionCubeTexture: CubeTexture
+      irradianceCubeTexture: CubeTexture;
+      reflectionCubeTexture: CubeTexture;
     }
   ) {
-    this.data = definition.data
+    this.data = data;
 
     this.reflectionRoughnessMapping = {
-      nbLevels: definition.data.reflectance_nb_levels,
-      startRoughness: definition.data.reflectance_start_roughness,
+      nbLevels: baking.reflection.nb_levels,
+      startRoughness: baking.reflection.start_roughness,
       endRoughness:
-        definition.data.reflectance_start_roughness +
-        definition.data.reflectance_nb_levels *
-          definition.data.reflectance_level_roughness,
-    }
+        baking.reflection.start_roughness +
+        baking.reflection.nb_levels * baking.reflection.level_roughness,
+    };
 
-    this.position = new Vector3(...definition.position)
+    this.position = new Vector3(...transform.position);
 
     this.irradianceCubeProbe = {
-      position: new Vector3(...definition.position),
+      position: new Vector3(...transform.position),
       type: 'irradiance',
       texture: irradianceCubeTexture,
-    }
+    };
 
     this.reflectionCubeProbe = {
-      position: new Vector3(...definition.position),
+      position: new Vector3(...transform.position),
       type: 'reflection',
       texture: reflectionCubeTexture,
-    }
+    };
   }
 
   roughnessToTextureLod(roughness: number): number {
     return ReflectionProbeVolume.RoughnessToTextureLod(
       roughness,
       this.reflectionRoughnessMapping
-    )
+    );
   }
 }

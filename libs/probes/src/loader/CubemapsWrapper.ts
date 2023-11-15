@@ -225,7 +225,7 @@ export class CubemapWrapper {
   static gridLayout(
     sourceTextureWidth: number,
     sourceTextureHeight: number,
-    cubemapSize: number,
+    cubemapFaceSize: number,
     nbCubes = 1,
     nbFacesPerRow = -1
   ): CubemapWrapperLayout[] {
@@ -233,11 +233,11 @@ export class CubemapWrapper {
 
     nbFacesPerRow =
       nbFacesPerRow === -1
-        ? Math.floor(sourceTextureWidth / cubemapSize)
+        ? Math.floor(sourceTextureWidth / cubemapFaceSize)
         : nbFacesPerRow
 
-    const uvWidth = cubemapSize / sourceTextureWidth
-    const uvHeight = cubemapSize / sourceTextureHeight
+    const uvWidth = cubemapFaceSize / sourceTextureWidth
+    const uvHeight = cubemapFaceSize / sourceTextureHeight
 
     for (let cubeIndex = 0; cubeIndex < nbCubes; cubeIndex++) {
       const face0 = cubeIndex * 6

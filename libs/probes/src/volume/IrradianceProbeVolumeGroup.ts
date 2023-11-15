@@ -1,9 +1,10 @@
-import { IrradianceVolumeData } from '../data';
+import { IrradianceProbeVolumeBaking, IrradianceProbeVolumeData } from '../data';
 import { IrradianceProbeVolume } from './IrradianceProbeVolume';
 import { ProbeVolumeGroup } from './ProbeVolumeGroup';
 
-
 export class IrradianceProbeVolumeGroup extends ProbeVolumeGroup<
-  IrradianceProbeVolume, IrradianceVolumeData, 'irradiance'
-> {
-}
+  IrradianceProbeVolume,
+  IrradianceProbeVolumeData,
+  IrradianceProbeVolumeBaking,
+  'irradiance'
+> {}

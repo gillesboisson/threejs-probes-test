@@ -3,7 +3,7 @@ import { ProbeRatio } from '../type'
 import { generateProbeGridPositions } from '../loader/generateProbeGridPositions'
 
 import { Probe } from '../Probe'
-import { IrradianceVolumeData } from '../data'
+import { IrradianceProbeVolumeBaking, IrradianceProbeVolumeData } from '../data'
 import { IrradianceVolumeProps } from '../props'
 import { ProbeVolume } from './ProbeVolume'
 
@@ -13,7 +13,8 @@ const normalizeToGridSpace = new Matrix4().multiply(
 // .multiply(new Matrix4().makeTranslation(0.5, 0.5, 0.5))
 
 export class IrradianceProbeVolume extends ProbeVolume<
-  IrradianceVolumeData,
+  IrradianceProbeVolumeData,
+  IrradianceProbeVolumeBaking,
   'irradiance',
   Probe
 > {

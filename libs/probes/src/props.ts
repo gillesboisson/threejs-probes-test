@@ -1,21 +1,30 @@
-import { CubeTexture } from "three"
-import { ProbeVolumeDefinition, ReflectionVolumeData, IrradianceVolumeData } from "./data"
-import { ProbeType } from "./type"
+import { CubeTexture } from 'three';
+import {
+  ProbeVolumeDefinition,
+  ReflectionProbeVolumeData,
+  IrradianceProbeVolumeData,
+  ReflectionProbeVolumeBaking,
+  IrradianceProbeVolumeBaking,
+} from './data';
+import { ProbeType } from './type';
 
 export type ProbeVolumeProps<
   DataT,
+  BakingT,
   TypeT extends ProbeType
-> = ProbeVolumeDefinition<DataT, TypeT> & {
-  textures: CubeTexture[]
-}
+> = ProbeVolumeDefinition<DataT, BakingT, TypeT> & {
+  textures: CubeTexture[];
+};
 
 export type ReflectionVolumeProps = ProbeVolumeProps<
-  ReflectionVolumeData,
+  ReflectionProbeVolumeData,
+  ReflectionProbeVolumeBaking,
   'reflection'
->
+>;
 export type IrradianceVolumeProps = ProbeVolumeProps<
-  IrradianceVolumeData,
+  IrradianceProbeVolumeData,
+  IrradianceProbeVolumeBaking,
   'irradiance'
->
+>;
 
-export type AnyProbeVolumeProps = ReflectionVolumeProps | IrradianceVolumeProps
+export type AnyProbeVolumeProps = ReflectionVolumeProps | IrradianceVolumeProps;

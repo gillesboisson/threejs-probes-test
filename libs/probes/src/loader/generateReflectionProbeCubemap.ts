@@ -1,22 +1,22 @@
 import { CubeTexture, LinearFilter, LinearMipMapLinearFilter } from 'three'
 import { getCubemapPackCoords } from './getCubemapPackCoords'
 import { unpackCubemaps } from './unpackCubemaps'
-import { ReflectionVolumeDefinition } from '../data'
+import { ReflectionProbeVolumeDefinition } from '../data'
 
 export function generateReflectionProbeCubemap(
-  data: ReflectionVolumeDefinition,
+  {data, baking}: ReflectionProbeVolumeDefinition,
   image: HTMLImageElement
 ) {
   const textureLevels: CubeTexture[] = []
 
-  const nbLevels = data.data.nb_levels
+  const nbLevels = baking.nb_levels
 
   for (let level = 0; level < nbLevels; level++) {
     const mapCoords = getCubemapPackCoords(
-      data.cubemap_size,
+      baking.cubemap_face_size,
       level,
       1,
-      data.texture_size,
+      image.width,
       4,
       2
     )
