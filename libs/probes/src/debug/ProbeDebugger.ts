@@ -16,11 +16,11 @@ export class ProbeDebugger extends Group {
   protected probeVolumesGroups: ProbeVolumeMeshGroup[] = []
   protected probeVolumesProbesGroups: Group[] = []
 
-  protected _probesVisible = true
+  protected _probesVisible = false
   protected _reflectionProbesVisible = true
   protected _irradianceProbesVisible = true
 
-  protected _influenceVisible = true
+  protected _influenceVisible = false
 
   // protected probeVolumes: AnyProbeVolume[] = []
 
@@ -52,6 +52,8 @@ export class ProbeDebugger extends Group {
       this.globalEnvMesh = new GlobalEnvMesh(probeScene.globalEnv)
       this.add(this.globalEnvMesh)
     }
+
+    this.refreshVisibility();
   }
 
   get probesVisible() {
@@ -152,50 +154,4 @@ export class ProbeDebugger extends Group {
     })
   }
 
-  // addProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
-  //   let group: ProbeVolumeMeshGroup<AnyProbeVolume> = null
-
-  //   for (let volume of probeVolumes) {
-  //     if (this.probeVolumes.indexOf(volume) === -1) {
-  //       this.probeVolumes.push(volume)
-
-  //       group = null
-
-  //       if (volume instanceof IrradianceProbeVolume) {
-  //         group = new IrradianceProbeVolumeMeshGroup(volume)
-  //       } else if (volume instanceof ReflectionProbeVolume) {
-  //         group = new ReflectionProbeVolumeMeshGroup(volume)
-  //       } else {
-  //         throw new Error('Invalid probe volume type')
-  //       }
-
-  //       if (group !== null) {
-  //         this.probeVolumesGroups.push(group)
-  //         this.probeVolumesProbesGroups.push(group.probesGroup)
-
-  //         this.add(group)
-  //       }
-  //     }
-  //   }
-
-  //   this.refreshVisibility()
-  // }
-
-  // removeProbeVolumes(...probeVolumes: AnyProbeVolume[]) {
-  //   for (let volume of probeVolumes) {
-  //     const index = this.probeVolumes.indexOf(volume)
-
-  //     if (index !== -1) {
-  //       this.probeVolumes.splice(index, 1)
-
-  //       const group = this.probeVolumesGroups[index]
-
-  //       this.probeVolumesGroups.splice(index, 1)
-  //       this.probeVolumesProbesGroups.splice(index, 1)
-  //       // this.probeVolumesInfluenceGroups.splice(index, 1)
-
-  //       this.remove(group)
-  //     }
-  //   }
-  // }
 }

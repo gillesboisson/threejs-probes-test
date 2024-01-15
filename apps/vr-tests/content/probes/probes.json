@@ -1,0 +1,313 @@
+{
+    "probes": [
+        {
+            "name": "env",
+            "probe_type": "global",
+            "transform": {
+                "position": [
+                    0.0,
+                    2.0,
+                    -0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 40.0,
+                "map_size": 512,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0,
+                "cycle_use_denoising": true
+            },
+            "irradiance_file": "env_irradiance_packed.exr",
+            "reflection_file": "env_radiance_packed.exr",
+            "data": {},
+            "baking": {
+                "irradiance": {
+                    "cubemap_face_size": 32,
+                    "max_texture_size": 2048
+                },
+                "reflection": {
+                    "cubemap_face_size": 16,
+                    "start_roughness": 0.0,
+                    "level_roughness": 1.0,
+                    "nb_levels": 1
+                }
+            },
+            "visibility": {
+                "collection": "env",
+                "invert": false
+            }
+        },
+        {
+            "name": "room_irradiance",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -1.6603466272354126,
+                    1.3486359119415283,
+                    -0.0
+                ],
+                "scale": [
+                    -6.902073860168457,
+                    -1.4936609268188477,
+                    -5.459566116333008
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 32,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0,
+                "cycle_use_denoising": true
+            },
+            "file": "room_irradiance_packed.exr",
+            "data": {
+                "resolution": [
+                    4,
+                    1,
+                    4
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.30000001192092896,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "pano",
+                "invert": false
+            }
+        },
+        {
+            "name": "room_reflection",
+            "probe_type": "reflection",
+            "transform": {
+                "position": [
+                    -1.589676022529602,
+                    1.399999976158142,
+                    -0.010873198509216309
+                ],
+                "scale": [
+                    8.531691551208496,
+                    6.672533988952637,
+                    1.971531867980957
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 40.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0,
+                "cycle_use_denoising": true
+            },
+            "data": {
+                "falloff": 0.20000000298023224,
+                "intensity": 1.0,
+                "influence_type": "BOX",
+                "influence_distance": 1.0
+            },
+            "file": "room_reflection_packed.exr",
+            "baking": {
+                "cubemap_face_size": 128,
+                "start_roughness": 0.0,
+                "end_roughness": 0.5,
+                "nb_levels": 4
+            },
+            "visibility": {
+                "collection": "pano",
+                "invert": false
+            }
+        }
+    ],
+    "baked_maps": [
+        {
+            "map_size": 1024,
+            "type": "DIFFUSE",
+            "name": "room_DIFFUSE",
+            "filename": "room_DIFFUSE.exr",
+            "grouped_bake": true,
+            "object_name": "ceilling",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": false,
+                "use_pass_emit": false,
+                "use_pass_color": true,
+                "use_pass_transmission": false
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "static",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 512,
+            "type": "DIFFUSE",
+            "name": "cube_DIFFUSE",
+            "filename": "cube_DIFFUSE.exr",
+            "grouped_bake": false,
+            "object_name": "cube",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": false,
+                "use_pass_emit": false,
+                "use_pass_color": true,
+                "use_pass_transmission": false
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "static",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 1024,
+            "type": "DIFFUSE",
+            "name": "room_DIFFUSE",
+            "filename": "room_DIFFUSE.exr",
+            "grouped_bake": true,
+            "object_name": "floor",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": false,
+                "use_pass_emit": false,
+                "use_pass_color": true,
+                "use_pass_transmission": false
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "static",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 128,
+            "type": "COMBINED",
+            "name": "body_COMBINED",
+            "filename": "body_COMBINED.exr",
+            "grouped_bake": true,
+            "object_name": "ref_body",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": false,
+                "use_pass_emit": false,
+                "use_pass_color": false,
+                "use_pass_transmission": false
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "static",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 1024,
+            "type": "DIFFUSE",
+            "name": "room_DIFFUSE",
+            "filename": "room_DIFFUSE.exr",
+            "grouped_bake": true,
+            "object_name": "walls",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": false,
+                "use_pass_emit": false,
+                "use_pass_color": true,
+                "use_pass_transmission": false
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "static",
+                "invert": false
+            }
+        }
+    ],
+    "visibility_collections": [
+        {
+            "name": "env",
+            "objects": [
+                "earth"
+            ]
+        },
+        {
+            "name": "static",
+            "objects": [
+                "ref_body",
+                "ceiling_light",
+                "ceiling_light.001",
+                "ceiling_light.002",
+                "ceiling_light.003",
+                "ceiling_light.004",
+                "ceiling_light.005",
+                "ceiling_light.006",
+                "earth",
+                "Sun",
+                "sun_placeholder",
+                "walls",
+                "ceilling",
+                "floor",
+                "cube"
+            ]
+        },
+        {
+            "name": "pano",
+            "objects": [
+                "ceiling_light",
+                "ceiling_light.001",
+                "ceiling_light.002",
+                "ceiling_light.003",
+                "ceiling_light.004",
+                "ceiling_light.005",
+                "ceiling_light.006",
+                "earth",
+                "Sun",
+                "sun_placeholder",
+                "walls",
+                "ceilling",
+                "floor",
+                "cube"
+            ]
+        }
+    ]
+}

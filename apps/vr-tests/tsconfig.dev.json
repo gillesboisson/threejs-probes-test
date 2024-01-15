@@ -1,0 +1,13 @@
+{
+  "extends": "@tsgl/config/tsconfig.base.json",
+  "exclude": [ "node_modules", "build","content"],
+  "include": [
+    "src",
+    "types"
+  ],
+ "compilerOptions": {
+    "outDir": "build",
+    "sourceMap": true,
+  }
+  
+}

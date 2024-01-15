@@ -1,0 +1,13 @@
+{
+  "exclude": [ "node_modules", "build","content"],
+  "extends": "@libs/config/tsconfig.base.json",
+  "include": [
+    "src",
+    "types"
+  ],
+  "compilerOptions": {
+    "outDir": "build",
+    "target": "ES2017",
+  }
+  
+}

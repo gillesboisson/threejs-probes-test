@@ -1,0 +1,471 @@
+{
+    "probes": [
+        {
+            "name": "inside",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -1.297224760055542,
+                    2.4945778846740723,
+                    -0.3853052854537964
+                ],
+                "scale": [
+                    14.254860877990723,
+                    7.949130535125732,
+                    14.254860877990723
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 64,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "inside_packed.exr",
+            "data": {
+                "resolution": [
+                    3,
+                    2,
+                    3
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.10000002384185791,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "out-east",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    18.358190536499023,
+                    9.605724334716797,
+                    -0.24855905771255493
+                ],
+                "scale": [
+                    14.052096366882324,
+                    15.898261070251465,
+                    3.978289842605591
+                ],
+                "rotation": [
+                    0.0,
+                    -1.570796251296997,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 64,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "out-east_packed.exr",
+            "data": {
+                "resolution": [
+                    2,
+                    2,
+                    1
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.20000000298023224,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "out-north",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -1.5213289260864258,
+                    9.605724334716797,
+                    -19.332292556762695
+                ],
+                "scale": [
+                    24.01204490661621,
+                    15.898261070251465,
+                    4.99765682220459
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 64,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "out-north_packed.exr",
+            "data": {
+                "resolution": [
+                    4,
+                    2,
+                    1
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.20000000298023224,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "out-south",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -1.5213289260864258,
+                    9.605724334716797,
+                    18.87885284423828
+                ],
+                "scale": [
+                    24.01204490661621,
+                    15.898261070251465,
+                    4.99765682220459
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 64,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "out-south_packed.exr",
+            "data": {
+                "resolution": [
+                    4,
+                    2,
+                    1
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.20000000298023224,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "out-top",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -1.297224760055542,
+                    17.912519454956055,
+                    -0.3853052854537964
+                ],
+                "scale": [
+                    14.254860877990723,
+                    7.619950294494629,
+                    14.254860877990723
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 64,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "out-top_packed.exr",
+            "data": {
+                "resolution": [
+                    2,
+                    1,
+                    2
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.10000002384185791,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "out-west",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -20.819751739501953,
+                    9.605724334716797,
+                    -0.24855905771255493
+                ],
+                "scale": [
+                    14.052096366882324,
+                    15.898261070251465,
+                    3.978289842605591
+                ],
+                "rotation": [
+                    0.0,
+                    -1.570796251296997,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.009999999776482582,
+                "clip_end": 40.0,
+                "map_size": 64,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "out-west_packed.exr",
+            "data": {
+                "resolution": [
+                    2,
+                    2,
+                    1
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.20000000298023224,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "ReflectionCubemap",
+            "probe_type": "reflection",
+            "transform": {
+                "position": [
+                    -1.297224760055542,
+                    2.3057234287261963,
+                    -0.3853052854537964
+                ],
+                "scale": [
+                    6.669998645782471,
+                    6.669998645782471,
+                    3.7114205360412598
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 40.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "data": {
+                "falloff": 0.10109890252351761,
+                "intensity": 1.0,
+                "influence_type": "BOX",
+                "influence_distance": 2.5
+            },
+            "file": "ReflectionCubemap_packed.exr",
+            "baking": {
+                "cubemap_face_size": 128,
+                "start_roughness": 0.10000000149011612,
+                "level_roughness": 0.20000000298023224,
+                "nb_levels": 4
+            },
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "name": "ReflectionCubemap.001",
+            "probe_type": "reflection",
+            "transform": {
+                "position": [
+                    -1.297224760055542,
+                    16.82742691040039,
+                    -0.3853052854537964
+                ],
+                "scale": [
+                    2.299999952316284,
+                    2.299999952316284,
+                    2.299999952316284
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 40.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "data": {
+                "falloff": 0.20000000298023224,
+                "intensity": 1.0,
+                "influence_type": "ELIPSOID",
+                "influence_distance": 2.5
+            },
+            "file": "ReflectionCubemap.001_packed.exr",
+            "baking": {
+                "cubemap_face_size": 128,
+                "start_roughness": 0.10000000149011612,
+                "level_roughness": 0.20000000298023224,
+                "nb_levels": 4
+            },
+            "visibility": {
+                "collection": "env",
+                "invert": false
+            }
+        }
+    ],
+    "baked_maps": [
+        {
+            "map_size": 256,
+            "type": "COMBINED",
+            "filename": "floor_COMBINED.exr",
+            "grouped_bake": false,
+            "object_name": "floor",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "HDR",
+            "uv_index": 0,
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 1024,
+            "type": "COMBINED",
+            "filename": "Room_COMBINED.exr",
+            "grouped_bake": true,
+            "object_name": "Room-roof",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 1024,
+            "type": "COMBINED",
+            "filename": "Room_COMBINED.exr",
+            "grouped_bake": true,
+            "object_name": "Room-walls",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "Static",
+                "invert": false
+            }
+        }
+    ],
+    "visibility_collections": [
+        {
+            "name": "Static",
+            "objects": [
+                "Room-walls",
+                "floor",
+                "Room-roof",
+                "Sun",
+                "light-south",
+                "light-east",
+                "light-west",
+                "light-north"
+            ]
+        },
+        {
+            "name": "env",
+            "objects": [
+                "floor",
+                "Sun"
+            ]
+        }
+    ]
+}

@@ -1,354 +1,498 @@
-[
-    {
-        "name": "Global probe",
-        "probe_type": "global",
-        "transform": {
-            "position": [
-                0.0,
-                5.0,
-                -0.0
-            ],
-            "scale": [
-                1.0,
-                1.0,
-                1.0
-            ],
-            "rotation": [
-                0,
-                0,
-                0
-            ]
-        },
-        "render": {
-            "clip_start": 0.800000011920929,
-            "clip_end": 80.0,
-            "map_size": 128,
-            "cycle_samples_max": 32,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 5
-        },
-        "irradiance_file": "Global probe_irradiance_packed.exr",
-        "reflection_file": "Global probe_radiance_packed.exr",
-        "data": {},
-        "baking": {
-            "irradiance": {
-                "cubemap_face_size": 32,
-                "max_texture_size": 960
+{
+    "probes": [
+        {
+            "name": "Global probe",
+            "probe_type": "global",
+            "transform": {
+                "position": [
+                    0.0,
+                    5.0,
+                    -0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
             },
-            "reflection": {
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 80.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 5
+            },
+            "irradiance_file": "Global probe_irradiance_packed.exr",
+            "reflection_file": "Global probe_radiance_packed.exr",
+            "data": {},
+            "baking": {
+                "irradiance": {
+                    "cubemap_face_size": 32,
+                    "max_texture_size": 960
+                },
+                "reflection": {
+                    "cubemap_face_size": 128,
+                    "start_roughness": 0.10000000149011612,
+                    "level_roughness": 0.20000000298023224,
+                    "nb_levels": 1
+                }
+            },
+            "visibility": {
+                "collection": "global_env_baked_only",
+                "invert": false
+            }
+        },
+        {
+            "name": "IrradianceVolume H",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    -0.017288759350776672,
+                    5.0,
+                    -26.014827728271484
+                ],
+                "scale": [
+                    7.889846324920654,
+                    3.944922924041748,
+                    3.944923162460327
+                ],
+                "rotation": [
+                    0.0,
+                    -1.2217304706573486,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.0010000000474974513,
+                "clip_end": 15.0,
+                "map_size": 64,
+                "cycle_samples_max": 8,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "IrradianceVolume H_packed.exr",
+            "data": {
+                "resolution": [
+                    2,
+                    2,
+                    2
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.30000007152557373,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        },
+        {
+            "name": "IrradianceVolume N",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    0.0,
+                    5.0,
+                    -7.051239490509033
+                ],
+                "scale": [
+                    14.094822883605957,
+                    6.012429237365723,
+                    6.948479175567627
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.0010000000474974513,
+                "clip_end": 30.0,
+                "map_size": 64,
+                "cycle_samples_max": 8,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "IrradianceVolume N_packed.exr",
+            "data": {
+                "resolution": [
+                    4,
+                    2,
+                    2
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.20000000298023224,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        },
+        {
+            "name": "IrradianceVolume S",
+            "probe_type": "irradiance",
+            "transform": {
+                "position": [
+                    0.0,
+                    5.0,
+                    6.948760509490967
+                ],
+                "scale": [
+                    14.094822883605957,
+                    6.012429237365723,
+                    6.948479175567627
+                ],
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "render": {
+                "clip_start": 0.0010000000474974513,
+                "clip_end": 30.0,
+                "map_size": 64,
+                "cycle_samples_max": 8,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "file": "IrradianceVolume S_packed.exr",
+            "data": {
+                "resolution": [
+                    4,
+                    2,
+                    2
+                ],
+                "intensity": 1.0,
+                "influence_distance": 0.20000000298023224,
+                "falloff": 1.0
+            },
+            "baking": {
+                "cubemap_face_size": 128,
+                "max_texture_size": 2048
+            },
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        },
+        {
+            "name": "ReflectionCubemap H",
+            "probe_type": "reflection",
+            "transform": {
+                "position": [
+                    0.0,
+                    5.0,
+                    -26.0
+                ],
+                "scale": [
+                    0.9371091723442078,
+                    0.48404669761657715,
+                    1.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 20.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "data": {
+                "falloff": 0.15170571208000183,
+                "intensity": 1.0,
+                "influence_type": "BOX",
+                "influence_distance": 10.0
+            },
+            "file": "ReflectionCubemap H_packed.exr",
+            "baking": {
                 "cubemap_face_size": 128,
                 "start_roughness": 0.10000000149011612,
                 "level_roughness": 0.20000000298023224,
-                "nb_levels": 1
+                "nb_levels": 4
+            },
+            "visibility": {
+                "collection": "baked",
+                "invert": false
             }
         },
-        "baked_objects": [
-            "pillar NE",
-            "pillar SE",
-            "pillar SW",
-            "pillar NW"
-        ]
-    },
-    {
-        "name": "IrradianceVolume H",
-        "probe_type": "irradiance",
-        "transform": {
-            "position": [
-                -0.017288759350776672,
-                5.0,
-                -26.014827728271484
-            ],
-            "scale": [
-                7.889846324920654,
-                3.944922924041748,
-                3.944923162460327
-            ],
-            "rotation": [
-                0.0,
-                -1.2217304706573486,
-                0.0
-            ]
+        {
+            "name": "ReflectionCubemap N",
+            "probe_type": "reflection",
+            "transform": {
+                "position": [
+                    0.0,
+                    5.0,
+                    -8.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 20.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "data": {
+                "falloff": 0.3314814865589142,
+                "intensity": 1.0,
+                "influence_type": "ELIPSOID",
+                "influence_distance": 9.0
+            },
+            "file": "ReflectionCubemap N_packed.exr",
+            "baking": {
+                "cubemap_face_size": 128,
+                "start_roughness": 0.10000000149011612,
+                "level_roughness": 0.20000000298023224,
+                "nb_levels": 4
+            },
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
         },
-        "render": {
-            "clip_start": 0.0010000000474974513,
-            "clip_end": 15.0,
-            "map_size": 64,
-            "cycle_samples_max": 8,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 0
-        },
-        "file": "IrradianceVolume H_packed.exr",
-        "data": {
-            "resolution": [
-                2,
-                2,
-                2
-            ],
-            "intensity": 1.0,
-            "influence_distance": 0.30000007152557373,
-            "falloff": 1.0
-        },
-        "baking": {
-            "cubemap_face_size": 128,
-            "max_texture_size": 2048
-        },
-        "baked_objects": [
-            "h--wall.001",
-            "h---wall.002",
-            "h---wall.003",
-            "h---wall.004"
-        ]
-    },
-    {
-        "name": "IrradianceVolume N",
-        "probe_type": "irradiance",
-        "transform": {
-            "position": [
-                0.0,
-                5.0,
-                -7.051239490509033
-            ],
-            "scale": [
-                14.094822883605957,
-                6.012429237365723,
-                6.948479175567627
-            ],
-            "rotation": [
-                0.0,
-                0.0,
-                0.0
-            ]
-        },
-        "render": {
-            "clip_start": 0.0010000000474974513,
-            "clip_end": 30.0,
-            "map_size": 64,
-            "cycle_samples_max": 8,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 0
-        },
-        "file": "IrradianceVolume N_packed.exr",
-        "data": {
-            "resolution": [
-                4,
-                2,
-                2
-            ],
-            "intensity": 1.0,
-            "influence_distance": 0.20000000298023224,
-            "falloff": 1.0
-        },
-        "baking": {
-            "cubemap_face_size": 128,
-            "max_texture_size": 2048
-        },
-        "baked_objects": [
-            "west--wall",
-            "floor",
-            "north-int-wall",
-            "south-int-wall",
-            "south-wall",
-            "north-wall"
-        ]
-    },
-    {
-        "name": "IrradianceVolume S",
-        "probe_type": "irradiance",
-        "transform": {
-            "position": [
-                0.0,
-                5.0,
-                6.948760509490967
-            ],
-            "scale": [
-                14.094822883605957,
-                6.012429237365723,
-                6.948479175567627
-            ],
-            "rotation": [
-                0.0,
-                0.0,
-                0.0
-            ]
-        },
-        "render": {
-            "clip_start": 0.0010000000474974513,
-            "clip_end": 30.0,
-            "map_size": 64,
-            "cycle_samples_max": 8,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 0
-        },
-        "file": "IrradianceVolume S_packed.exr",
-        "data": {
-            "resolution": [
-                4,
-                2,
-                2
-            ],
-            "intensity": 1.0,
-            "influence_distance": 0.20000000298023224,
-            "falloff": 1.0
-        },
-        "baking": {
-            "cubemap_face_size": 128,
-            "max_texture_size": 2048
-        },
-        "baked_objects": [
-            "east-wall",
-            "floor",
-            "north-int-wall",
-            "north-wall",
-            "south-int-wall",
-            "south-wall"
-        ]
-    },
-    {
-        "name": "ReflectionCubemap H",
-        "probe_type": "reflection",
-        "transform": {
-            "position": [
-                0.0,
-                5.0,
-                -26.0
-            ],
-            "scale": [
-                0.9371091723442078,
-                0.48404669761657715,
-                1.0
-            ],
-            "rotation": [
-                0,
-                0,
-                0
-            ]
-        },
-        "render": {
-            "clip_start": 0.800000011920929,
-            "clip_end": 20.0,
+        {
+            "name": "ReflectionCubemap S",
+            "probe_type": "reflection",
+            "transform": {
+                "position": [
+                    0.0,
+                    5.0,
+                    8.0
+                ],
+                "scale": [
+                    1.9800000190734863,
+                    1.0,
+                    1.0
+                ],
+                "rotation": [
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "render": {
+                "clip_start": 0.800000011920929,
+                "clip_end": 20.0,
+                "map_size": 256,
+                "cycle_samples_max": 32,
+                "cycle_samples_min": 1,
+                "cycle_time_limit": 0
+            },
+            "data": {
+                "falloff": 0.2976284623146057,
+                "intensity": 1.0,
+                "influence_type": "BOX",
+                "influence_distance": 10.0
+            },
+            "file": "ReflectionCubemap S_packed.exr",
+            "baking": {
+                "cubemap_face_size": 128,
+                "start_roughness": 0.10000000149011612,
+                "level_roughness": 0.20000000298023224,
+                "nb_levels": 4
+            },
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        }
+    ],
+    "baked_maps": [
+        {
             "map_size": 256,
-            "cycle_samples_max": 32,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 0
+            "type": "COMBINED",
+            "filename": "Baked map group_COMBINED.png",
+            "grouped_bake": true,
+            "object_name": "east-wall",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "SDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
         },
-        "data": {
-            "falloff": 0.15170571208000183,
-            "intensity": 1.0,
-            "influence_type": "BOX",
-            "influence_distance": 10.0
+        {
+            "map_size": 128,
+            "type": "COMBINED",
+            "filename": "floor_COMBINED.exr",
+            "grouped_bake": false,
+            "object_name": "floor",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "HDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
         },
-        "file": "ReflectionCubemap H_packed.exr",
-        "baking": {
-            "cubemap_face_size": 128,
-            "start_roughness": 0.10000000149011612,
-            "level_roughness": 0.20000000298023224,
-            "nb_levels": 4
+        {
+            "map_size": 256,
+            "type": "COMBINED",
+            "filename": "Baked map group_COMBINED.png",
+            "grouped_bake": true,
+            "object_name": "north-int-wall",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "SDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
         },
-        "baked_objects": [
-            "h--wall.001",
-            "h---wall.002",
-            "h---wall.003",
-            "h---wall.004"
-        ]
-    },
-    {
-        "name": "ReflectionCubemap N",
-        "probe_type": "reflection",
-        "transform": {
-            "position": [
-                0.0,
-                5.0,
-                -8.0
-            ],
-            "scale": [
-                1.0,
-                1.0,
-                1.0
-            ],
-            "rotation": [
-                0,
-                0,
-                0
+        {
+            "map_size": 128,
+            "type": "COMBINED",
+            "filename": "north-wall_COMBINED.exr",
+            "grouped_bake": false,
+            "object_name": "north-wall",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "HDR",
+            "uv_index": 0,
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 256,
+            "type": "COMBINED",
+            "filename": "Baked map group_COMBINED.png",
+            "grouped_bake": true,
+            "object_name": "south-int-wall",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "SDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        },
+        {
+            "map_size": 256,
+            "type": "COMBINED",
+            "filename": "Baked map group_COMBINED.png",
+            "grouped_bake": true,
+            "object_name": "west--wall",
+            "passes": {
+                "use_pass_direct": true,
+                "use_pass_indirect": true,
+                "use_pass_diffuse": true,
+                "use_pass_glossy": true,
+                "use_pass_emit": true,
+                "use_pass_transmission": true
+            },
+            "format": "SDR",
+            "uv_index": 1,
+            "visibility": {
+                "collection": "baked",
+                "invert": false
+            }
+        }
+    ],
+    "visibility_collections": [
+        {
+            "name": "baked",
+            "objects": [
+                "pillar NE",
+                "pillar NW",
+                "pillar SE",
+                "pillar SW",
+                "east-wall",
+                "floor",
+                "h---wall.002",
+                "h---wall.003",
+                "h---wall.004",
+                "h--wall.001",
+                "north-int-wall",
+                "north-wall",
+                "Point.001",
+                "Point.002",
+                "Point.003",
+                "Point.004",
+                "south-int-wall",
+                "south-wall",
+                "Sun",
+                "west--wall"
             ]
         },
-        "render": {
-            "clip_start": 0.800000011920929,
-            "clip_end": 20.0,
-            "map_size": 256,
-            "cycle_samples_max": 32,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 0
-        },
-        "data": {
-            "falloff": 0.3314814865589142,
-            "intensity": 1.0,
-            "influence_type": "ELIPSOID",
-            "influence_distance": 9.0
-        },
-        "file": "ReflectionCubemap N_packed.exr",
-        "baking": {
-            "cubemap_face_size": 128,
-            "start_roughness": 0.10000000149011612,
-            "level_roughness": 0.20000000298023224,
-            "nb_levels": 4
-        },
-        "baked_objects": [
-            "west--wall",
-            "floor",
-            "north-int-wall",
-            "south-int-wall",
-            "south-wall",
-            "north-wall"
-        ]
-    },
-    {
-        "name": "ReflectionCubemap S",
-        "probe_type": "reflection",
-        "transform": {
-            "position": [
-                0.0,
-                5.0,
-                8.0
-            ],
-            "scale": [
-                1.9800000190734863,
-                1.0,
-                1.0
-            ],
-            "rotation": [
-                0,
-                0,
-                0
+        {
+            "name": "global_env_baked_only",
+            "objects": [
+                "pillar NE",
+                "pillar NW",
+                "pillar SE",
+                "pillar SW"
             ]
-        },
-        "render": {
-            "clip_start": 0.800000011920929,
-            "clip_end": 20.0,
-            "map_size": 256,
-            "cycle_samples_max": 32,
-            "cycle_samples_min": 1,
-            "cycle_time_limit": 0
-        },
-        "data": {
-            "falloff": 0.2976284623146057,
-            "intensity": 1.0,
-            "influence_type": "BOX",
-            "influence_distance": 10.0
-        },
-        "file": "ReflectionCubemap S_packed.exr",
-        "baking": {
-            "cubemap_face_size": 128,
-            "start_roughness": 0.10000000149011612,
-            "level_roughness": 0.20000000298023224,
-            "nb_levels": 4
-        },
-        "baked_objects": [
-            "east-wall",
-            "floor",
-            "north-int-wall",
-            "north-wall",
-            "south-int-wall",
-            "south-wall"
-        ]
-    }
-]
+        }
+    ]
+}

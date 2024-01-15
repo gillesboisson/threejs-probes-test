@@ -3,7 +3,9 @@ import {
   DataTexture,
   DataTextureLoader,
   DefaultLoadingManager,
+  Light,
   LoadingManager,
+  Object3D,
   PMREMGenerator,
   Renderer,
   Scene,
@@ -17,9 +19,11 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { ProbeVolumeHandler } from '../ProbeVolumeHandler';
 import {
   AnyProbeVolumeJSON,
+  BakingJSON,
   GlobalEnvProbeVolumeJSON,
   IrradianceProbeVolumeJSON,
   ReflectionProbeVolumeJSON,
+  VisibilityDefinition,
 } from '../data';
 import {
   AnyProbeVolume,
@@ -43,11 +47,88 @@ export class ProbeLoader {
     this.cubemapWrapper = new CubemapWrapper(renderer);
   }
 
-  async load(url: string): Promise<ProbeVolumeHandler> {
-    const sourceData = await this.loadJSON(url);
+  protected getVisibilityDefinition(
+    collectionName: string,
+    collection: VisibilityDefinition[],
+    failIfNotFound = true
+  ) {
+    const definition = collection.find(
+      (collection) => collection.name === collectionName
+    );
 
+    if (!definition && failIfNotFound) {
+      throw new Error(`No collection with name ${collectionName}`);
+    }
+
+    return definition;
+  }
+
+  /**
+   * 
+   * Update object and lights layers property to match with backed lights
+   * backed light will be enabled in all layers by default and removed from layers matching with visibility collection index
+   * other objects will be disabled in all layers by default and enabled in layers matching with visibility collection index
+   * @param objects
+   * @param visibilityCollection
+   * @param disableStaticObjectMatrixAutoUpdate : as backed objects are static, we can disable matrix auto update (default : true)
+   * @param throwErrorIfObjectMissing  : throw an error if an object defined in the visibility collection is not found in objects (default : true)
+   *
+   */
+  setupSceneLayerVisibility(
+    objects: Object3D[],
+    visibilityCollection: VisibilityDefinition[],
+    disableStaticObjectMatrixAutoUpdate = true,
+    throwErrorIfObjectMissing = true
+  ) {
+    const foundObjects = [];
+
+    for (
+      let indexLayer = 0;
+      indexLayer < visibilityCollection.length;
+      indexLayer++
+    ) {
+      const layer = visibilityCollection[indexLayer];
+
+      for (let objectName of layer.objects) {
+        const object = objects.find((object) => object.name === objectName);
+        if (!object && throwErrorIfObjectMissing) {
+          throw new Error(`Object with name ${objectName} not found`);
+        }
+
+        if (foundObjects.includes(object)) {
+          foundObjects.push(object);
+          // if object is light we remove it from all layers
+          if (object instanceof Light) {
+            object.layers.enableAll();
+          } else {
+            object.layers.disableAll();
+          }
+          if (disableStaticObjectMatrixAutoUpdate) {
+            object.matrixAutoUpdate = false;
+            object.updateMatrixWorld(true);
+          }
+        }
+        if (object instanceof Light) {
+          object.layers.disable(indexLayer);
+        } else {
+          object.layers.enable(indexLayer);
+        }
+      }
+    }
+  }
+
+  async load(url:string):Promise<ProbeVolumeHandler>{
+    const data = await this.loadJSON(url);  
+
+    return this.setData(data);
+  }
+  
+  async setData(data:BakingJSON): Promise<ProbeVolumeHandler> {
+    const { probes, visibility_collections } = data;
+    
     // Load probes
-    const probesJSON = sourceData.filter(
+
+    const probesJSON = probes.filter(
       (probe) => probe.probe_type !== 'global'
     ) as AnyProbeVolumeJSON[];
 
@@ -134,7 +215,7 @@ export class ProbeLoader {
 
     let globalEnv: GlobalEnvVolume;
 
-    const envsJSON = sourceData.filter(
+    const envsJSON = probes.filter(
       (probe) => probe.probe_type === 'global'
     ) as GlobalEnvProbeVolumeJSON[];
 
@@ -189,16 +270,9 @@ export class ProbeLoader {
     return new ProbeVolumeHandler(volumes, globalEnv);
   }
 
-  loadJSON(
-    url: string
-  ): Promise<Array<AnyProbeVolumeJSON | GlobalEnvProbeVolumeJSON>> {
+  loadJSON(url: string): Promise<BakingJSON> {
     this.dir = url.replace(/[^/]+$/, '');
-    return fetch(url).then(
-      (res) =>
-        res.json() as Promise<
-          Array<AnyProbeVolumeJSON | GlobalEnvProbeVolumeJSON>
-        >
-    );
+    return fetch(url).then((res) => res.json() as Promise<BakingJSON>);
   }
 
   loadTextures(urls: string[]): Promise<Array<Texture>> {
