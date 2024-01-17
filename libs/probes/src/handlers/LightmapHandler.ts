@@ -26,6 +26,8 @@ export class LightmapHandler extends BaseBakeHandler<
   protected _map: Texture = null;
   protected _lightmap: Texture = null;
 
+  protected _sourceMaterials: MeshStandardMaterial[] = [];
+
   get displayMap(): boolean {
     return this._displayMap;
   }
@@ -38,7 +40,7 @@ export class LightmapHandler extends BaseBakeHandler<
           if ((mat as any).__map) {
             mat.map = (mat as any).__map;
           }
-        }else{
+        } else {
           (mat as any).__map = mat.map;
           mat.map = null;
         }
@@ -58,7 +60,7 @@ export class LightmapHandler extends BaseBakeHandler<
           if ((mat as any).__lightMap) {
             mat.lightMap = (mat as any).__lightMap;
           }
-        }else{
+        } else {
           (mat as any).__lightMap = mat.lightMap;
           mat.lightMap = null;
         }
@@ -80,7 +82,6 @@ export class LightmapHandler extends BaseBakeHandler<
       this._lightMapIntensity = val;
     }
   }
-  
 
   // materials: MaterialType[] = [];
 
@@ -94,6 +95,11 @@ export class LightmapHandler extends BaseBakeHandler<
     if (data && textures) {
       this.setData(data, textures);
     }
+  }
+
+  protected _reset(): void {
+    super._reset();
+    this._sourceMaterials = [];
   }
 
   setData(data: LightMapGroupDefinition[], textures: Texture[]) {
@@ -142,7 +148,15 @@ export class LightmapHandler extends BaseBakeHandler<
     }
 
     if (this._addMesh(mesh)) {
-      lightmap.addToMaterial(mesh, this._lightMapIntensity, setupLayers);
+      const sourceMateriaIndex =
+        this._sourceMaterials.indexOf(mesh.material as MeshStandardMaterial);
+
+      if (sourceMateriaIndex === -1) {
+        this._sourceMaterials.push(mesh.material as MeshStandardMaterial);
+        lightmap.addToMaterial(mesh, this._lightMapIntensity, setupLayers);
+      }else{
+        mesh.material = this._materials[sourceMateriaIndex];
+      }
 
       if (this._addMaterial(mesh.material as MeshStandardMaterial)) {
       }

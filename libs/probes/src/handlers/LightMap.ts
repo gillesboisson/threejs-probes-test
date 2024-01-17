@@ -37,11 +37,15 @@ export class LightMap {
       return;
     }
 
-    const material = mesh.material as MeshStandardMaterial;
-    material.lightMap = this.texture;
-    material.lightMapIntensity = intensity;
+    const meshMaterial = mesh.material as MeshStandardMaterial;
+
 
     this.texture.channel = this.uvIndex;
+
+    const material = mesh.material = new MeshStandardMaterial(mesh.material)
+
+    material.lightMap = this.texture;
+    material.lightMapIntensity = intensity;
 
     if (this.passes.use_pass_color) {
       material.map = null;
