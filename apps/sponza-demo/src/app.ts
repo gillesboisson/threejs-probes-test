@@ -331,11 +331,13 @@ export class App {
 
   protected initDebug() {
     const gui = new GUI();
-
+    
     gui.title('Three JS Probes Volume');
 
     this.renderer.toneMapping = toneMappingOptions[guiParams.toneMapping];
     this.renderer.toneMappingExposure = guiParams.exposure;
+
+
 
     const toneMappingFolder = gui.addFolder('Tone Mapping');
     toneMappingFolder
