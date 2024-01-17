@@ -2,6 +2,8 @@ import {
   ACESFilmicToneMapping,
   AddOperation,
   AmbientLight,
+  BufferGeometry,
+  Camera,
   CineonToneMapping,
   Clock,
   CubeReflectionMapping,
@@ -11,7 +13,9 @@ import {
   DoubleSide,
   Group,
   HemisphereLight,
+  Light,
   LinearToneMapping,
+  Material,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
@@ -36,7 +40,7 @@ import { MapControls } from 'three/examples/jsm/controls/MapControls';
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import {
-  ProbeLoader,
+  BakeLoader,
   ProbeDebugger,
   DynamicProbeDebugger,
   ProbeVolumeHandler,
@@ -46,12 +50,15 @@ import {
   MeshProbeStandardMaterial,
   GlobalEnvProbeVolumeJSON,
   BakingJSON,
+  LightmapHandler,
+  BakeRenderLayer,
 } from '@libs/probes';
 import GUI from 'lil-gui';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader';
+import { VisibilityHandler } from '@libs/probes/build/handlers/VisibilityHandler';
 
 const guiParams = {
-  exposure: 1.0,
+  exposure: 2.0,
   toneMapping: 'ACESFilmic',
   blurriness: 0.3,
   intensity: 1.0,
@@ -97,25 +104,28 @@ export class App {
 
   protected probesDebug: ProbeDebugger;
   protected dynamicProbeDebug: DynamicProbeDebugger;
-  protected probeHandler: ProbeVolumeHandler;
+  protected probeVolumeHandler: ProbeVolumeHandler;
   protected probeDebugMesh: Mesh;
   protected staticObjectsGroup: Group;
   protected probedObjectsGroup: Group;
-  protected currentDebugMaterialKey: keyof AppDebugMaterials = 'standard';
+  // protected currentDebugMaterialKey: keyof AppDebugMaterials = 'standard';
 
-  protected roofMeshName = 'Room-roof';
-  protected wallsMeshName = 'Room-walls';
-  protected sunPlaceholderName = 'Sun_Placeholder';
+  // protected roofMeshName = 'Room-roof';
+  // protected wallsMeshName = 'Room-walls';
+  // protected sunPlaceholderName = 'Sun_Placeholder';
 
   protected roofMesh?: Mesh;
   protected wallsMesh?: Mesh;
   sunLight: DirectionalLight;
   private _requestRender: boolean = true;
-  private _staticObjectsNames: string[];
+  // private _staticObjectsNames: string[];
+  protected lightmapHandler: LightmapHandler;
+  private _bakeLoader: BakeLoader;
+  protected visibilityHandler: VisibilityHandler;
 
-  get currentDebugMaterial() {
-    return this.materials[this.currentDebugMaterialKey];
-  }
+  // get currentDebugMaterial() {
+  //   return this.materials[this.currentDebugMaterialKey];
+  // }
 
   async init() {
     const loadingCaption = document.getElementById('loading_caption');
@@ -123,7 +133,7 @@ export class App {
 
     await this.setupRenderer();
     loadingCaption.innerHTML = 'probes';
-    await this.loadProbes();
+    await this.loadBaking();
     loadingCaption.innerHTML = 'scene';
     await this.loadScene();
     loadingCaption.innerHTML = 'setup';
@@ -144,6 +154,8 @@ export class App {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
     document.body.appendChild(this.renderer.domElement);
+    // this.renderer.autoClearDepth = false;
+    this.renderer.autoClear = false;
 
     const infoPanel = document.createElement('div');
     infoPanel.id = 'info-panel';
@@ -174,14 +186,24 @@ export class App {
 
         promises.push(
           new Promise((resolve) => {
-            const texture = new TextureLoader().load(
-              `baked-small/${bakedMap.filename}`,
-              resolve
+            const isEXR = bakedMap.filename.endsWith('.exr');
+
+            const loader = isEXR ? new EXRLoader() : new TextureLoader();
+
+            const texture = loader.load(
+              `baked-small-night/${bakedMap.filename}`,
+              (t) => {
+                t.flipY = true;
+                t.channel = bakedMap.uv_index;
+
+                resolve(t);
+              }
             );
 
-            console.log('bakedMap.uv_index', bakedMap.uv_index);
-            texture.channel = bakedMap.uv_index;
-            texture.flipY = false;
+
+            // texture.flipY = true;
+
+            // texture.needsUpdate = true;
             materialMap.lightMap = texture;
           })
         );
@@ -192,28 +214,23 @@ export class App {
       }
     });
 
+
     await Promise.all(promises);
   }
 
-  async loadProbes() {
-    const probeLoader = new ProbeLoader(this.renderer);
+  async loadBaking() {
+    this._bakeLoader = new BakeLoader(this.renderer);
 
-    const data = await probeLoader.loadJSON('baked-small/probes.json');
+    // const data = await probeLoader.loadJSON('baked-small-night/probes.json');
 
-    this._staticObjectsNames = [];
+    const handlers = await this._bakeLoader.load(
+      'baked-small-night/probes.json'
+    );
+    this.probeVolumeHandler = handlers.probeVolumeHandler;
+    this.lightmapHandler = handlers.lightmapHandler;
+    this.visibilityHandler = handlers.visibilityHandler;
 
-    data.visibility_collections.forEach((collection) => {
-      this._staticObjectsNames.push(...collection.objects);
-    });
-
-    this.probeHandler = await probeLoader.setData(data);
-
-    if (this.probeHandler.globalEnv) {
-      this.scene.background =
-        this.probeHandler.globalEnv.reflectionCubeProbe.texture;
-    }
-
-    await this.loadLightMaps(data);
+    this.lightmapHandler.lightMapIntensity = 2;
   }
 
   async loadScene() {
@@ -223,68 +240,71 @@ export class App {
     this.probedObjectsGroup = new Group();
     this.scene.add(this.staticObjectsGroup, this.probedObjectsGroup);
 
-    this.sunLight = new DirectionalLight(0xffffff, 1);
-    this.sunLight.lookAt(new Vector3(-1, 0, -0.1));
-    this.sunLight.shadow.camera.left *= 5;
-    this.sunLight.shadow.camera.right *= 5;
-    this.sunLight.shadow.camera.top *= 5;
-    this.sunLight.shadow.camera.bottom *= 5;
-    this.sunLight.shadow.camera.far *= 5;
-
-    this.scene.add(this.sunLight);
-
-    this.sunLight.castShadow = true;
-
     const gltf = await loader.loadAsync(
-      'models/sponza-small/sponza-small.gltf'
+      'models/sponza-small/sponza-night.gltf'
     );
 
-    const materials: MeshStandardMaterial[] = gltf.scene.children
-      .filter((child) => child instanceof Mesh)
-      .map((mesh) => (mesh as Mesh).material as MeshStandardMaterial)
-      .filter((material, index, self) => self.indexOf(material) === index);
-
-    materials.forEach((material) => {
-      console.log('material.side', material.side);
-    });
-
     for (let i = 0; i < gltf.scene.children.length; i++) {
-      const mesh = gltf.scene.children[i];
+      const object = gltf.scene.children[i];
       let addToScene = false;
+      let isStatic = false;
+      // const isStatic = this._staticObjectsNames.includes(mesh.name);
 
-      const isStatic = this._staticObjectsNames.includes(mesh.name);
+      if (object.name === 'sun_placeholder') {
+        this.sunLight = new DirectionalLight(0xffffff, 1);
+        this.sunLight.lookAt(new Vector3(-1, 0, -0.1));
+        this.sunLight.shadow.camera.left *= 5;
+        this.sunLight.shadow.camera.right *= 5;
+        this.sunLight.shadow.camera.top *= 5;
+        this.sunLight.shadow.camera.bottom *= 5;
+        this.sunLight.shadow.camera.far *= 5;
 
-      if (mesh.name === 'sun_placeholder') {
-        this.sunLight.position.copy(mesh.position);
-        this.sunLight.rotation.copy(mesh.rotation);
+        this.scene.add(this.sunLight);
+
+        this.sunLight.castShadow = true;
+
+        this.sunLight.position.copy(object.position);
+        this.sunLight.rotation.copy(object.rotation);
         this.sunLight.matrixWorldNeedsUpdate;
+
+        continue;
       }
 
-      if (mesh instanceof Mesh) {
-        if (isStatic) {
-          const bakedMaterialMap = this._bakedMaterialMap.find((m) => {
-            return m.objectNames.includes(mesh.name);
-          });
+      if (object instanceof Mesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
 
-          if (bakedMaterialMap) {
-            mesh.material.lightMap = bakedMaterialMap.lightMap;
-            mesh.material.lightMapIntensity = 3;
-          }
-        }else{
-          mesh.material = new MeshProbeStandardMaterial(this.probeHandler, mesh.material);
-        }
+      if (object instanceof Mesh && this.lightmapHandler.setupObject(object)) {
 
         addToScene = true;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        isStatic = true;
+      } else if (
+        object instanceof Mesh &&
+        this.probeVolumeHandler.setupObject(object)
+      ) {
+
+        addToScene = true;
+        isStatic = false;
+      } else {
+
+        this.visibilityHandler.setupObject(object, true);
+        addToScene = true;
+        isStatic = false;
+      }
+
+      if (object instanceof Light) {
+        object.intensity = 0.3;
+        // lights.push(object);
       }
 
       if (addToScene) {
         i--;
+
         if (isStatic) {
-          this.staticObjectsGroup.add(mesh);
+          this.staticObjectsGroup.add(object);
         } else {
-          this.probedObjectsGroup.add(mesh);
+          this.probedObjectsGroup.add(object);
         }
       }
     }
@@ -298,6 +318,11 @@ export class App {
     this.camera.position.copy(targetPos).add(new Vector3(0, 3, 3));
 
     this.camera.lookAt(targetPos);
+
+    this.camera.layers.disableAll();
+    this.camera.layers.enable(BakeRenderLayer.Static);
+    this.camera.layers.enable(BakeRenderLayer.Active);
+    // this.camera.layers.enable(BakeRenderLayer.StaticLights);
 
     this.controls = new MapControls(this.camera, this.renderer.domElement);
     this.controls.target.copy(targetPos);
@@ -315,26 +340,27 @@ export class App {
     const toneMappingFolder = gui.addFolder('Tone Mapping');
     toneMappingFolder
       .add(guiParams, 'toneMapping', Object.keys(toneMappingOptions))
+      .name('Tone mapping')
       .onChange((value) => {
         this.renderer.toneMapping = toneMappingOptions[value];
       });
 
-    toneMappingFolder.add(guiParams, 'exposure', 0, 10).onChange((value) => {
+    toneMappingFolder.add(guiParams, 'exposure', 0, 10).name('Exposure').onChange((value) => {
       this.renderer.toneMappingExposure = value;
     });
 
-    this.probesDebug = new ProbeDebugger(this.probeHandler);
+    this.probesDebug = new ProbeDebugger(this.probeVolumeHandler);
     this.probesDebug.visibilityChanged = () => (this._requestRender = true);
     this.probesDebug.gui(gui);
     this.scene.add(this.probesDebug);
 
     if (this.sunLight) {
-      const lightFolder = gui.addFolder('Sun')
+      const lightFolder = gui.addFolder('Sun');
 
-      lightFolder.add(this.sunLight, 'intensity', 0, 3)
-      lightFolder.add(this.sunLight, 'castShadow')
-      lightFolder.add(this.sunLight.shadow, 'radius', 0, 10)
-      lightFolder.add(this.sunLight.shadow, 'bias', -1, 1)
+      lightFolder.add(this.sunLight, 'intensity', 0, 3);
+      lightFolder.add(this.sunLight, 'castShadow').name("Cast shadow");
+      lightFolder.add(this.sunLight.shadow, 'radius', 0, 10);
+      lightFolder.add(this.sunLight.shadow, 'bias', -1, 1);
       // lightFolder.add(this.sunLight.shadow.camera, 'near', 0, 100)
       // lightFolder.add(this.sunLight.shadow.camera, 'far', 0, 100)
       // lightFolder.add(this.sunLight.shadow.camera, 'left', -100, 100)
@@ -342,6 +368,13 @@ export class App {
       // lightFolder.add(this.sunLight.shadow.camera, 'top', -100, 100)
       // lightFolder.add(this.sunLight.shadow.camera, 'bottom', -100, 100)
     }
+
+    const lightmapFolder = gui.addFolder('Lightmap');
+
+    lightmapFolder.add(this.lightmapHandler, 'lightMapIntensity', 0.5, 3).name('Lightmap intensity');
+    lightmapFolder.add(this.lightmapHandler, 'displayMap').name('Display albedo map');
+    lightmapFolder.add(this.lightmapHandler, 'displayLightmap').name('Display lightmap');
+
   }
 
   start() {
@@ -377,8 +410,17 @@ export class App {
   updateProbeDebug() {}
 
   render(deltaTime: number, frameRatio: number) {
+   
+    const layers = [0, BakeRenderLayer.Static, BakeRenderLayer.Active];
     if (this._requestRender === true) {
-      this.renderer.render(this.scene, this.camera);
+      this.renderer.clear();
+
+      for (let l of layers) {
+        this.camera.layers.disableAll();
+        this.camera.layers.set(l);
+
+        this.renderer.render(this.scene, this.camera);
+      }
       this._requestRender = false;
     }
   }

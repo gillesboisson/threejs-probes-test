@@ -10,7 +10,7 @@ import { ProbeVolumeMeshGroup } from './ProbeVolumeMeshGroup'
 import GUI from 'lil-gui'
 import { GlobalEnvVolume } from '../volume/GlobalEnvVolume'
 import { GlobalEnvMesh } from './GlobalEnvMesh'
-import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
+import { ProbeVolumeHandler } from '../handlers/ProbeVolumeHandler'
 
 export class ProbeDebugger extends Group {
   protected probeVolumesGroups: ProbeVolumeMeshGroup[] = []

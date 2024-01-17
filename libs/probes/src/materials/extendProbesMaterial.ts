@@ -32,7 +32,7 @@ import {
   reflectionLodVar,
   reflectionMapNames,
 } from './shaderConstants'
-import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
+import { ProbeVolumeHandler } from '../handlers/ProbeVolumeHandler'
 import { ProbeRatio, ProbeRatioLod } from '../type'
 import {
   IrradianceProbeVolume,
@@ -285,7 +285,7 @@ export function extendProbesMaterial<
     }
 
     onBeforeCompile(shader: Shader, renderer: WebGLRenderer): void {
-      console.log('-> onBeforeCompile')
+      // console.log('-> onBeforeCompile')
 
       for (let key in this.uniforms) {
         if (shader.uniforms[key]) {
@@ -330,7 +330,7 @@ export function extendProbesMaterial<
         ;(shader as any).defines.PROBE_MODE_REFRACTION = true
       }
 
-      console.log(';(shader as any).defines', (shader as any).defines)
+      // console.log(';(shader as any).defines', (shader as any).defines)
       super.onBeforeCompile(shader, renderer)
     }
 

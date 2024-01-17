@@ -5,7 +5,7 @@ import {
 } from 'three'
 import { shaderReplaceInclude } from './utils'
 import { extendProbesMaterial } from './extendProbesMaterial'
-import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
+import { ProbeVolumeHandler } from '../handlers/ProbeVolumeHandler'
 
 export class MeshProbeStandardMaterial extends extendProbesMaterial<MeshStandardMaterial>(
   MeshStandardMaterial

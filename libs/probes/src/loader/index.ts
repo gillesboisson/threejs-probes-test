@@ -1,2 +1,2 @@
-export * from './ProbeLoader'
+export * from './BakeLoader'
 export * from './CubemapsWrapper'

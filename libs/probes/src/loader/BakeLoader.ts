@@ -16,14 +16,16 @@ import {
 } from 'three';
 
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
-import { ProbeVolumeHandler } from '../ProbeVolumeHandler';
+import { ProbeVolumeHandler } from '../handlers/ProbeVolumeHandler';
 import {
   AnyProbeVolumeJSON,
   BakingJSON,
   GlobalEnvProbeVolumeJSON,
   IrradianceProbeVolumeJSON,
+  LightMapJSON,
   ReflectionProbeVolumeJSON,
   VisibilityDefinition,
+  groupLightMap,
 } from '../data';
 import {
   AnyProbeVolume,
@@ -36,10 +38,25 @@ import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader';
 import { CubemapWrapper } from './CubemapsWrapper';
 import { Probe } from '../Probe';
 import { GlobalEnvVolume } from '../volume/GlobalEnvVolume';
+import { cleanObjectName } from '../helpers';
+import { LightmapHandler } from '../handlers/LightmapHandler';
+import { VisibilityHandler } from '../handlers/VisibilityHandler';
 
-export class ProbeLoader {
+export type BakeLoaderResult = {
+  probeVolumeHandler: ProbeVolumeHandler;
+  lightmapHandler: LightmapHandler;
+  visibilityHandler: VisibilityHandler;
+  // visibilityCollection: VisibilityDefinition[];
+};
+
+export class BakeLoader {
+  protected _probeVolumeHandler: ProbeVolumeHandler = null;
+
   dir: string = './';
   protected cubemapWrapper: CubemapWrapper;
+  protected _lightmapHandler: LightmapHandler;
+  // protected _staticObjectNames: string[] = [];
+
   constructor(
     readonly renderer: WebGLRenderer,
     readonly loadManager: LoadingManager = DefaultLoadingManager
@@ -64,7 +81,7 @@ export class ProbeLoader {
   }
 
   /**
-   * 
+   *
    * Update object and lights layers property to match with backed lights
    * backed light will be enabled in all layers by default and removed from layers matching with visibility collection index
    * other objects will be disabled in all layers by default and enabled in layers matching with visibility collection index
@@ -74,58 +91,98 @@ export class ProbeLoader {
    * @param throwErrorIfObjectMissing  : throw an error if an object defined in the visibility collection is not found in objects (default : true)
    *
    */
-  setupSceneLayerVisibility(
-    objects: Object3D[],
-    visibilityCollection: VisibilityDefinition[],
-    disableStaticObjectMatrixAutoUpdate = true,
-    throwErrorIfObjectMissing = true
-  ) {
-    const foundObjects = [];
+  // setupSceneLayerVisibility(
+  //   objects: Object3D[],
+  //   visibilityCollection: VisibilityDefinition[],
+  //   disableStaticObjectMatrixAutoUpdate = true,
+  //   throwErrorIfObjectMissing = true
+  // ) {
+  //   const foundObjects = [];
 
-    for (
-      let indexLayer = 0;
-      indexLayer < visibilityCollection.length;
-      indexLayer++
-    ) {
-      const layer = visibilityCollection[indexLayer];
+  //   for (
+  //     let indexLayer = 0;
+  //     indexLayer < visibilityCollection.length;
+  //     indexLayer++
+  //   ) {
+  //     const layer = visibilityCollection[indexLayer];
 
-      for (let objectName of layer.objects) {
-        const object = objects.find((object) => object.name === objectName);
-        if (!object && throwErrorIfObjectMissing) {
-          throw new Error(`Object with name ${objectName} not found`);
-        }
+  //     for (let objectName of layer.objects) {
+  //       const object = objects.find((object) => object.name === objectName);
+  //       if (!object && throwErrorIfObjectMissing) {
+  //         throw new Error(`Object with name ${objectName} not found`);
+  //       }
 
-        if (foundObjects.includes(object)) {
-          foundObjects.push(object);
-          // if object is light we remove it from all layers
-          if (object instanceof Light) {
-            object.layers.enableAll();
-          } else {
-            object.layers.disableAll();
-          }
-          if (disableStaticObjectMatrixAutoUpdate) {
-            object.matrixAutoUpdate = false;
-            object.updateMatrixWorld(true);
-          }
-        }
-        if (object instanceof Light) {
-          object.layers.disable(indexLayer);
-        } else {
-          object.layers.enable(indexLayer);
-        }
-      }
-    }
+  //       if (foundObjects.includes(object)) {
+  //         foundObjects.push(object);
+  //         // if object is light we remove it from all layers
+  //         if (object instanceof Light) {
+  //           object.layers.enableAll();
+  //         } else {
+  //           object.layers.disableAll();
+  //         }
+  //         if (disableStaticObjectMatrixAutoUpdate) {
+  //           object.matrixAutoUpdate = false;
+  //           object.updateMatrixWorld(true);
+  //         }
+  //       }
+  //       if (object instanceof Light) {
+  //         object.layers.disable(indexLayer);
+  //       } else {
+  //         object.layers.enable(indexLayer);
+  //       }
+  //     }
+  //   }
+  // }
+
+  async load(url: string): Promise<BakeLoaderResult> {
+    const data = await this.loadJSON(url);
+
+    data.visibility_collections.forEach((collection) => {
+      collection.objects = collection.objects.map((objectName) =>
+        cleanObjectName(objectName)
+      );
+    });
+
+    this._probeVolumeHandler = null;
+    this._probeVolumeHandler = await this.setProbesData(
+      data.probes,
+      data.visibility_collections
+    );
+
+    this._lightmapHandler = null;
+    this._lightmapHandler = await this.setLightmapData(
+      data.baked_maps,
+      data.visibility_collections
+    );
+
+    return {
+      probeVolumeHandler: this._probeVolumeHandler,
+      lightmapHandler: this._lightmapHandler,
+      visibilityHandler: new VisibilityHandler(data.visibility_collections),
+      // visibilityCollection: data.visibility_collections,
+    };
   }
 
-  async load(url:string):Promise<ProbeVolumeHandler>{
-    const data = await this.loadJSON(url);  
+  async setLightmapData(
+    lightmaps: LightMapJSON[],
+    visibility: VisibilityDefinition[]
+  ): Promise<LightmapHandler> {
+    // group lightmaps by name with sub prop object_names
 
-    return this.setData(data);
+    const lightMapGroups = groupLightMap(lightmaps, visibility);
+
+    const textureUrls = lightMapGroups.map(
+      (lightMap) => this.dir + lightMap.filename
+    );
+    const textures = await this.loadTextures(textureUrls, true);
+
+    return new LightmapHandler(lightMapGroups, visibility, textures);
   }
-  
-  async setData(data:BakingJSON): Promise<ProbeVolumeHandler> {
-    const { probes, visibility_collections } = data;
-    
+
+  async setProbesData(
+    probes: AnyProbeVolumeJSON[],
+    visibility: VisibilityDefinition[]
+  ): Promise<ProbeVolumeHandler> {
     // Load probes
 
     const probesJSON = probes.filter(
@@ -267,7 +324,7 @@ export class ProbeLoader {
       });
     }
 
-    return new ProbeVolumeHandler(volumes, globalEnv);
+    return new ProbeVolumeHandler(volumes, visibility, globalEnv);
   }
 
   loadJSON(url: string): Promise<BakingJSON> {
@@ -275,7 +332,7 @@ export class ProbeLoader {
     return fetch(url).then((res) => res.json() as Promise<BakingJSON>);
   }
 
-  loadTextures(urls: string[]): Promise<Array<Texture>> {
+  loadTextures(urls: string[], autoFlipLightmaps = false): Promise<Array<Texture>> {
     // const urls = probes.map((probe) => this.dir + probe.file)
     return new Promise((resolve, err) => {
       let indexLoading = 0;
@@ -304,6 +361,9 @@ export class ProbeLoader {
             exrLoader.load(
               url,
               (image) => {
+                if(autoFlipLightmaps){
+                  image.flipY = true;
+                }
                 images.push(image);
                 loadNext();
               },
@@ -317,6 +377,9 @@ export class ProbeLoader {
             rgbeLoader.load(
               url,
               (image) => {
+                if(autoFlipLightmaps){
+                  image.flipY = true;
+                }
                 images.push(image);
                 loadNext();
               },
@@ -331,6 +394,9 @@ export class ProbeLoader {
             textureLoader.load(
               url,
               (image) => {
+                if(autoFlipLightmaps){
+                  image.flipY = false;
+                }
                 images.push(image);
                 loadNext();
               },

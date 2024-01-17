@@ -3,7 +3,7 @@ import { ProbeRatio, ProbeRatioLod } from '../type'
 import { IrradianceProbeDebugMaterial } from './IrradianceProbeDebugMaterial'
 import { ReflectionProbeDebugMaterial } from './ReflectionProbeDebugMaterial'
 import GUI from 'lil-gui'
-import { ProbeVolumeHandler } from '../ProbeVolumeHandler'
+import { ProbeVolumeHandler } from '../handlers/ProbeVolumeHandler'
 
 const leftHalfSphereGeom = new SphereGeometry(1, 32, 32, 0, Math.PI)
 const rightHalfSphereGeom = new SphereGeometry(1, 32, 32, Math.PI, Math.PI)
