@@ -6,7 +6,6 @@ import {
   MaterialParameters,
   Object3D,
   Scene,
-  Shader,
   WebGLRenderer,
   UniformsUtils,
   UniformsGroup,
@@ -16,6 +15,8 @@ import {
   MeshLambertMaterial,
   CubeReflectionMapping,
   Vector3,
+  ShaderLibShader,
+  WebGLProgramParametersWithUniforms,
 } from 'three'
 import { replaceShaderSourceIncludes } from './utils'
 import {
@@ -284,7 +285,7 @@ export function extendProbesMaterial<
       return 'probes,' + this._combine + ',' + this._probeMapMode
     }
 
-    onBeforeCompile(shader: Shader, renderer: WebGLRenderer): void {
+    onBeforeCompile(shader: WebGLProgramParametersWithUniforms, renderer: WebGLRenderer): void {
       // console.log('-> onBeforeCompile')
 
       for (let key in this.uniforms) {

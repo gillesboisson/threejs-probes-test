@@ -20,10 +20,10 @@
   "devDependencies": {
     "typescript": "^4.0.2",
     "@libs/config": "0.0.1",
-    "@types/three": "^0.157"
+    "@types/three": "^0.160"
   },
   "dependencies": {
-    "three": "^0.157",
+    "three": "^0.160",
     "@libs/utils": "^0.0.1"
   }
 }
