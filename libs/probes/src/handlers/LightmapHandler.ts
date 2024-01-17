@@ -148,17 +148,23 @@ export class LightmapHandler extends BaseBakeHandler<
     }
 
     if (this._addMesh(mesh)) {
-      const sourceMateriaIndex =
-        this._sourceMaterials.indexOf(mesh.material as MeshStandardMaterial);
+      const sourceMateriaIndex = this._sourceMaterials.indexOf(
+        mesh.material as MeshStandardMaterial
+      );
 
+      let material: MeshStandardMaterial = null;
       if (sourceMateriaIndex === -1) {
         this._sourceMaterials.push(mesh.material as MeshStandardMaterial);
-        lightmap.addToMaterial(mesh, this._lightMapIntensity, setupLayers);
-      }else{
-        mesh.material = this._materials[sourceMateriaIndex];
+        material = lightmap.createMaterial(mesh, this._lightMapIntensity);
+      } else {
+        material = this._materials[sourceMateriaIndex];
       }
 
-      if (this._addMaterial(mesh.material as MeshStandardMaterial)) {
+      if (material) {
+        lightmap.setupObject(mesh, material, setupLayers);
+
+        if (this._addMaterial(material)) {
+        }
       }
     }
 

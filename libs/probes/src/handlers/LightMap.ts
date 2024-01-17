@@ -1,10 +1,12 @@
 import { Mesh, MeshStandardMaterial, Texture } from 'three';
 import {
   BakeFormat,
-  BakeRenderLayer, LightMapGroupDefinition, LightMapPassDefinition,
-  LightMapType, VisibilityRelation
+  BakeRenderLayer,
+  LightMapGroupDefinition,
+  LightMapPassDefinition,
+  LightMapType,
+  VisibilityRelation,
 } from '..';
-
 
 export class LightMap {
   type: LightMapType;
@@ -16,8 +18,6 @@ export class LightMap {
   visibility: VisibilityRelation;
   uvIndex: number;
 
-
-
   constructor(data: LightMapGroupDefinition, texture: Texture) {
     this.type = data.type;
     this.name = data.name;
@@ -26,23 +26,16 @@ export class LightMap {
     this.format = data.format;
     this.uvIndex = data.uv_index;
     this.texture = texture;
+    this.texture.channel = this.uvIndex;
   }
 
-  addToMaterial(
-    mesh: Mesh,
-    intensity: number = 1,
-    setObjectRenderLayer: boolean = false
-  ) {
+  createMaterial(mesh: Mesh, intensity: number = 1): MeshStandardMaterial {
+    
     if (!mesh.material || !(mesh.material instanceof MeshStandardMaterial)) {
-      return;
+      return null;
     }
 
-    const meshMaterial = mesh.material as MeshStandardMaterial;
-
-
-    this.texture.channel = this.uvIndex;
-
-    const material = mesh.material = new MeshStandardMaterial(mesh.material)
+    const material = (mesh.material = new MeshStandardMaterial(mesh.material));
 
     material.lightMap = this.texture;
     material.lightMapIntensity = intensity;
@@ -51,13 +44,18 @@ export class LightMap {
       material.map = null;
     }
 
+    return material;
+  }
+
+  setupObject(
+    mesh: Mesh,
+    material: MeshStandardMaterial,
+    setObjectRenderLayer: boolean = false
+  ): void {
+    mesh.material = material;
     if (setObjectRenderLayer) {
       mesh.layers.disableAll();
       mesh.layers.enable(BakeRenderLayer.Static);
-
-      // if (!this.passes.use_pass_direct) {
-      //   mesh.layers.enable(BakeRenderLayer.StaticLights);
-      // }
     }
   }
 }
