@@ -1,6 +1,6 @@
 import { CubeTexture, Vector3 } from 'three';
 import { GlobalEnvProbeVolumeData, GlobalEnvProbeVolumeDefinition } from '../data';
-import { Probe, RoughnessLodMapping } from '../Probe';
+import { Probe, RoughnessLodMapping } from '../handlers/Probe';
 import { ReflectionProbeVolume } from './ReflectionProbeVolume';
 
 export class GlobalEnvVolume {

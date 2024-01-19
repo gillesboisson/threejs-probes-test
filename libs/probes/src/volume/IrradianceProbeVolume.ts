@@ -2,7 +2,7 @@ import { Box3, Matrix4, Vector3 } from 'three'
 import { ProbeRatio } from '../type'
 import { generateProbeGridPositions } from '../loader/generateProbeGridPositions'
 
-import { Probe } from '../Probe'
+import { Probe } from '../handlers/Probe'
 import { IrradianceProbeVolumeBaking, IrradianceProbeVolumeData } from '../data'
 import { IrradianceVolumeProps } from '../props'
 import { ProbeVolume } from './ProbeVolume'

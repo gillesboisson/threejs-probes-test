@@ -1,4 +1,14 @@
-import { Light, Mesh, MeshStandardMaterial, SpotLight, Texture } from 'three';
+import {
+  BufferGeometry,
+  Light,
+  Material,
+  Mesh,
+  MeshStandardMaterial,
+  NormalBufferAttributes,
+  Object3DEventMap,
+  SpotLight,
+  Texture,
+} from 'three';
 import {
   BakeRenderLayer,
   LightMapDefinition,
@@ -9,10 +19,7 @@ import {
 import { BaseBakeHandler } from './BaseBakeHandler';
 import { LightMap } from './LightMap';
 
-export class LightmapHandler extends BaseBakeHandler<
-  MeshStandardMaterial,
-  Mesh
-> {
+export class LightmapHandler extends BaseBakeHandler<MeshStandardMaterial> {
   protected data: LightMapGroupDefinition[] | null = null;
 
   protected lightmaps: LightMap[] | null = null;
@@ -25,8 +32,6 @@ export class LightmapHandler extends BaseBakeHandler<
 
   protected _map: Texture = null;
   protected _lightmap: Texture = null;
-
-  protected _sourceMaterials: MeshStandardMaterial[] = [];
 
   get displayMap(): boolean {
     return this._displayMap;
@@ -56,6 +61,15 @@ export class LightmapHandler extends BaseBakeHandler<
     if (value !== this._displayLightmap) {
       this._displayLightmap = value;
       for (let mat of this._materials) {
+        for (let mesh of this._objects) {
+          mesh.layers.disableAll();
+          mesh.layers.enable(
+            this._displayLightmap
+              ? BakeRenderLayer.Static
+              : BakeRenderLayer.Active
+          );
+        }
+
         if (this.displayLightmap) {
           if ((mat as any).__lightMap) {
             mat.lightMap = (mat as any).__lightMap;
@@ -120,55 +134,39 @@ export class LightmapHandler extends BaseBakeHandler<
     }
   }
 
-  setupObject(mesh: Mesh, setupLayers = true): boolean {
-    if (!this.data) {
-      throw new Error('No lightmap data');
-    }
+  filterMesh(mesh: Mesh): boolean {
+    return (
+      super.filterMesh(mesh) &&
+      !!this.lightmaps?.find((l) => l.objectNames.includes(mesh.name)) &&
+      mesh.material instanceof MeshStandardMaterial
+    );
+  }
 
-    if (!this.isStaticObject(mesh.name)) {
-      return false;
-    }
-
-    if (!(mesh.material instanceof MeshStandardMaterial)) {
-      if (setupLayers) {
-        mesh.layers.disableAll();
-        // mesh.layers.enable(BakeRenderLayer.StaticLights);
-        mesh.layers.enable(BakeRenderLayer.Active);
-        // mesh.layers.enable(BakeRenderLayer.Static);
-      }
-
-      return false;
-    }
-
+  mapMaterial(mesh, material: MeshStandardMaterial): MeshStandardMaterial {
     const lightmap = this.lightmaps?.find((l) =>
       l.objectNames.includes(mesh.name)
     );
     if (!lightmap) {
-      return false;
+      throw new Error('No lightmap data');
     }
 
-    if (this._addMesh(mesh)) {
-      const sourceMateriaIndex = this._sourceMaterials.indexOf(
-        mesh.material as MeshStandardMaterial
-      );
+    return lightmap.createMaterial(mesh, this._lightMapIntensity);
+  }
 
-      let material: MeshStandardMaterial = null;
-      if (sourceMateriaIndex === -1) {
-        this._sourceMaterials.push(mesh.material as MeshStandardMaterial);
-        material = lightmap.createMaterial(mesh, this._lightMapIntensity);
-      } else {
-        material = this._materials[sourceMateriaIndex];
-      }
+  setupObject(
+    mesh: Mesh,
+    material: MeshStandardMaterial,
+    setupLayers = true
+  ): void {
+    const lightmap = this.lightmaps?.find((l) =>
+      l.objectNames.includes(mesh.name)
+    );
 
-      if (material) {
-        lightmap.setupObject(mesh, material, setupLayers);
-
-        if (this._addMaterial(material)) {
-        }
-      }
+    if (!lightmap) {
+      throw new Error('No lightmap data');
     }
 
-    return true;
+    lightmap.setupObject(mesh, material, setupLayers);
   }
 
   removeMesh(mesh: Mesh, resetMaterial: boolean = true) {

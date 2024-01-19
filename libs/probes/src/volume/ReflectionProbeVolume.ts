@@ -1,5 +1,5 @@
 import { Box3, Vector3 } from 'three';
-import { Probe, ReflectionProbe, RoughnessLodMapping } from '../Probe';
+import { Probe, ReflectionProbe, RoughnessLodMapping } from '../handlers/Probe';
 import {
   ReflectionProbeVolumeBaking,
   ReflectionProbeVolumeData,

@@ -7,7 +7,7 @@ import { ProbeRatioLod } from '../type';
 import { ReflectionProbeVolume } from './ReflectionProbeVolume';
 import { ProbeVolumeRatio } from './type';
 import { ProbeVolumeGroup } from './ProbeVolumeGroup';
-import { Probe } from '../Probe';
+import { Probe } from '../handlers/Probe';
 
 export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
   ReflectionProbeVolume,

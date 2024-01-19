@@ -3,7 +3,7 @@ import { AnyProbeVolumeBaking, AnyProbeVolumeData } from '../data';
 import { ProbeType, ProbeRatio } from '../type';
 import { ProbeVolume, AnyProbeVolume } from './ProbeVolume';
 import { ProbeVolumeRatio } from './type';
-import { Probe } from '../Probe';
+import { Probe } from '../handlers/Probe';
 import { GlobalEnvVolume } from './GlobalEnvVolume';
 
 export class ProbeVolumeGroup<

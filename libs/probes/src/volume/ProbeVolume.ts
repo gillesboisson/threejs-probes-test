@@ -1,5 +1,5 @@
 import { Object3D, Box3, CubeTexture, Vector3 } from 'three';
-import { Probe } from '../Probe';
+import { Probe } from '../handlers/Probe';
 import { AnyProbeVolumeBaking, AnyProbeVolumeData } from '../data';
 import { ProbeVolumeProps } from '../props';
 import { ProbeType, ProbeRatio } from '../type';

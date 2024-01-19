@@ -127,8 +127,7 @@ export class ProbeDebugger extends Group {
     this.visibilityChanged()
   }
 
-  gui(gui: GUI) {
-    const folder = gui.addFolder('Probes')
+  gui(gui: GUI, folder = gui.addFolder('Probes')) {
     const mainVisibleProp = folder
       .add(this, 'probesVisible')
       .name('Display all Probes')
@@ -141,6 +140,8 @@ export class ProbeDebugger extends Group {
         .add(this, 'irradianceProbesVisible')
         .name('Display irradiance probes'),
       folder.add(this, 'influenceVisible').name('Display Influence'),
+
+
     ]
     // visible only if probes visible enabled
     mainVisibleProp.listen().onChange((value) => {

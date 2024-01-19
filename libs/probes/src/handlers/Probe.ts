@@ -2,7 +2,7 @@ import {
   CubeTexture,
   Vector3,
 } from 'three'
-import { ProbeType } from './type'
+import { ProbeType } from '../type'
 
 export type Probe = {
   position: Vector3

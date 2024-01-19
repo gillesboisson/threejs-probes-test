@@ -1,5 +1,5 @@
 import { Vector3 } from 'three'
-import { Probe } from '../Probe'
+import { Probe } from '../handlers/Probe'
 import { ProbeRatio } from '../type'
 import { AnyProbeVolume } from './ProbeVolume'
 

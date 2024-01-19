@@ -9,8 +9,6 @@ export * from './props'
 export * from './materials'
 export * from './helpers'
 
-export * from './Probe'
-export * from './handlers/ProbeVolumeHandler'
-export * from './handlers/LightmapHandler'
+export * from './handlers'
 
 

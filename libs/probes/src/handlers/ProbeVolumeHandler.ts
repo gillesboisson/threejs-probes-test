@@ -28,13 +28,29 @@ import {
   MeshProbePhysicalMaterial,
   MeshProbeStandardMaterial,
 } from '../materials';
+import { IProbeMaterial } from '../materials/extendProbesMaterial';
 
-export class ProbeVolumeHandler extends BaseBakeHandler<Material, Mesh> {
+export class ProbeVolumeHandler extends BaseBakeHandler<AnyMeshProbeMaterial> {
   private _irradianceProbeRatio: ProbeRatio[] = [];
   private _reflectionProbeRatio: ProbeRatioLod[] = [];
 
   readonly irradianceVolumes = new IrradianceProbeVolumeGroup();
   readonly reflectionVolumes = new ReflectionProbeVolumeGroup();
+
+  protected _lightIntensity = 1;
+
+  get lightIntensity(): number {
+    return this._lightIntensity;
+  }
+
+  set lightIntensity(val: number) {
+    if (val !== this._lightIntensity) {
+      for (let mat of this._materials) {
+        mat.probesIntensity = val;
+      }
+      this._lightIntensity = val;
+    }
+  }
 
   constructor(
     volumes: AnyProbeVolume[],
@@ -62,64 +78,49 @@ export class ProbeVolumeHandler extends BaseBakeHandler<Material, Mesh> {
     }
   }
 
-  // public public isStaticObject(objectName: string): boolean {
-  //   return super.isStaticObject(objectName);
-  // }
+  filterMesh(mesh: Mesh): boolean {
+    return !super.filterMesh(mesh);
+  }
 
-  mapMaterial(material: Material): AnyMeshProbeMaterial {
+  mapMaterial(mesh: Mesh, material: Material): AnyMeshProbeMaterial {
+    let finalMmaterial: AnyMeshProbeMaterial = null;
+
     switch (true) {
       case material instanceof MeshStandardMaterial:
-        return new MeshProbeStandardMaterial(this, material);
-
+        finalMmaterial = new MeshProbeStandardMaterial(this, material);
+        break;
       case material instanceof MeshPhysicalMaterial:
-        return new MeshProbePhysicalMaterial(this, material);
-
+        finalMmaterial = new MeshProbePhysicalMaterial(this, material);
+        break;
       case material instanceof MeshProbeLambertMaterial:
-        return new MeshProbeLambertMaterial(this, material);
-
+        finalMmaterial = new MeshProbeLambertMaterial(this, material);
+        break;
       case material instanceof MeshProbePhongMaterial:
-        return new MeshProbePhongMaterial(this, material);
-
+        finalMmaterial = new MeshProbePhongMaterial(this, material);
+        break;
       case material instanceof MeshProbeStandardMaterial ||
         material instanceof MeshProbeLambertMaterial ||
         material instanceof MeshProbePhongMaterial ||
         material instanceof MeshProbeLambertMaterial:
-        return material as AnyMeshProbeMaterial;
-
+        finalMmaterial = material as AnyMeshProbeMaterial;
+        break;
       default:
         throw new Error(
           `Unsupported material type ${material.constructor.name}`
         );
     }
+
+    finalMmaterial.probesIntensity = this._lightIntensity;
+    return finalMmaterial;
   }
 
-  setupObject(mesh: Mesh, setupLayers = true): boolean {
-    if (!this.isStaticObject(mesh.name)) {
-      if (this._addMesh(mesh)) {
-        if (setupLayers) {
-          mesh.layers.enable(BakeRenderLayer.Active);
-          // mesh.layers.enable(BakeRenderLayer.StaticLights);
-        }
-
-        // if mesh.material is an array, we need to map each material
-
-        if (!Array.isArray(mesh.material)) {
-          const material = this.mapMaterial(mesh.material);
-          mesh.material = material;
-
-          if (this._addMaterial(material)) {
-            
-          }
-        }
-      }
-
-      return true;
+  setupObject(mesh: Mesh, material: Material, setupLayers = true) {
+    if (setupLayers) {
+      // debugger
+      mesh.layers.enable(BakeRenderLayer.Active);
+      // mesh.layers.enable(BakeRenderLayer.StaticLights);
     }
-
-    return false;
   }
-
-  removeMesh(mesh: Mesh): void {}
 
   addVolume(...volumes: AnyProbeVolume[]) {
     volumes

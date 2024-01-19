@@ -36,7 +36,7 @@ import { generateProbeGridCubemaps } from './generateProbeGridCubemaps';
 import { generateReflectionProbeCubemap } from './generateReflectionProbeCubemap';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader';
 import { CubemapWrapper } from './CubemapsWrapper';
-import { Probe } from '../Probe';
+import { Probe } from '../handlers/Probe';
 import { GlobalEnvVolume } from '../volume/GlobalEnvVolume';
 import { cleanObjectName } from '../helpers';
 import { LightmapHandler } from '../handlers/LightmapHandler';
@@ -91,48 +91,6 @@ export class BakeLoader {
    * @param throwErrorIfObjectMissing  : throw an error if an object defined in the visibility collection is not found in objects (default : true)
    *
    */
-  // setupSceneLayerVisibility(
-  //   objects: Object3D[],
-  //   visibilityCollection: VisibilityDefinition[],
-  //   disableStaticObjectMatrixAutoUpdate = true,
-  //   throwErrorIfObjectMissing = true
-  // ) {
-  //   const foundObjects = [];
-
-  //   for (
-  //     let indexLayer = 0;
-  //     indexLayer < visibilityCollection.length;
-  //     indexLayer++
-  //   ) {
-  //     const layer = visibilityCollection[indexLayer];
-
-  //     for (let objectName of layer.objects) {
-  //       const object = objects.find((object) => object.name === objectName);
-  //       if (!object && throwErrorIfObjectMissing) {
-  //         throw new Error(`Object with name ${objectName} not found`);
-  //       }
-
-  //       if (foundObjects.includes(object)) {
-  //         foundObjects.push(object);
-  //         // if object is light we remove it from all layers
-  //         if (object instanceof Light) {
-  //           object.layers.enableAll();
-  //         } else {
-  //           object.layers.disableAll();
-  //         }
-  //         if (disableStaticObjectMatrixAutoUpdate) {
-  //           object.matrixAutoUpdate = false;
-  //           object.updateMatrixWorld(true);
-  //         }
-  //       }
-  //       if (object instanceof Light) {
-  //         object.layers.disable(indexLayer);
-  //       } else {
-  //         object.layers.enable(indexLayer);
-  //       }
-  //     }
-  //   }
-  // }
 
   async load(url: string): Promise<BakeLoaderResult> {
     const data = await this.loadJSON(url);
@@ -355,14 +313,19 @@ export class BakeLoader {
         const url = urls[indexLoading++];
 
         const extension = url.split('.').pop().toLowerCase();
-
+        // console.log(url, extension);
         switch (extension.toLowerCase()) {
           case 'exr':
             exrLoader.load(
               url,
               (image) => {
                 if(autoFlipLightmaps){
+                  // console.log(url, extension, image.flipY);
                   image.flipY = true;
+                  
+                  // image.flipX = true;
+                  
+                  // image.flipY = true;
                 }
                 images.push(image);
                 loadNext();
@@ -378,7 +341,9 @@ export class BakeLoader {
               url,
               (image) => {
                 if(autoFlipLightmaps){
-                  image.flipY = true;
+                  image.flipY != image.flipY
+
+                  // image.flipY = true;
                 }
                 images.push(image);
                 loadNext();
@@ -395,7 +360,8 @@ export class BakeLoader {
               url,
               (image) => {
                 if(autoFlipLightmaps){
-                  image.flipY = false;
+                  image.flipY != image.flipY
+
                 }
                 images.push(image);
                 loadNext();

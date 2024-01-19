@@ -166,63 +166,15 @@ export class App {
 
   protected _bakedMaterialMap: BakedMaterialData[];
 
-  async loadLightMaps(data: BakingJSON) {
-    this._bakedMaterialMap = [];
-
-    const promises = [];
-
-    data.baked_maps.forEach((bakedMap) => {
-      let materialMap = this._bakedMaterialMap.find(
-        (m) => m.name === bakedMap.name
-      ) as Partial<BakedMaterialData>;
-
-      const objectName = bakedMap.object_name.split('.').join('');
-
-      if (!materialMap) {
-        materialMap = {
-          name: bakedMap.name,
-          objectNames: [objectName],
-        };
-
-        promises.push(
-          new Promise((resolve) => {
-            const isEXR = bakedMap.filename.endsWith('.exr');
-
-            const loader = isEXR ? new EXRLoader() : new TextureLoader();
-
-            const texture = loader.load(
-              `baked-small-night/${bakedMap.filename}`,
-              (t) => {
-                t.flipY = true;
-                t.channel = bakedMap.uv_index;
-
-                resolve(t);
-              }
-            );
-
-
-            // texture.flipY = true;
-
-            // texture.needsUpdate = true;
-            materialMap.lightMap = texture;
-          })
-        );
-
-        this._bakedMaterialMap.push(materialMap as BakedMaterialData);
-      } else {
-        materialMap.objectNames.push(objectName);
-      }
-    });
-
-
-    await Promise.all(promises);
-  }
 
   async loadBaking() {
     this._bakeLoader = new BakeLoader(this.renderer);
 
     // const data = await probeLoader.loadJSON('baked-small-night/probes.json');
 
+    // const handlers = await this._bakeLoader.load(
+    //   'baked-small-night/probes.json'
+    // );
     const handlers = await this._bakeLoader.load(
       'baked-small-night/probes.json'
     );
@@ -230,7 +182,8 @@ export class App {
     this.lightmapHandler = handlers.lightmapHandler;
     this.visibilityHandler = handlers.visibilityHandler;
 
-    this.lightmapHandler.lightMapIntensity = 2;
+    this.lightmapHandler.lightMapIntensity = 1;
+    this.probeVolumeHandler.lightIntensity = 1;
   }
 
   async loadScene() {
@@ -240,6 +193,9 @@ export class App {
     this.probedObjectsGroup = new Group();
     this.scene.add(this.staticObjectsGroup, this.probedObjectsGroup);
 
+    // const gltf = await loader.loadAsync(
+    //   'models/sponza-small/sponza-night.gltf'
+    // );
     const gltf = await loader.loadAsync(
       'models/sponza-small/sponza-night.gltf'
     );
@@ -275,26 +231,31 @@ export class App {
         object.receiveShadow = true;
       }
 
-      if (object instanceof Mesh && this.lightmapHandler.setupObject(object)) {
+      if (object instanceof Mesh && this.lightmapHandler.addMesh(object)) {
 
         addToScene = true;
         isStatic = true;
       } else if (
         object instanceof Mesh &&
-        this.probeVolumeHandler.setupObject(object)
+        this.probeVolumeHandler.addMesh(object)
       ) {
 
         addToScene = true;
         isStatic = false;
       } else {
 
-        this.visibilityHandler.setupObject(object, true);
+        this.visibilityHandler.addMesh(object);
         addToScene = true;
         isStatic = false;
       }
 
+
       if (object instanceof Light) {
-        object.intensity = 0.3;
+        console.log('object.intensity',object.intensity);
+        object.intensity /= 5000;
+        if(object instanceof PointLight){
+          // object.distance = 5
+        }
         // lights.push(object);
       }
 
@@ -353,7 +314,10 @@ export class App {
 
     this.probesDebug = new ProbeDebugger(this.probeVolumeHandler);
     this.probesDebug.visibilityChanged = () => (this._requestRender = true);
-    this.probesDebug.gui(gui);
+
+    const probeFolder = gui.addFolder('Probes'); 
+    probeFolder.add(this.probeVolumeHandler,"lightIntensity",0,10).name("Intensity")
+    this.probesDebug.gui(gui,probeFolder);
     this.scene.add(this.probesDebug);
 
     if (this.sunLight) {
@@ -363,12 +327,6 @@ export class App {
       lightFolder.add(this.sunLight, 'castShadow').name("Cast shadow");
       lightFolder.add(this.sunLight.shadow, 'radius', 0, 10);
       lightFolder.add(this.sunLight.shadow, 'bias', -1, 1);
-      // lightFolder.add(this.sunLight.shadow.camera, 'near', 0, 100)
-      // lightFolder.add(this.sunLight.shadow.camera, 'far', 0, 100)
-      // lightFolder.add(this.sunLight.shadow.camera, 'left', -100, 100)
-      // lightFolder.add(this.sunLight.shadow.camera, 'right', -100, 100)
-      // lightFolder.add(this.sunLight.shadow.camera, 'top', -100, 100)
-      // lightFolder.add(this.sunLight.shadow.camera, 'bottom', -100, 100)
     }
 
     const lightmapFolder = gui.addFolder('Lightmap');

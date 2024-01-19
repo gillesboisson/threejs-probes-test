@@ -1,5 +1,5 @@
 import { SphereGeometry, Mesh } from 'three'
-import { Probe } from '../Probe'
+import { Probe } from '../handlers/Probe'
 import { ReflectionProbeMeshMaterial } from './ReflectionProbeMeshMaterial'
 import { probeMeshGeom } from './ProbeMesh'
 
