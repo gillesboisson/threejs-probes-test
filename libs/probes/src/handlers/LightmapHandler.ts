@@ -1,29 +1,15 @@
-import {
-  BufferGeometry,
-  Light,
-  Material,
-  Mesh,
-  MeshStandardMaterial,
-  NormalBufferAttributes,
-  Object3DEventMap,
-  SpotLight,
-  Texture,
-} from 'three';
-import {
-  BakeRenderLayer,
-  LightMapDefinition,
-  LightMapGroupDefinition,
-  LightMapGroupJSON,
-  VisibilityDefinition,
-} from '..';
+import { Mesh, MeshStandardMaterial, Texture } from 'three';
 import { BaseBakeHandler } from './BaseBakeHandler';
-import { LightMap } from './LightMap';
+import { LightMap, LightMapGroup } from './LightMap';
+
+import { BakeRenderLayer, LightMapGroupDefinition, VisibilityDefinition } from '../data';
+import { cleanObjectName } from '../helpers';
 
 export class LightmapHandler extends BaseBakeHandler<
   MeshStandardMaterial,
   LightMap
 > {
-  protected data: LightMapGroupDefinition[] | null = null;
+  protected definition: LightMapGroup[] | null = null;
 
   protected lightmaps: LightMap[] | null = null;
 
@@ -104,14 +90,11 @@ export class LightmapHandler extends BaseBakeHandler<
 
   constructor(
     data: LightMapGroupDefinition[],
-    visibilities: VisibilityDefinition[],
-    textures: Texture[]
+    visibilities: VisibilityDefinition[]
   ) {
     super(visibilities);
 
-    if (data && textures) {
-      this.setData(data, textures);
-    }
+    this.setData(data);
   }
 
   protected _reset(): void {
@@ -119,20 +102,30 @@ export class LightmapHandler extends BaseBakeHandler<
     this._sourceMaterials = [];
   }
 
-  setData(data: LightMapGroupDefinition[], textures: Texture[]) {
-    if (data !== null) {
-      this.data = data;
+  setData(groupDefinition: LightMapGroupDefinition[]) {
+    if (groupDefinition !== null) {
+      this._staticObjectNames = [];
+      this.lightmaps = [];
 
-      this.lightmaps = data.map((d, ind) => {
-        const texture = textures[ind];
-        return new LightMap(d, texture);
-      });
+      this.definition = groupDefinition.map(
+        (groupDefinition): LightMapGroup => {
+          const maps = groupDefinition.maps.map((map) => {
+            this._staticObjectNames.push(...(map.objects.map(cleanObjectName)));
+            return new LightMap(map, groupDefinition);
+          });
+          this.lightmaps.push(...maps);
 
-      this._staticObjectNames = this.data.map((d) => d.object_names).flat();
+          return {
+            ...groupDefinition,
+            maps,
+          };
+        }
+      );
+
       this._reset();
     } else {
       this.lightmaps = null;
-      this.data = null;
+      this.definition = null;
       this._staticObjectNames = [];
     }
   }
@@ -154,25 +147,25 @@ export class LightmapHandler extends BaseBakeHandler<
     sourceMaterial: MeshStandardMaterial,
     data?: LightMap
   ): MeshStandardMaterial {
-
-
     // return cached material only if source material matched and it uses the same lightmap
-
-    for (let i=0;i<this._sourceMaterials.length;i++) {
+    for (let i = 0; i < this._sourceMaterials.length; i++) {
       if (this._sourceMaterials[i] === sourceMaterial) {
         const material = this._materials[i];
-
-        if(material.lightMap === data.texture) {
+        
+        if (material.lightMap === data.texture) {
           return material;
-
         }
-      } 
+      }
     }
 
     return null;
   }
 
-  mapMaterial(mesh, material: MeshStandardMaterial, lightmap: LightMap): MeshStandardMaterial {
+  mapMaterial(
+    mesh,
+    material: MeshStandardMaterial,
+    lightmap: LightMap
+  ): MeshStandardMaterial {
     return lightmap.createMaterial(mesh, this._lightMapIntensity);
   }
 

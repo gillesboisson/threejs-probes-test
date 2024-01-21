@@ -1,6 +1,6 @@
 export * from './type'
 
-import { LightMapJSON } from './lightMap'
+import { LightMapGroupJSON } from './lightMap'
 import { AnyProbeVolumeJSON } from './probeVolume'
 import { VisibilityDefinition } from './type'
 
@@ -9,6 +9,6 @@ export * from './lightMap'
 
 export type BakingJSON = {
   probes: AnyProbeVolumeJSON[]
-  baked_maps: LightMapJSON[]
+  baked_maps: LightMapGroupJSON[]
   visibility_collections: VisibilityDefinition[]
 }

@@ -86,7 +86,7 @@ export abstract class BaseBakeHandler<
     const data = this.getMeshData(mesh);
     const match = this.filterMesh(mesh, data); 
     const sourceMaterial = mesh.material as MaterialT;
-
+    
     if (match) {
       const finalMesh = this.mapObject(mesh, sourceMaterial as MaterialT);
       if (this._addObject(finalMesh, data)) {

@@ -251,7 +251,6 @@ export class App {
 
 
       if (object instanceof Light) {
-        console.log('object.intensity',object.intensity);
         object.intensity /= 5000;
         if(object instanceof PointLight){
           // object.distance = 5

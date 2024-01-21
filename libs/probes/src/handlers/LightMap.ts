@@ -2,35 +2,38 @@ import { Mesh, MeshStandardMaterial, Texture } from 'three';
 import {
   BakeFormat,
   BakeRenderLayer,
+  LightMapCoreDefinition,
+  LightMapDefinition,
+  LightMapGroupCoreDefinition,
   LightMapGroupDefinition,
-  LightMapPassDefinition,
+  LightMapPass,
   LightMapType,
+  VisibilityDefinition,
   VisibilityRelation,
-} from '..';
+} from '../data';
 
 export class LightMap {
-  type: LightMapType;
-  name: string;
-  objectNames: string[];
-  passes: LightMapPassDefinition;
-  format: BakeFormat;
-  texture: Texture;
-  visibility: VisibilityRelation;
-  uvIndex: number;
+  readonly type: LightMapType;
+  readonly name: string;
+  readonly objectNames: string[];
+  readonly passes: LightMapPass;
+  readonly format: BakeFormat;
+  readonly texture: Texture;
+  readonly visibility: VisibilityRelation;
+  readonly uvIndex: number;
 
-  constructor(data: LightMapGroupDefinition, texture: Texture) {
-    this.type = data.type;
-    this.name = data.name;
-    this.objectNames = [...data.object_names];
-    this.passes = data.passes;
-    this.format = data.format;
-    this.uvIndex = data.uv_index;
-    this.texture = texture;
+  constructor(data: LightMapDefinition, group: LightMapGroupDefinition) {
+    this.type = group.type;
+    this.name = group.name;
+    this.objectNames = data.objects;
+    this.passes = group.passes;
+    this.format = group.format;
+    this.uvIndex = group.uv_index;
+    this.texture = data.map;
     this.texture.channel = this.uvIndex;
   }
 
   createMaterial(mesh: Mesh, intensity: number = 1): MeshStandardMaterial {
-    
     if (!mesh.material || !(mesh.material instanceof MeshStandardMaterial)) {
       return null;
     }
@@ -40,7 +43,7 @@ export class LightMap {
     material.lightMap = this.texture;
     material.lightMapIntensity = intensity;
 
-    if (this.passes.use_pass_color) {
+    if (this.passes.indexOf('COLOR') !== -1) {
       material.map = null;
     }
 
@@ -59,3 +62,8 @@ export class LightMap {
     }
   }
 }
+
+export type LightMapGroup = LightMapGroupCoreDefinition<
+  LightMap,
+  VisibilityDefinition
+>;

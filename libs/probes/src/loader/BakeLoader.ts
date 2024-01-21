@@ -22,10 +22,11 @@ import {
   BakingJSON,
   GlobalEnvProbeVolumeJSON,
   IrradianceProbeVolumeJSON,
-  LightMapJSON,
+  LightMapDefinition,
+  LightMapGroupDefinition,
+  LightMapGroupJSON,
   ReflectionProbeVolumeJSON,
   VisibilityDefinition,
-  groupLightMap,
 } from '../data';
 import {
   AnyProbeVolume,
@@ -122,19 +123,48 @@ export class BakeLoader {
   }
 
   async setLightmapData(
-    lightmaps: LightMapJSON[],
-    visibility: VisibilityDefinition[]
+    lightmapGroupsJSON: LightMapGroupJSON[],
+    visibilities: VisibilityDefinition[]
   ): Promise<LightmapHandler> {
     // group lightmaps by name with sub prop object_names
 
-    const lightMapGroups = groupLightMap(lightmaps, visibility);
+    const maps = lightmapGroupsJSON.map((group) => group.maps).flat();
 
-    const textureUrls = lightMapGroups.map(
-      (lightMap) => this.dir + lightMap.filename
-    );
+    const textureUrls = maps.map((map) => this.dir + map.filename);
+
     const textures = await this.loadTextures(textureUrls, true);
 
-    return new LightmapHandler(lightMapGroups, visibility, textures);
+    
+
+    const lightmapGroups: LightMapGroupDefinition[] = lightmapGroupsJSON.map((group) => {
+      const visibilityDefinition = this.getVisibilityDefinition(
+        group.visibility.collection,
+        visibilities
+      );
+
+      const groupMaps: LightMapDefinition[] = group.maps.map((lightMap) => {
+        const mapIndex = maps.findIndex((m) => m.filename === lightMap.filename);
+        if (mapIndex === -1) {
+          throw new Error(`Could not find map ${lightMap.filename}`);
+        }
+
+        const texture = textures[mapIndex];
+
+        return {
+          ...lightMap,
+          objects: lightMap.objects.map(cleanObjectName),
+          map: texture,
+        };
+      });
+
+      return {
+        ...group,
+        maps: groupMaps,
+        visibility: visibilityDefinition,
+      };
+    });
+
+    return new LightmapHandler(lightmapGroups, visibilities);
   }
 
   async setProbesData(
@@ -290,7 +320,10 @@ export class BakeLoader {
     return fetch(url).then((res) => res.json() as Promise<BakingJSON>);
   }
 
-  loadTextures(urls: string[], autoFlipLightmaps = false): Promise<Array<Texture>> {
+  loadTextures(
+    urls: string[],
+    autoFlipLightmaps = false
+  ): Promise<Array<Texture>> {
     // const urls = probes.map((probe) => this.dir + probe.file)
     return new Promise((resolve, err) => {
       let indexLoading = 0;
@@ -319,12 +352,12 @@ export class BakeLoader {
             exrLoader.load(
               url,
               (image) => {
-                if(autoFlipLightmaps){
+                if (autoFlipLightmaps) {
                   // console.log(url, extension, image.flipY);
                   image.flipY = true;
-                  
+
                   // image.flipX = true;
-                  
+
                   // image.flipY = true;
                 }
                 images.push(image);
@@ -341,9 +374,8 @@ export class BakeLoader {
             rgbeLoader.load(
               url,
               (image) => {
-                if(autoFlipLightmaps){
+                if (autoFlipLightmaps) {
                   // image.flipY != image.flipY
-
                   // image.flipY = true;
                 }
                 images.push(image);
@@ -362,9 +394,8 @@ export class BakeLoader {
             textureLoader.load(
               url,
               (image) => {
-                if(autoFlipLightmaps){
-                  image.flipY = false
-
+                if (autoFlipLightmaps) {
+                  image.flipY = false;
                 }
                 images.push(image);
                 image.name = url.split('/').pop();
