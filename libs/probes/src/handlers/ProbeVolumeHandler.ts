@@ -64,6 +64,7 @@ export class ProbeVolumeHandler extends BaseBakeHandler<AnyMeshProbeMaterial> {
       this.reflectionVolumes.fallbackVolume = _globalEnv;
       this.irradianceVolumes.fallbackVolume = _globalEnv;
     }
+    this._reset();
   }
 
   get globalEnv() {
@@ -78,8 +79,12 @@ export class ProbeVolumeHandler extends BaseBakeHandler<AnyMeshProbeMaterial> {
     }
   }
 
-  filterMesh(mesh: Mesh): boolean {
-    return !super.filterMesh(mesh);
+  filterMesh(
+    mesh: Mesh,
+    data: unknown,
+    sourceMaterial: Material,
+  ): boolean {
+    return !super.filterMesh(mesh, data, sourceMaterial);
   }
 
   mapMaterial(mesh: Mesh, material: Material): AnyMeshProbeMaterial {

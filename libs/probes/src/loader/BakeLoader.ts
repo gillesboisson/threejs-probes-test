@@ -328,6 +328,7 @@ export class BakeLoader {
                   // image.flipY = true;
                 }
                 images.push(image);
+                image.name = url.split('/').pop();
                 loadNext();
               },
               undefined,
@@ -341,11 +342,13 @@ export class BakeLoader {
               url,
               (image) => {
                 if(autoFlipLightmaps){
-                  image.flipY != image.flipY
+                  // image.flipY != image.flipY
 
                   // image.flipY = true;
                 }
                 images.push(image);
+                image.name = url.split('/').pop();
+
                 loadNext();
               },
               undefined,
@@ -360,10 +363,12 @@ export class BakeLoader {
               url,
               (image) => {
                 if(autoFlipLightmaps){
-                  image.flipY != image.flipY
+                  image.flipY = false
 
                 }
                 images.push(image);
+                image.name = url.split('/').pop();
+
                 loadNext();
               },
               undefined,

@@ -18,11 +18,11 @@ export type LightMapCoreDefinition = {
   map_size: number;
   type: LightMapType;
   name: string;
+  group_index: number;
   grouped_bake: boolean;
   passes: LightMapPassDefinition;
   format: BakeFormat;
   uv_index: number;
- 
 };
 
 export type LightMapDefinition = LightMapCoreDefinition & {
@@ -50,7 +50,9 @@ export function groupLightMap(
   const groups: LightMapGroupJSON[] = [];
 
   for (const lightmap of lightmapsData) {
-    let group = groups.find((g) => g.name === lightmap.name);
+    let group = groups.find(
+      (g) => g.name === lightmap.name && g.group_index === lightmap.group_index
+    );
 
     const objectName = cleanObjectName(lightmap.object_name);
 

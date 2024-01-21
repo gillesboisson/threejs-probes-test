@@ -4,14 +4,16 @@ import { VisibilityDefinition } from '../data';
 import { cleanObjectName } from '../helpers';
 import { HasObjectMapper } from '../type';
 
-export abstract class BaseBakeHandler<MaterialT extends Material>
-  implements HasObjectMapper
-{
+export abstract class BaseBakeHandler<
+  MaterialT extends Material,
+  DataT = unknown
+> {
   protected _objects: Object3D[] = [];
   protected _materials: MaterialT[] = [];
   protected _sourceMaterials: MaterialT[] = [];
 
   protected _staticObjectNames: string[];
+  protected _data: any[];
 
   public get staticObjectNames() {
     return this._staticObjectNames;
@@ -37,6 +39,7 @@ export abstract class BaseBakeHandler<MaterialT extends Material>
     this._objects = [];
     this._materials = [];
     this._sourceMaterials = [];
+    this._data = [];
   }
 
   abstract setupObject(
@@ -45,14 +48,28 @@ export abstract class BaseBakeHandler<MaterialT extends Material>
     setupLayers?: boolean
   ): void;
 
-  abstract mapMaterial(mesh: Mesh, material: MaterialT): MaterialT;
+  abstract mapMaterial(mesh: Mesh, material: MaterialT, data: DataT): MaterialT;
 
   mapObject(object: Mesh, material: MaterialT) {
     return object;
   }
 
-  filterMesh(mesh: Mesh, material = mesh.material): boolean {
+  filterMesh(mesh: Mesh, data: DataT, material = mesh.material): boolean {
     return this._staticObjectNames.includes(cleanObjectName(mesh.name));
+  }
+
+  protected getCachedMaterial(
+    mesh: Mesh,
+    sourceMaterial: MaterialT,
+    data: DataT
+  ): MaterialT {
+    const ind = this._sourceMaterials.indexOf(sourceMaterial as MaterialT);
+
+    if (ind > -1) {
+      return this._materials[ind];
+    }
+
+    return null;
   }
 
   public removeMesh(mesh: Mesh): void {
@@ -61,45 +78,51 @@ export abstract class BaseBakeHandler<MaterialT extends Material>
     }
   }
 
+  public getMeshData(mesh: Mesh): DataT {
+    return null;
+  }
+
   public addMesh(mesh: Mesh, setupLayers = true): boolean {
-    const match = this.filterMesh(mesh);
+    const data = this.getMeshData(mesh);
+    const match = this.filterMesh(mesh, data); 
+    const sourceMaterial = mesh.material as MaterialT;
 
     if (match) {
-      const finalMesh = this.mapObject(mesh, mesh.material as MaterialT);
-      if (this._addObject(finalMesh)) {
-        let material = null;
-        if (
-          this._sourceMaterials.indexOf(finalMesh.material as MaterialT) === -1
-        ) {
+      const finalMesh = this.mapObject(mesh, sourceMaterial as MaterialT);
+      if (this._addObject(finalMesh, data)) {
+        let material = this.getCachedMaterial(mesh, sourceMaterial as MaterialT, data);
+
+        if (material === null) {
           material = this.mapMaterial(
             finalMesh,
-            finalMesh.material as MaterialT
+            finalMesh.material as MaterialT,
+            data
           );
-          this._addMaterial(material);
-        } else {
-          material = finalMesh.material as MaterialT;
-        }
-
-        this.setupObject(finalMesh, material, setupLayers);
+          this._addMaterial(material, sourceMaterial);
+        } 
+        
         finalMesh.material = material;
+        this.setupObject(finalMesh, material, setupLayers);
       }
     }
 
     return match;
   }
 
-  protected _addObject(mesh: Object3D): boolean {
+  protected _addObject(mesh: Object3D, data: DataT): boolean {
     if (!this._objects.includes(mesh)) {
       this._objects.push(mesh);
+      this._data.push(data);
       return true;
     }
 
     return false;
   }
 
-  protected _addMaterial(material: MaterialT): boolean {
+  protected _addMaterial(material: MaterialT, sourceMaterial: MaterialT): boolean {
     if (!this._materials.includes(material)) {
       this._materials.push(material);
+      this._sourceMaterials.push(sourceMaterial);
       return true;
     }
 
@@ -110,6 +133,8 @@ export abstract class BaseBakeHandler<MaterialT extends Material>
     const index = this._objects.indexOf(mesh);
     if (index > -1) {
       this._objects.splice(index, 1);
+      this._data.splice(index, 1);
+
       return true;
     }
 

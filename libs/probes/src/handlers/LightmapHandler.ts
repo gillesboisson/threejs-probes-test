@@ -19,7 +19,10 @@ import {
 import { BaseBakeHandler } from './BaseBakeHandler';
 import { LightMap } from './LightMap';
 
-export class LightmapHandler extends BaseBakeHandler<MeshStandardMaterial> {
+export class LightmapHandler extends BaseBakeHandler<
+  MeshStandardMaterial,
+  LightMap
+> {
   protected data: LightMapGroupDefinition[] | null = null;
 
   protected lightmaps: LightMap[] | null = null;
@@ -134,22 +137,42 @@ export class LightmapHandler extends BaseBakeHandler<MeshStandardMaterial> {
     }
   }
 
-  filterMesh(mesh: Mesh): boolean {
+  filterMesh(mesh: Mesh, data: LightMap): boolean {
     return (
-      super.filterMesh(mesh) &&
-      !!this.lightmaps?.find((l) => l.objectNames.includes(mesh.name)) &&
-      mesh.material instanceof MeshStandardMaterial
+      data &&
+      mesh.material instanceof MeshStandardMaterial &&
+      super.filterMesh(mesh, data)
     );
   }
 
-  mapMaterial(mesh, material: MeshStandardMaterial): MeshStandardMaterial {
-    const lightmap = this.lightmaps?.find((l) =>
-      l.objectNames.includes(mesh.name)
-    );
-    if (!lightmap) {
-      throw new Error('No lightmap data');
+  public getMeshData(mesh: Mesh): LightMap {
+    return this.lightmaps?.find((l) => l.objectNames.includes(mesh.name));
+  }
+
+  protected getCachedMaterial(
+    mesh: Mesh,
+    sourceMaterial: MeshStandardMaterial,
+    data?: LightMap
+  ): MeshStandardMaterial {
+
+
+    // return cached material only if source material matched and it uses the same lightmap
+
+    for (let i=0;i<this._sourceMaterials.length;i++) {
+      if (this._sourceMaterials[i] === sourceMaterial) {
+        const material = this._materials[i];
+
+        if(material.lightMap === data.texture) {
+          return material;
+
+        }
+      } 
     }
 
+    return null;
+  }
+
+  mapMaterial(mesh, material: MeshStandardMaterial, lightmap: LightMap): MeshStandardMaterial {
     return lightmap.createMaterial(mesh, this._lightMapIntensity);
   }
 
