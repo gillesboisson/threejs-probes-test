@@ -7,7 +7,6 @@ import { ProbeRatioLod } from '../type';
 import { ReflectionProbeVolume } from './ReflectionProbeVolume';
 import { ProbeVolumeRatio } from './type';
 import { ProbeVolumeGroup } from './ProbeVolumeGroup';
-import { Probe } from '../handlers/Probe';
 
 export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
   ReflectionProbeVolume,
@@ -44,7 +43,9 @@ export class ReflectionProbeVolumeGroup extends ProbeVolumeGroup<
       out[resultIndex] = [
         this.fallbackVolume.reflectionCubeProbe,
         1 - totalProbeRatio,
-        this.fallbackVolume.roughnessToTextureLod(roughness),
+        this.fallbackVolume.reflectionRoughnessMapping.startRoughness,
+        this.fallbackVolume.reflectionRoughnessMapping.endRoughness,
+        this.fallbackVolume.reflectionRoughnessMapping.nbLevels,
       ];
       resultIndex++;
     }

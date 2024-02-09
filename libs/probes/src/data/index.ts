@@ -10,5 +10,5 @@ export * from './lightMap'
 export type BakingJSON = {
   probes: AnyProbeVolumeJSON[]
   baked_maps: LightMapGroupJSON[]
-  visibility_collections: VisibilityDefinition[]
+  collections: VisibilityDefinition[]
 }

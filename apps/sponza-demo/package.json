@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "pack-victorian": "mkdir -p build/gltf && gltfpack -i assets/licensed-victorian/export/victorian-house.gltf -o build/gltf/victorian-house.glb",
     "copy-content": "mkdir -p build/ && rm -fr build/content && cp -fr content/* build/",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:production": "yarn copy-content && webpack",
@@ -15,6 +16,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@libs/probes": "^0.0.1",
     "ammojs": "^0.0.2",
     "delaunator": "^5.0.0",
     "lil-gui": "^0.18.2",
@@ -26,8 +28,7 @@
     "webpack": "^4.44.2",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2",
-    "webpack-node-externals": "^2.5.2",
-    "@libs/probes": "^0.0.1"
+    "webpack-node-externals": "^2.5.2"
   },
   "browser": {
     "fs": false,
@@ -38,6 +39,8 @@
     "@types/requirejs": "^2.1.32",
     "@types/three": "^0.160",
     "ammojs-typed": "^1.0.6",
-    "prettier": "^2.5.1"
+    "gltfpack": "^0.20.0",
+    "prettier": "^2.5.1",
+    "sharp": "^0.33.2"
   }
 }

@@ -1,5 +1,5 @@
 import { Box3, Vector3 } from 'three';
-import { Probe, ReflectionProbe, RoughnessLodMapping } from '../handlers/Probe';
+import { Probe, ReflectionProbe, RoughnessLodMapping } from '../type';
 import {
   ReflectionProbeVolumeBaking,
   ReflectionProbeVolumeData,
@@ -26,21 +26,21 @@ export class ReflectionProbeVolume
   readonly influenceType: ProbeInfluenceType;
   readonly influenceDistance: number;
 
-  static RoughnessToTextureLod(
-    roughness: number,
-    rougnessLod: RoughnessLodMapping
-  ): number {
-    return (
-      Math.min(
-        Math.max(
-          roughness / (rougnessLod.endRoughness - rougnessLod.startRoughness) -
-            rougnessLod.startRoughness,
-          0
-        ),
-        1
-      ) * rougnessLod.nbLevels
-    );
-  }
+  // static RoughnessToTextureLod(
+  //   roughness: number,
+  //   rougnessLod: RoughnessLodMapping
+  // ): number {
+  //   return (
+  //     Math.min(
+  //       Math.max(
+  //         roughness / (rougnessLod.endRoughness - rougnessLod.startRoughness) -
+  //           rougnessLod.startRoughness,
+  //         0
+  //       ),
+  //       1
+  //     ) * rougnessLod.nbLevels
+  //   );
+  // }
 
   protected influenceBounds = new Box3();
   readonly reflectionProbe: ReflectionProbe;
@@ -51,9 +51,10 @@ export class ReflectionProbeVolume
     const { baking, data } = props;
 
     this.startRoughness = baking.start_roughness;
-    this.endRoughness =
-      baking.start_roughness + baking.nb_levels * baking.level_roughness;
-    this.levelRoughness = baking.level_roughness;
+    this.endRoughness = baking.end_roughness;
+    this.levelRoughness =
+      (baking.end_roughness - baking.start_roughness) / baking.nb_levels;
+
     this.nbLevels = baking.nb_levels;
 
     this.intensity = data.intensity;
@@ -110,9 +111,9 @@ export class ReflectionProbeVolume
     );
   }
 
-  roughnessToTextureLod(roughness: number): number {
-    return ReflectionProbeVolume.RoughnessToTextureLod(roughness, this);
-  }
+  // roughnessToTextureLod(roughness: number): number {
+  //   return ReflectionProbeVolume.RoughnessToTextureLod(roughness, this);
+  // }
 
   /**
    * Populate provided probe ratio with texture lod
@@ -129,7 +130,7 @@ export class ReflectionProbeVolume
     affectedLastProbes = probeRatio.length,
     out: ProbeRatioLod[] = []
   ): ProbeRatioLod[] {
-    const textureLod = this.roughnessToTextureLod(roughness);
+    // const textureLod = this.roughnessToTextureLod(roughness);
 
     const i0 = Math.max(0, probeRatio.length - affectedLastProbes);
 
@@ -137,9 +138,17 @@ export class ReflectionProbeVolume
       if (out[i] !== undefined) {
         out[i][0] = probeRatio[i][0];
         out[i][1] = probeRatio[i][1];
-        out[i][2] = textureLod;
+        out[i][2] = this.startRoughness;
+        out[i][3] = this.endRoughness;
+        out[i][4] = this.nbLevels;
       } else {
-        out[i] = [probeRatio[i][0], probeRatio[i][1], textureLod];
+        out[i] = [
+          probeRatio[i][0],
+          probeRatio[i][1],
+          this.startRoughness,
+          this.endRoughness,
+          this.nbLevels,
+        ];
       }
     }
 
@@ -160,6 +169,14 @@ export class ReflectionProbeVolume
     }
 
     return 1;
+  }
+
+  getClosestProbe(position: Vector3): ReflectionProbe {
+    if (this.bounds.containsPoint(position) === false) {
+      return null;
+    }
+
+    return this.reflectionProbe;
   }
 
   getGlobalRatio(position: Vector3): number {

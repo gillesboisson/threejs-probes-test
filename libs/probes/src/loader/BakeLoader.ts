@@ -1,17 +1,21 @@
 import {
+  AmbientLight,
   CubeTexture,
-  DataTexture,
-  DataTextureLoader,
   DefaultLoadingManager,
+  DirectionalLight,
+  Group,
   Light,
+  LightShadow,
   LoadingManager,
+  Material,
+  Mesh,
+  MeshStandardMaterial,
   Object3D,
   PMREMGenerator,
-  Renderer,
+  PointLight,
   Scene,
   Texture,
   TextureLoader,
-  Vector3,
   WebGLRenderer,
 } from 'three';
 
@@ -19,6 +23,7 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
 import { ProbeVolumeHandler } from '../handlers/ProbeVolumeHandler';
 import {
   AnyProbeVolumeJSON,
+  BakeRenderLayer,
   BakingJSON,
   GlobalEnvProbeVolumeJSON,
   IrradianceProbeVolumeJSON,
@@ -33,11 +38,8 @@ import {
   IrradianceProbeVolume,
   ReflectionProbeVolume,
 } from '../volume';
-import { generateProbeGridCubemaps } from './generateProbeGridCubemaps';
-import { generateReflectionProbeCubemap } from './generateReflectionProbeCubemap';
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader';
 import { CubemapWrapper } from './CubemapsWrapper';
-import { Probe } from '../handlers/Probe';
 import { GlobalEnvVolume } from '../volume/GlobalEnvVolume';
 import { cleanObjectName } from '../helpers';
 import { LightmapHandler } from '../handlers/LightmapHandler';
@@ -46,23 +48,38 @@ import { VisibilityHandler } from '../handlers/VisibilityHandler';
 export type BakeLoaderResult = {
   probeVolumeHandler: ProbeVolumeHandler;
   lightmapHandler: LightmapHandler;
-  visibilityHandler: VisibilityHandler;
+  // visibilityHandler: VisibilityHandler;
   // visibilityCollection: VisibilityDefinition[];
 };
 
-export class BakeLoader {
-  protected _probeVolumeHandler: ProbeVolumeHandler = null;
+export type BakeLoaderSceneResult = BakeLoaderResult & {
+  scene: Scene;
+  groups: Group[];
+  objects: Object3D[];
+};
 
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { ProbeMeshMaterial } from '../debug';
+import { IProbeMaterial } from '../type';
+import {
+  BakeSceneMapperMapMaterial,
+  BakeSceneMapperMapObject,
+} from '../handlers';
+import { AnyMeshProbeMaterial, ConvertibleMeshProbeMaterial } from '../materials';
+import { VisibilityLayersHandler } from './VisibilityLayersHandler';
+
+export class BakeLoader {
   dir: string = './';
-  protected cubemapWrapper: CubemapWrapper;
+
+  protected _probeVolumeHandler: ProbeVolumeHandler = null;
+  protected _cubemapWrapper: CubemapWrapper;
   protected _lightmapHandler: LightmapHandler;
-  // protected _staticObjectNames: string[] = [];
 
   constructor(
     readonly renderer: WebGLRenderer,
     readonly loadManager: LoadingManager = DefaultLoadingManager
   ) {
-    this.cubemapWrapper = new CubemapWrapper(renderer);
+    this._cubemapWrapper = new CubemapWrapper(renderer);
   }
 
   protected getVisibilityDefinition(
@@ -81,6 +98,83 @@ export class BakeLoader {
     return definition;
   }
 
+  mapObject: BakeSceneMapperMapObject | null = null;
+
+  mapProbeMaterial: BakeSceneMapperMapMaterial<
+  ConvertibleMeshProbeMaterial,
+    AnyMeshProbeMaterial
+  > | null = null;
+
+  filterProbeMesh: (mesh: Mesh, handler: ProbeVolumeHandler) => boolean = null;
+
+  async loadScene(
+    url: string,
+    scene: Scene = new Scene()
+  ): Promise<BakeLoaderSceneResult> {
+    this.dir = url.replace(/[^/]+$/, '');
+    
+    const gltf: GLTF = await new GLTFLoader(this.loadManager).loadAsync(url);
+    const probeJSON = gltf.scene.userData.bake_gi_export_json as BakingJSON;
+    const handers = await this.setupHandlers(probeJSON);
+
+    
+
+    const collections = probeJSON.collections;
+
+    const layerHandler = new VisibilityLayersHandler();
+
+    layerHandler.setupObjectLayers(collections, gltf.scene.children);
+
+    
+
+    const objects: Object3D[] = [];
+
+    for (let i = 0; i < gltf.scene.children.length; i++) {
+      const sceneObject = gltf.scene.children[i];
+
+      let object =
+        sceneObject instanceof Mesh && this.mapObject !== null
+          ? this.mapObject(sceneObject, sceneObject.material, this)
+          : gltf.scene.children[i];
+
+      let addToScene = false;
+      let isStatic = false;
+
+      if (object.layers.mask === 0) {
+        continue;
+      }
+
+      if (object instanceof Light) {
+        addToScene = true;
+        object.intensity /= 5000;
+        // object.intensity = 0;
+        // if (object instanceof PointLight) {
+        //   object.decay = 1;
+        // }
+      }
+
+      if (object instanceof Mesh) {
+        addToScene = true;
+        this._lightmapHandler.addMesh(object);        
+        this._probeVolumeHandler.addMesh(object)
+      }
+
+      if (addToScene) {
+        objects.push(object);
+      }
+    }
+
+    const groups = layerHandler.setupObjectLayersGroup(objects, collections);
+    scene.add(...groups);
+
+    return {
+      ...handers,
+      scene,
+      groups,
+      objects,
+    };
+  }
+
   /**
    *
    * Update object and lights layers property to match with backed lights
@@ -93,33 +187,48 @@ export class BakeLoader {
    *
    */
 
-  async load(url: string): Promise<BakeLoaderResult> {
-    const data = await this.loadJSON(url);
-
-    data.visibility_collections.forEach((collection) => {
-      collection.objects = collection.objects.map((objectName) =>
-        cleanObjectName(objectName)
-      );
-    });
+  async setupHandlers(data: BakingJSON): Promise<BakeLoaderResult> {
+    // data.collections.forEach((collection) => {
+    //   collection.objects = collection.objects.map((objectName) =>
+    //     cleanObjectName(objectName)
+    //   );
+    // });
 
     this._probeVolumeHandler = null;
     this._probeVolumeHandler = await this.setProbesData(
       data.probes,
-      data.visibility_collections
+      data.collections
     );
+
+    this._probeVolumeHandler.mapMaterial = this.mapProbeMaterial;
+    this._probeVolumeHandler.filterMesh = this.filterProbeMesh;
 
     this._lightmapHandler = null;
     this._lightmapHandler = await this.setLightmapData(
       data.baked_maps,
-      data.visibility_collections
+      data.collections
     );
+
+    if (this._probeVolumeHandler.globalEnv) {
+      this._lightmapHandler.defaultEnvTexture =
+        this._probeVolumeHandler.globalEnv.reflectionCubeProbe.texture;
+    }
+
+    // this._visibilityHandler = new VisibilityHandler(
+    //   data.collections
+    // );
 
     return {
       probeVolumeHandler: this._probeVolumeHandler,
       lightmapHandler: this._lightmapHandler,
-      visibilityHandler: new VisibilityHandler(data.visibility_collections),
+      // visibilityHandler: this._visibilityHandler,
       // visibilityCollection: data.visibility_collections,
     };
+  }
+
+  async loadData(url: string): Promise<BakeLoaderResult> {
+    const data = await this.loadJSON(url);
+    return this.setupHandlers(data);
   }
 
   async setLightmapData(
@@ -134,35 +243,37 @@ export class BakeLoader {
 
     const textures = await this.loadTextures(textureUrls, true);
 
-    
+    const lightmapGroups: LightMapGroupDefinition[] = lightmapGroupsJSON.map(
+      (group) => {
+        const visibilityDefinition = this.getVisibilityDefinition(
+          group.visibility.collection,
+          visibilities
+        );
 
-    const lightmapGroups: LightMapGroupDefinition[] = lightmapGroupsJSON.map((group) => {
-      const visibilityDefinition = this.getVisibilityDefinition(
-        group.visibility.collection,
-        visibilities
-      );
+        const groupMaps: LightMapDefinition[] = group.maps.map((lightMap) => {
+          const mapIndex = maps.findIndex(
+            (m) => m.filename === lightMap.filename
+          );
+          if (mapIndex === -1) {
+            throw new Error(`Could not find map ${lightMap.filename}`);
+          }
 
-      const groupMaps: LightMapDefinition[] = group.maps.map((lightMap) => {
-        const mapIndex = maps.findIndex((m) => m.filename === lightMap.filename);
-        if (mapIndex === -1) {
-          throw new Error(`Could not find map ${lightMap.filename}`);
-        }
+          const texture = textures[mapIndex];
 
-        const texture = textures[mapIndex];
+          return {
+            ...lightMap,
+            objects: lightMap.objects.map(cleanObjectName),
+            map: texture,
+          };
+        });
 
         return {
-          ...lightMap,
-          objects: lightMap.objects.map(cleanObjectName),
-          map: texture,
+          ...group,
+          maps: groupMaps,
+          visibility: visibilityDefinition,
         };
-      });
-
-      return {
-        ...group,
-        maps: groupMaps,
-        visibility: visibilityDefinition,
-      };
-    });
+      }
+    );
 
     return new LightmapHandler(lightmapGroups, visibilities);
   }
@@ -179,7 +290,6 @@ export class BakeLoader {
 
     const sourceTextures = await this.loadTextures(
       probesJSON.map((probe) => {
-        console.log((probe as IrradianceProbeVolumeJSON).file);
         switch (probe.probe_type) {
           case 'irradiance':
             return this.dir + (probe as IrradianceProbeVolumeJSON).file;
@@ -346,14 +456,12 @@ export class BakeLoader {
         const url = urls[indexLoading++];
 
         const extension = url.split('.').pop().toLowerCase();
-        // console.log(url, extension);
         switch (extension.toLowerCase()) {
           case 'exr':
             exrLoader.load(
               url,
               (image) => {
                 if (autoFlipLightmaps) {
-                  // console.log(url, extension, image.flipY);
                   image.flipY = true;
 
                   // image.flipX = true;

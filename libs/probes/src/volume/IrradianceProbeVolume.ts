@@ -2,7 +2,7 @@ import { Box3, Matrix4, Vector3 } from 'three'
 import { ProbeRatio } from '../type'
 import { generateProbeGridPositions } from '../loader/generateProbeGridPositions'
 
-import { Probe } from '../handlers/Probe'
+import { Probe } from '../type'
 import { IrradianceProbeVolumeBaking, IrradianceProbeVolumeData } from '../data'
 import { IrradianceVolumeProps } from '../props'
 import { ProbeVolume } from './ProbeVolume'
@@ -93,6 +93,29 @@ export class IrradianceProbeVolume extends ProbeVolume<
         type: 'irradiance',
       })
     }
+  }
+
+  getClosestProbe(position: Vector3): Probe {
+    if (this.bounds.containsPoint(position) === false) {
+      return null;
+    }
+
+    const prs: ProbeRatio[] = []
+
+    this.getSuroundingProbes(position, 1, prs, 0);
+
+    let highestRatio = 0;
+    let closestProbe = null;
+
+    for (let i = 0; i < prs.length; i++) {
+      const [probe, ratio] = prs[i];
+      if (ratio > highestRatio) {
+        highestRatio = ratio;
+        closestProbe = probe;
+      }
+    }
+
+    return closestProbe;
   }
 
   getGlobalRatio(position: Vector3): number {

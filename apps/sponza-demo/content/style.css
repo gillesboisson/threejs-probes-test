@@ -12,8 +12,8 @@ html {
 }
 
 canvas {
-  image-rendering: pixelated;
-  transform-origin: top left;
+  /* image-rendering: pixelated; */
+  /* transform-origin: top left; */
   
 }
 

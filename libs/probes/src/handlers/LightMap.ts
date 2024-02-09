@@ -37,11 +37,20 @@ export class LightMap {
     if (!mesh.material || !(mesh.material instanceof MeshStandardMaterial)) {
       return null;
     }
+    
 
     const material = (mesh.material = new MeshStandardMaterial(mesh.material));
 
-    material.lightMap = this.texture;
-    material.lightMapIntensity = intensity;
+    const isAO = this.passes.indexOf('AO') !== -1;
+    
+    if (isAO) {
+      
+      material.aoMap = this.texture;
+      material.aoMapIntensity = intensity;
+    } else {
+      material.lightMap = this.texture;
+      material.lightMapIntensity = intensity;
+    }
 
     if (this.passes.indexOf('COLOR') !== -1) {
       material.map = null;
@@ -53,13 +62,8 @@ export class LightMap {
   setupObject(
     mesh: Mesh,
     material: MeshStandardMaterial,
-    setObjectRenderLayer: boolean = false
   ): void {
     mesh.material = material;
-    if (setObjectRenderLayer) {
-      mesh.layers.disableAll();
-      mesh.layers.enable(BakeRenderLayer.Static);
-    }
   }
 }
 

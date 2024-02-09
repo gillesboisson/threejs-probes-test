@@ -1,5 +1,5 @@
 import { Group } from 'three'
-import { Probe, ReflectionProbe } from '../handlers/Probe'
+import { Probe } from '../type'
 import { IrradianceProbeMesh } from './IrradianceProbeMesh'
 import { ReflectionProbeMesh } from './ReflectionProbeMesh'
 import {

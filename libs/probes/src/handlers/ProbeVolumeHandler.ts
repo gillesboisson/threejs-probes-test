@@ -19,18 +19,18 @@ import {
   ReflectionProbeVolume,
 } from '../volume';
 import { ProbeRatio, ProbeRatioLod } from '../type';
-import { BaseBakeHandler } from './BaseBakeHandler';
+import { BaseBakeSceneMapper } from './BakeSceneMapper';
 import { BakeRenderLayer, VisibilityDefinition } from '..';
 import {
   AnyMeshProbeMaterial,
+  ConvertibleMeshProbeMaterial,
   MeshProbeLambertMaterial,
   MeshProbePhongMaterial,
   MeshProbePhysicalMaterial,
   MeshProbeStandardMaterial,
 } from '../materials';
-import { IProbeMaterial } from '../materials/extendProbesMaterial';
 
-export class ProbeVolumeHandler extends BaseBakeHandler<AnyMeshProbeMaterial> {
+export class ProbeVolumeHandler extends BaseBakeSceneMapper<AnyMeshProbeMaterial> {
   private _irradianceProbeRatio: ProbeRatio[] = [];
   private _reflectionProbeRatio: ProbeRatioLod[] = [];
 
@@ -79,15 +79,43 @@ export class ProbeVolumeHandler extends BaseBakeHandler<AnyMeshProbeMaterial> {
     }
   }
 
-  filterMesh(
-    mesh: Mesh,
-    data: unknown,
-    sourceMaterial: Material,
-  ): boolean {
-    return !super.filterMesh(mesh, data, sourceMaterial);
+  public filterMesh:
+    | null
+    | ((mesh: Mesh, handler: ProbeVolumeHandler) => boolean) = null;
+
+  public mapMaterial:
+    | null
+    | ((
+        mesh: Mesh,
+        material: ConvertibleMeshProbeMaterial,
+        handler: ProbeVolumeHandler
+      ) => AnyMeshProbeMaterial) = null;
+
+  public mapObject:
+    | null
+    | ((
+        object: Mesh,
+        material: AnyMeshProbeMaterial,
+        handler: ProbeVolumeHandler
+      ) => Mesh) = null;
+
+  protected _filterMesh(mesh: Mesh, data: unknown): boolean {
+    if (this.filterMesh !== null) {
+      return this.filterMesh(mesh, this);
+    }
+    return true;
   }
 
-  mapMaterial(mesh: Mesh, material: Material): AnyMeshProbeMaterial {
+  protected _mapObject(object: Mesh, material: AnyMeshProbeMaterial) {
+    if (this.mapObject !== null) {
+      return this.mapObject(object, material, this);
+    }
+    return object;
+  }
+
+  public materialToProbeMaterial<MaterialT extends AnyMeshProbeMaterial>(
+    material: ConvertibleMeshProbeMaterial
+  ): MaterialT | null {
     let finalMmaterial: AnyMeshProbeMaterial = null;
 
     switch (true) {
@@ -115,17 +143,20 @@ export class ProbeVolumeHandler extends BaseBakeHandler<AnyMeshProbeMaterial> {
         );
     }
 
+    return finalMmaterial as MaterialT;
+  }
+
+  protected _mapMaterial(mesh: Mesh, material: ConvertibleMeshProbeMaterial): AnyMeshProbeMaterial {
+    let finalMmaterial: AnyMeshProbeMaterial =
+      this.mapMaterial !== null
+        ? this.mapMaterial(mesh, material, this)
+        : this.materialToProbeMaterial(material);
+
     finalMmaterial.probesIntensity = this._lightIntensity;
     return finalMmaterial;
   }
 
-  setupObject(mesh: Mesh, material: Material, setupLayers = true) {
-    if (setupLayers) {
-      // debugger
-      mesh.layers.enable(BakeRenderLayer.Active);
-      // mesh.layers.enable(BakeRenderLayer.StaticLights);
-    }
-  }
+  protected _setupObject(mesh: Mesh, material: Material, setupLayers = true) {}
 
   addVolume(...volumes: AnyProbeVolume[]) {
     volumes

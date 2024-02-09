@@ -22,6 +22,7 @@ export type LightMapPass =
   | 'GLOSSY'
   | 'EMIT'
   | 'COLOR'
+  | 'AO'
   | 'TRANSMISSION';
 
 export type LightMapCoreDefinition<Object3DT> = {

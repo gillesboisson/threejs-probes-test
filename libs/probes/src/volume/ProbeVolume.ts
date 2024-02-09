@@ -1,5 +1,5 @@
 import { Object3D, Box3, CubeTexture, Vector3 } from 'three';
-import { Probe } from '../handlers/Probe';
+import { Probe } from '../type';
 import { AnyProbeVolumeBaking, AnyProbeVolumeData } from '../data';
 import { ProbeVolumeProps } from '../props';
 import { ProbeType, ProbeRatio } from '../type';
@@ -66,7 +66,8 @@ export abstract class ProbeVolume<
   ): number;
 
   abstract getGlobalRatio(position: Vector3): number;
-
+  abstract getClosestProbe(position: Vector3): ProbeT | null;
+  
   get bounds(): Box3 {
     if (this.needBoundsUpdate === true) {
       this.computeBounds();

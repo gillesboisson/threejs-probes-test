@@ -7,6 +7,7 @@ export const maxReflectionMaps = 4
 export const defines = {
   MAX_IRRADIANCE_MAPS: maxIrradianceMaps,
   MAX_REFLECTION_MAPS: maxReflectionMaps,
+  MAX_REFLECTION_MAPS_DATA: maxReflectionMaps * 3,
   USE_PROBES: true,
 }
 
@@ -39,18 +40,3 @@ for (let i = 0; i < maxReflectionMaps; i++) {
   reflectionMapNames.push(mapVar('reflection', i.toString()))
 }
 
-// export const materialUniforms: Record<string, IUniform> = {}
-// irradianceMapNames.forEach((name) => {
-//   materialUniforms[name] = { value: null }
-// })
-// reflectionMapNames.forEach((name) => {
-//   materialUniforms[name] = { value: null }
-// })
-
-// materialUniforms[ratioVar('irradiance')] = {
-//   value: new Float32Array(maxIrradianceMaps),
-// }
-// materialUniforms[ratioVar('reflection')] = {
-//   value: new Float32Array(maxReflectionMaps),
-// }
-// materialUniforms[reflectionLodVar()] = { value: new Float32Array(maxReflectionMaps) }

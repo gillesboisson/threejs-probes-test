@@ -1,7 +1,7 @@
 import { SphereGeometry, Mesh } from 'three';
-import { Probe } from '../handlers/Probe';
 import { IrradianceProbeMeshMaterial } from './IrradianceProbeMeshMaterial';
 import { probeMeshGeom } from './ProbeMesh';
+import { Probe } from '../type';
 
 
 export class IrradianceProbeMesh extends Mesh<

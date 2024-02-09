@@ -2,8 +2,8 @@ import { Box3, Vector3 } from 'three';
 import { AnyProbeVolumeBaking, AnyProbeVolumeData } from '../data';
 import { ProbeType, ProbeRatio } from '../type';
 import { ProbeVolume, AnyProbeVolume } from './ProbeVolume';
-import { ProbeVolumeRatio } from './type';
-import { Probe } from '../handlers/Probe';
+import { ProbeVolumeRatio,  } from './type';
+import { Probe } from '../type';
 import { GlobalEnvVolume } from './GlobalEnvVolume';
 
 export class ProbeVolumeGroup<
@@ -33,6 +33,31 @@ export class ProbeVolumeGroup<
       this.volumes.push(volume);
       this._boundsDirty = true;
     }
+  }
+
+  getClosestProbe(
+    position: Vector3
+  ): (Probe & { volume?: ProbeVolumeT }) | null {
+    let closestProbe: Probe | null = null;
+    let closestDistance = Infinity;
+    let closestVolume: ProbeVolumeT | null = null;
+    for (let i = 0; i < this.volumes.length; i++) {
+      const volume = this.volumes[i];
+      if (volume.bounds.containsPoint(position) !== false) {
+        const probe = volume.getClosestProbe(position);
+
+        if (probe !== null) {
+          const distance = probe.position.distanceTo(position);
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestProbe = probe;
+            closestVolume = volume;
+          }
+        }
+      }
+    }
+
+    return { ...closestProbe, volume: closestVolume };
   }
 
   getGlobalRatio(

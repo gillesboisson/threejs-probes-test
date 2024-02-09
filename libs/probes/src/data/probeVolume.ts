@@ -42,7 +42,7 @@ export type ReflectionProbeVolumeData = {
 export type ReflectionProbeVolumeBaking = {
   cubemap_face_size: number;
   start_roughness: number;
-  level_roughness: number;
+  end_roughness: number;
   nb_levels: number;
 };
 
@@ -88,6 +88,7 @@ export type GlobalEnvVolumeBaking = {
   reflection: {
     cubemap_face_size: number;
     start_roughness: number;
+    end_roughness: number;
     level_roughness: number;
     nb_levels: number;
   };

@@ -1,6 +1,6 @@
 import { CubeTexture, Vector3 } from 'three';
 import { GlobalEnvProbeVolumeData, GlobalEnvProbeVolumeDefinition } from '../data';
-import { Probe, RoughnessLodMapping } from '../handlers/Probe';
+import { Probe, RoughnessLodMapping } from '../type';
 import { ReflectionProbeVolume } from './ReflectionProbeVolume';
 
 export class GlobalEnvVolume {
@@ -28,9 +28,7 @@ export class GlobalEnvVolume {
     this.reflectionRoughnessMapping = {
       nbLevels: baking.reflection.nb_levels,
       startRoughness: baking.reflection.start_roughness,
-      endRoughness:
-        baking.reflection.start_roughness +
-        baking.reflection.nb_levels * baking.reflection.level_roughness,
+      endRoughness: baking.reflection.end_roughness,
     };
 
     this.position = new Vector3(...transform.position);
@@ -48,10 +46,10 @@ export class GlobalEnvVolume {
     };
   }
 
-  roughnessToTextureLod(roughness: number): number {
-    return ReflectionProbeVolume.RoughnessToTextureLod(
-      roughness,
-      this.reflectionRoughnessMapping
-    );
-  }
+  // roughnessToTextureLod(roughness: number): number {
+  //   return ReflectionProbeVolume.RoughnessToTextureLod(
+  //     roughness,
+  //     this.reflectionRoughnessMapping
+  //   );
+  // }
 }

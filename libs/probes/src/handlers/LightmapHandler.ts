@@ -1,11 +1,15 @@
-import { Mesh, MeshStandardMaterial, Texture } from 'three';
-import { BaseBakeHandler } from './BaseBakeHandler';
+import { Material, Mesh, MeshStandardMaterial, Texture } from 'three';
+import { BaseBakeSceneMapper } from './BakeSceneMapper';
 import { LightMap, LightMapGroup } from './LightMap';
 
-import { BakeRenderLayer, LightMapGroupDefinition, VisibilityDefinition } from '../data';
+import {
+  BakeRenderLayer,
+  LightMapGroupDefinition,
+  VisibilityDefinition,
+} from '../data';
 import { cleanObjectName } from '../helpers';
 
-export class LightmapHandler extends BaseBakeHandler<
+export class LightmapHandler extends BaseBakeSceneMapper<
   MeshStandardMaterial,
   LightMap
 > {
@@ -13,80 +17,14 @@ export class LightmapHandler extends BaseBakeHandler<
 
   protected lightmaps: LightMap[] | null = null;
 
-  // protected lights: Light[] = null;
-  // protected staticObjectNames: string[] = null;
-
   protected _displayMap = true;
   protected _displayLightmap = true;
+  protected _displayAOMap = true;
 
   protected _map: Texture = null;
   protected _lightmap: Texture = null;
 
-  get displayMap(): boolean {
-    return this._displayMap;
-  }
-
-  set displayMap(value: boolean) {
-    if (value !== this._displayMap) {
-      this._displayMap = value;
-      for (let mat of this._materials) {
-        if (this.displayMap) {
-          if ((mat as any).__map) {
-            mat.map = (mat as any).__map;
-          }
-        } else {
-          (mat as any).__map = mat.map;
-          mat.map = null;
-        }
-      }
-    }
-  }
-
-  get displayLightmap(): boolean {
-    return this._displayLightmap;
-  }
-
-  set displayLightmap(value: boolean) {
-    if (value !== this._displayLightmap) {
-      this._displayLightmap = value;
-      for (let mat of this._materials) {
-        for (let mesh of this._objects) {
-          mesh.layers.disableAll();
-          mesh.layers.enable(
-            this._displayLightmap
-              ? BakeRenderLayer.Static
-              : BakeRenderLayer.Active
-          );
-        }
-
-        if (this.displayLightmap) {
-          if ((mat as any).__lightMap) {
-            mat.lightMap = (mat as any).__lightMap;
-          }
-        } else {
-          (mat as any).__lightMap = mat.lightMap;
-          mat.lightMap = null;
-        }
-      }
-    }
-  }
-
-  protected _lightMapIntensity = 1;
-
-  get lightMapIntensity(): number {
-    return this._lightMapIntensity;
-  }
-
-  set lightMapIntensity(val: number) {
-    if (val !== this._lightMapIntensity) {
-      for (const mat of this._materials) {
-        mat.lightMapIntensity = val;
-      }
-      this._lightMapIntensity = val;
-    }
-  }
-
-  // materials: MaterialType[] = [];
+  public defaultEnvTexture: Texture = null;
 
   constructor(
     data: LightMapGroupDefinition[],
@@ -97,6 +35,10 @@ export class LightmapHandler extends BaseBakeHandler<
     this.setData(data);
   }
 
+  protected _mapObject(object: Mesh, material: MeshStandardMaterial) {
+    return object;
+  }
+
   protected _reset(): void {
     super._reset();
     this._sourceMaterials = [];
@@ -104,13 +46,13 @@ export class LightmapHandler extends BaseBakeHandler<
 
   setData(groupDefinition: LightMapGroupDefinition[]) {
     if (groupDefinition !== null) {
-      this._staticObjectNames = [];
+      // this._staticObjectNames = [];
       this.lightmaps = [];
 
       this.definition = groupDefinition.map(
         (groupDefinition): LightMapGroup => {
           const maps = groupDefinition.maps.map((map) => {
-            this._staticObjectNames.push(...(map.objects.map(cleanObjectName)));
+            // this._staticObjectNames.push(...map.objects.map(cleanObjectName));
             return new LightMap(map, groupDefinition);
           });
           this.lightmaps.push(...maps);
@@ -126,15 +68,15 @@ export class LightmapHandler extends BaseBakeHandler<
     } else {
       this.lightmaps = null;
       this.definition = null;
-      this._staticObjectNames = [];
+      // this._staticObjectNames = [];
     }
   }
 
-  filterMesh(mesh: Mesh, data: LightMap): boolean {
+  protected _filterMesh(mesh: Mesh, data: LightMap): boolean {
     return (
       data &&
       mesh.material instanceof MeshStandardMaterial &&
-      super.filterMesh(mesh, data)
+      data.objectNames.includes(mesh.name)
     );
   }
 
@@ -151,8 +93,11 @@ export class LightmapHandler extends BaseBakeHandler<
     for (let i = 0; i < this._sourceMaterials.length; i++) {
       if (this._sourceMaterials[i] === sourceMaterial) {
         const material = this._materials[i];
-        
-        if (material.lightMap === data.texture) {
+        const isAO = data.passes.indexOf('AO') !== -1;
+
+        if (isAO && material.aoMap === data.texture) {
+          return material;
+        } else if (material.lightMap === data.texture) {
           return material;
         }
       }
@@ -161,19 +106,24 @@ export class LightmapHandler extends BaseBakeHandler<
     return null;
   }
 
-  mapMaterial(
+  protected _mapMaterial(
     mesh,
     material: MeshStandardMaterial,
     lightmap: LightMap
   ): MeshStandardMaterial {
-    return lightmap.createMaterial(mesh, this._lightMapIntensity);
+    const mat = lightmap.createMaterial(mesh);
+    if (
+      this.defaultEnvTexture &&
+      mat.envMap === null &&
+      mat.lightMap === null
+    ) {
+      mat.envMap = this.defaultEnvTexture;
+      mat.envMapIntensity = 1;
+    }
+    return mat;
   }
 
-  setupObject(
-    mesh: Mesh,
-    material: MeshStandardMaterial,
-    setupLayers = true
-  ): void {
+  protected _setupObject(mesh: Mesh, material: MeshStandardMaterial): void {
     const lightmap = this.lightmaps?.find((l) =>
       l.objectNames.includes(mesh.name)
     );
@@ -182,17 +132,12 @@ export class LightmapHandler extends BaseBakeHandler<
       throw new Error('No lightmap data');
     }
 
-    lightmap.setupObject(mesh, material, setupLayers);
+    lightmap.setupObject(mesh, material);
   }
 
   removeMesh(mesh: Mesh, resetMaterial: boolean = true) {
     if (this._objects) {
       if (this._removeObject(mesh)) {
-        if (resetMaterial) {
-          mesh.layers.disableAll();
-          mesh.layers.enable(0);
-        }
-
         if (this._removeMaterial(mesh.material as MeshStandardMaterial)) {
           if (resetMaterial) {
             (mesh.material as MeshStandardMaterial).lightMap = null;

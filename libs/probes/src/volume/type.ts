@@ -1,7 +1,6 @@
-import { Vector3 } from 'three'
-import { Probe } from '../handlers/Probe'
-import { ProbeRatio } from '../type'
-import { AnyProbeVolume } from './ProbeVolume'
+import { Vector3 } from 'three';
+import { ProbeRatio } from '../type';
+import { AnyProbeVolume } from './ProbeVolume';
 
 export type UseGetSuroundingProbes = {
   getSuroundingProbes(
@@ -9,10 +8,10 @@ export type UseGetSuroundingProbes = {
     volumeRatio: number,
     result: ProbeRatio[],
     offset?: number
-  ): number
+  ): number;
 
-  getGlobalRatio(position: Vector3): number
-}
+  getGlobalRatio(position: Vector3): number;
+};
 
 export type ProbeVolumeRatio<VolumeT extends AnyProbeVolume = AnyProbeVolume> =
-  [VolumeT, number]
+  [VolumeT, number];

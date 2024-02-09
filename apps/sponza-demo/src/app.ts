@@ -1,44 +1,25 @@
 import {
   ACESFilmicToneMapping,
-  AddOperation,
-  AmbientLight,
-  BufferGeometry,
-  Camera,
   CineonToneMapping,
   Clock,
-  CubeReflectionMapping,
-  CubeRefractionMapping,
+  Color,
   CustomToneMapping,
-  DirectionalLight,
-  DoubleSide,
   Group,
-  HemisphereLight,
-  Light,
   LinearToneMapping,
   Material,
   Mesh,
-  MeshBasicMaterial,
   MeshStandardMaterial,
-  MixOperation,
-  MultiplyOperation,
   NoToneMapping,
-  NormalBlending,
-  PCFSoftShadowMap,
+  Object3D,
   PerspectiveCamera,
-  PointLight,
   ReinhardToneMapping,
   Scene,
-  SphereGeometry,
-  SpotLight,
-  Texture,
-  TextureLoader,
   Vector3,
   WebGLRenderer,
 } from 'three';
 
 import { MapControls } from 'three/examples/jsm/controls/MapControls';
 
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import {
   BakeLoader,
   ProbeDebugger,
@@ -48,17 +29,14 @@ import {
   MeshProbePhongMaterial,
   MeshProbePhysicalMaterial,
   MeshProbeStandardMaterial,
-  GlobalEnvProbeVolumeJSON,
-  BakingJSON,
   LightmapHandler,
-  BakeRenderLayer,
+  ConvertibleMeshProbeMaterial,
+  ProbeMode,
 } from '@libs/probes';
 import GUI from 'lil-gui';
-import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader';
-import { VisibilityHandler } from '@libs/probes/build/handlers/VisibilityHandler';
 
 const guiParams = {
-  exposure: 2.0,
+  exposure: 8.0,
   toneMapping: 'ACESFilmic',
   blurriness: 0.3,
   intensity: 1.0,
@@ -80,17 +58,13 @@ type AppDebugMaterials = {
   physical: MeshProbePhysicalMaterial;
 };
 
-type BakedMaterialData = {
-  name: string;
-  lightMap: Texture;
-  objectNames: string[];
-};
-
 export class App {
   protected clock = new Clock();
   protected scene = new Scene();
-  protected renderer = new WebGLRenderer();
-  protected materials: AppDebugMaterials;
+  protected renderer = new WebGLRenderer({
+    antialias: true,
+    alpha: false,
+  });
 
   protected camera = new PerspectiveCamera(
     75,
@@ -99,6 +73,8 @@ export class App {
     1000
   );
 
+  camRadius = 30;
+
   protected controls: MapControls;
   private _refreshClosure = () => this.refresh();
 
@@ -106,34 +82,114 @@ export class App {
   protected dynamicProbeDebug: DynamicProbeDebugger;
   protected probeVolumeHandler: ProbeVolumeHandler;
   protected probeDebugMesh: Mesh;
-  protected staticObjectsGroup: Group;
-  protected probedObjectsGroup: Group;
-  // protected currentDebugMaterialKey: keyof AppDebugMaterials = 'standard';
 
-  // protected roofMeshName = 'Room-roof';
-  // protected wallsMeshName = 'Room-walls';
-  // protected sunPlaceholderName = 'Sun_Placeholder';
-
-  protected roofMesh?: Mesh;
-  protected wallsMesh?: Mesh;
-  sunLight: DirectionalLight;
   private _requestRender: boolean = true;
-  // private _staticObjectsNames: string[];
   protected lightmapHandler: LightmapHandler;
-  private _bakeLoader: BakeLoader;
-  protected visibilityHandler: VisibilityHandler;
+  protected passesGroups: Group[];
+  protected objects: Object3D[];
+  protected materials: MeshStandardMaterial[];
 
-  // get currentDebugMaterial() {
-  //   return this.materials[this.currentDebugMaterialKey];
-  // }
+  protected _lightMapIntensity = 1;
+  protected _aoMapIntensity = 1;
+  protected _displayAlbedo = true;
+  protected _displayLightmap = true;
+  protected _displayAOMap = true;
+  protected debugObject: Mesh;
+
+  get lightMapIntensity(): number {
+    return this._lightMapIntensity;
+  }
+
+  set lightMapIntensity(val: number) {
+    if (val !== this._lightMapIntensity) {
+      this.materials.forEach((mat) => {
+        mat.lightMapIntensity = val;
+      });
+    }
+    this._lightMapIntensity = val;
+  }
+
+  get aoMapIntensity(): number {
+    return this._aoMapIntensity;
+  }
+
+  set aoMapIntensity(val: number) {
+    if (val !== this._aoMapIntensity) {
+      this.materials.forEach((mat) => {
+        mat.aoMapIntensity = val;
+      });
+      this._aoMapIntensity = val;
+    }
+  }
+
+  get displayAlbedo(): boolean {
+    return this._displayAlbedo;
+  }
+
+  set displayAlbedo(val: boolean) {
+    if (val !== this._displayAlbedo) {
+      this._displayAlbedo = val;
+      if (val) {
+        this.materials.forEach((mat) => {
+          mat.map = (mat as any).__map;
+          mat.color = (mat as any).__color;
+        });
+      } else {
+        this.materials.forEach((mat) => {
+          (mat as any).__map = mat.map;
+          (mat as any).__color = mat.color;
+          mat.map = null;
+          mat.color = new Color(0xffffff);
+        });
+      }
+    }
+  }
+
+  get displayLightmap(): boolean {
+    return this._displayLightmap;
+  }
+
+  set displayLightmap(val: boolean) {
+    if (val !== this._displayLightmap) {
+      this._displayLightmap = val;
+      if (val) {
+        this.materials.forEach((mat) => {
+          mat.lightMap = (mat as any).__lightMap;
+        });
+      } else {
+        this.materials.forEach((mat) => {
+          (mat as any).__lightMap = mat.lightMap;
+          mat.lightMap = null;
+        });
+      }
+    }
+  }
+
+  get displayAOMap(): boolean {
+    return this._displayAOMap;
+  }
+
+  set displayAOMap(val: boolean) {
+    if (val !== this._displayAOMap) {
+      this._displayAOMap = val;
+      if (val) {
+        this.materials.forEach((mat) => {
+          mat.aoMap = (mat as any).__aoMap;
+        });
+      } else {
+        this.materials.forEach((mat) => {
+          (mat as any).__aoMap = mat.aoMap;
+          mat.aoMap = null;
+        });
+      }
+    }
+  }
 
   async init() {
     const loadingCaption = document.getElementById('loading_caption');
     const loading = document.getElementById('loading');
 
     await this.setupRenderer();
-    loadingCaption.innerHTML = 'probes';
-    await this.loadBaking();
     loadingCaption.innerHTML = 'scene';
     await this.loadScene();
     loadingCaption.innerHTML = 'setup';
@@ -154,135 +210,129 @@ export class App {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
     document.body.appendChild(this.renderer.domElement);
-    // this.renderer.autoClearDepth = false;
     this.renderer.autoClear = false;
 
     const infoPanel = document.createElement('div');
     infoPanel.id = 'info-panel';
     document.body.appendChild(infoPanel);
 
-    infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw with left rotate camera.`;
-  }
-
-  protected _bakedMaterialMap: BakedMaterialData[];
-
-
-  async loadBaking() {
-    this._bakeLoader = new BakeLoader(this.renderer);
-
-    // const data = await probeLoader.loadJSON('baked-small-night/probes.json');
-
-    // const handlers = await this._bakeLoader.load(
-    //   'baked-small-night/probes.json'
-    // );
-    const handlers = await this._bakeLoader.load(
-      'baked-small-night/probes.json'
-    );
-    this.probeVolumeHandler = handlers.probeVolumeHandler;
-    this.lightmapHandler = handlers.lightmapHandler;
-    this.visibilityHandler = handlers.visibilityHandler;
-
-    this.lightmapHandler.lightMapIntensity = 1;
-    this.probeVolumeHandler.lightIntensity = 1;
+    infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw wi th left rotate camera.`;
   }
 
   async loadScene() {
-    const loader = new GLTFLoader();
+    const loader = new BakeLoader(this.renderer);
 
-    this.staticObjectsGroup = new Group();
-    this.probedObjectsGroup = new Group();
-    this.scene.add(this.staticObjectsGroup, this.probedObjectsGroup);
+    const useLightMapLayerMask = 1;
+    const useProbeStaticLayerMask = 2;
+    const useActiveLayerMask = 4;
+    const useProbeLayer =
+      useLightMapLayerMask | useProbeStaticLayerMask | useActiveLayerMask;
 
-    // const gltf = await loader.loadAsync(
-    //   'models/sponza-small/sponza-night.gltf'
-    // );
-    const gltf = await loader.loadAsync(
-      'models/sponza-small/sponza-night.gltf'
-    );
 
-    for (let i = 0; i < gltf.scene.children.length; i++) {
-      const object = gltf.scene.children[i];
-      let addToScene = false;
-      let isStatic = false;
-      // const isStatic = this._staticObjectsNames.includes(mesh.name);
+    // In this example 
+    // - irradiance probes are used for GI only (on objects with lightmaps)
+    // - reflection probes are used for all objects
+    // - lightmaps are used for diffuse only on a specific group of objects
 
-      if (object.name === 'sun_placeholder') {
-        this.sunLight = new DirectionalLight(0xffffff, 1);
-        this.sunLight.lookAt(new Vector3(-1, 0, -0.1));
-        this.sunLight.shadow.camera.left *= 5;
-        this.sunLight.shadow.camera.right *= 5;
-        this.sunLight.shadow.camera.top *= 5;
-        this.sunLight.shadow.camera.bottom *= 5;
-        this.sunLight.shadow.camera.far *= 5;
+    // this is implemented by using visibility layers and bake loader filter and mapping functions
 
-        this.scene.add(this.sunLight);
+    // optimize scene by filtering and adapting elements settings based on there layers
+    // Static objects : light baked object and probe static object
+    //  > they will use nearest / fix probes
+    //  > they will have there transform matrix update once
+    //  + Static objects with lightmaps
+    //     > they will not use probes for irradiance
+    //  + Static probed objects
+    //     > they will use nearest probes
+    //     > they will be lit by active lights
+    // Active objects / lights
+    //    > objects they will use probes with autoupdate with interpolation mode
+    //    > lights will lit all none lightmapped objects 
 
-        this.sunLight.castShadow = true;
+    loader.filterProbeMesh = (mesh, handler) =>
+      (mesh.layers.mask & useProbeLayer) !== 0;
+    
+      loader.mapProbeMaterial = (
+      mesh,
+      material: ConvertibleMeshProbeMaterial,
+      handler: ProbeVolumeHandler
+    ) => {
+      const finalMaterial = handler.materialToProbeMaterial(material);
 
-        this.sunLight.position.copy(object.position);
-        this.sunLight.rotation.copy(object.rotation);
-        this.sunLight.matrixWorldNeedsUpdate;
+      const isStatic = (mesh.layers.mask & useActiveLayerMask) === 0;
 
-        continue;
+      const activeProbeMode =
+        isStatic
+          ? ProbeMode.Nearest
+          : ProbeMode.FragmentRatio;
+
+      finalMaterial.autoUpdateProbes = !isStatic;
+      finalMaterial.needsProbeUpdate = true;
+
+      finalMaterial.irradianceProbeMode = finalMaterial.lightMap
+        ? ProbeMode.Disabled
+        : activeProbeMode;
+      finalMaterial.reflectionProbeMode = activeProbeMode;
+
+      console.log('finalMaterial',mesh.name, finalMaterial.name, mesh.layers.mask, useActiveLayerMask, isStatic, activeProbeMode);
+
+      return finalMaterial;
+    };
+
+    loader.mapObject = (object, material, handler) => {
+      const isStatic = (object.layers.mask & useActiveLayerMask) === 0;
+
+      console.log('mapObject',object.name, object.layers.mask, useActiveLayerMask, isStatic);
+
+      if(isStatic) {
+        object.matrixAutoUpdate = false;
+        object.updateMatrix();
       }
 
-      if (object instanceof Mesh) {
-        object.castShadow = true;
-        object.receiveShadow = true;
-      }
+      return object;
+    };
 
-      if (object instanceof Mesh && this.lightmapHandler.addMesh(object)) {
+    const { lightmapHandler, probeVolumeHandler, groups, objects } =
+      await loader.loadScene('victorian/victorian-house.gltf', this.scene);
 
-        addToScene = true;
-        isStatic = true;
-      } else if (
-        object instanceof Mesh &&
-        this.probeVolumeHandler.addMesh(object)
-      ) {
+    this.passesGroups = groups;
 
-        addToScene = true;
-        isStatic = false;
-      } else {
+    // based on victorian-house.gltf layers masks and current lights : layers will be splitted in two passes automatically
+    // - objects with lightmaps (layer 1)
+    // - objects with no lightmaps 
 
-        this.visibilityHandler.addMesh(object);
-        addToScene = true;
-        isStatic = false;
-      }
+    this.lightmapHandler = lightmapHandler;
+    this.probeVolumeHandler = probeVolumeHandler;
 
+    this.objects = objects;
+    // get unique materials list
 
-      if (object instanceof Light) {
-        object.intensity /= 5000;
-        if(object instanceof PointLight){
-          // object.distance = 5
+    const materials: Material[] = (this.materials = []);
+    this.objects
+      .filter((o) => o instanceof Mesh)
+      .forEach((o: Mesh) => {
+        const mesh = o as Mesh;
+        if (
+          mesh.material instanceof Material &&
+          materials.indexOf(mesh.material) === -1
+        ) {
+          materials.push(mesh.material);
         }
-        // lights.push(object);
-      }
+      });
 
-      if (addToScene) {
-        i--;
-
-        if (isStatic) {
-          this.staticObjectsGroup.add(object);
-        } else {
-          this.probedObjectsGroup.add(object);
-        }
-      }
-    }
+    this.debugObject = this.objects.find((o) => o.name === 'Debug') as Mesh;
   }
 
   protected setupCamera() {
     this.scene.add(this.camera);
 
-    const targetPos = new Vector3(0, 1, 0);
+    const offset = new Vector3(0, 0, 3);
+    const targetPos = offset.clone().add(new Vector3(0, 0, 0));
+    const camPos = offset.clone().add(new Vector3(-0, 3, 9));
 
-    this.camera.position.copy(targetPos).add(new Vector3(0, 3, 3));
+    this.camera.position.copy(camPos);
 
     this.camera.lookAt(targetPos);
-
-    this.camera.layers.disableAll();
-    this.camera.layers.enable(BakeRenderLayer.Static);
-    this.camera.layers.enable(BakeRenderLayer.Active);
-    // this.camera.layers.enable(BakeRenderLayer.StaticLights);
 
     this.controls = new MapControls(this.camera, this.renderer.domElement);
     this.controls.target.copy(targetPos);
@@ -291,13 +341,11 @@ export class App {
 
   protected initDebug() {
     const gui = new GUI();
-    
+
     gui.title('Three JS Probes Volume');
 
     this.renderer.toneMapping = toneMappingOptions[guiParams.toneMapping];
     this.renderer.toneMappingExposure = guiParams.exposure;
-
-
 
     const toneMappingFolder = gui.addFolder('Tone Mapping');
     toneMappingFolder
@@ -307,33 +355,43 @@ export class App {
         this.renderer.toneMapping = toneMappingOptions[value];
       });
 
-    toneMappingFolder.add(guiParams, 'exposure', 0, 10).name('Exposure').onChange((value) => {
-      this.renderer.toneMappingExposure = value;
-    });
+    toneMappingFolder
+      .add(guiParams, 'exposure', 0, 10)
+      .name('Exposure')
+      .onChange((value) => {
+        this.renderer.toneMappingExposure = value;
+      });
 
     this.probesDebug = new ProbeDebugger(this.probeVolumeHandler);
     this.probesDebug.visibilityChanged = () => (this._requestRender = true);
 
-    const probeFolder = gui.addFolder('Probes'); 
-    probeFolder.add(this.probeVolumeHandler,"lightIntensity",0,10).name("Intensity")
-    this.probesDebug.gui(gui,probeFolder);
+    const probeFolder = gui.addFolder('Probes');
+    probeFolder
+      .add(this.probeVolumeHandler, 'lightIntensity', 0, 10)
+      .name('Intensity');
+    this.probesDebug.gui(gui, probeFolder);
     this.scene.add(this.probesDebug);
-
-    if (this.sunLight) {
-      const lightFolder = gui.addFolder('Sun');
-
-      lightFolder.add(this.sunLight, 'intensity', 0, 3);
-      lightFolder.add(this.sunLight, 'castShadow').name("Cast shadow");
-      lightFolder.add(this.sunLight.shadow, 'radius', 0, 10);
-      lightFolder.add(this.sunLight.shadow, 'bias', -1, 1);
-    }
 
     const lightmapFolder = gui.addFolder('Lightmap');
 
-    lightmapFolder.add(this.lightmapHandler, 'lightMapIntensity', 0.5, 3).name('Lightmap intensity');
-    lightmapFolder.add(this.lightmapHandler, 'displayMap').name('Display albedo map');
-    lightmapFolder.add(this.lightmapHandler, 'displayLightmap').name('Display lightmap');
+    lightmapFolder
+      .add(this, 'lightMapIntensity', 0, 3)
+      .name('Lightmap intensity');
+    lightmapFolder.add(this, 'aoMapIntensity', 0, 1).name('AO intensity');
+    lightmapFolder.add(this, 'displayAlbedo').name('Display albedo');
+    lightmapFolder.add(this, 'displayLightmap').name('Display lightmap');
+    lightmapFolder.add(this, 'displayAOMap').name('Display AO map');
 
+    if (this.debugObject) {
+      const debugFolder = gui.addFolder('Debug');
+
+      debugFolder
+        .add(this.debugObject.material, 'roughness', 0, 1)
+        .name('Roughness');
+      debugFolder
+        .add(this.debugObject.material, 'metalness', 0, 1)
+        .name('Metalness');
+    }
   }
 
   start() {
@@ -346,12 +404,18 @@ export class App {
     this.clock.stop();
   }
 
+  protected elapsedTime = 0;
+
   refresh(forcedDeltaTime: number = -1) {
     if (this.clock.running) {
+
+      
       const clockDeltaTime = this.clock.getElapsedTime();
       const deltaTime =
-        forcedDeltaTime !== -1 ? forcedDeltaTime : clockDeltaTime;
+        forcedDeltaTime !== -1 ? forcedDeltaTime : clockDeltaTime - this.elapsedTime;
       const frameRatio = (deltaTime * 1) / 60;
+
+      this.elapsedTime = clockDeltaTime;
 
       this.update(deltaTime, frameRatio);
       this.render(deltaTime, frameRatio);
@@ -362,21 +426,38 @@ export class App {
 
   update(deltaTime: number, frameRatio: number) {
     if (this.controls) {
-      this.updateProbeDebug();
+      if (this.debugObject) {
+        this.debugObject.position.x = this.controls.target.x;
+        this.debugObject.position.z = this.controls.target.z;
+      }
     }
   }
 
-  updateProbeDebug() {}
-
   render(deltaTime: number, frameRatio: number) {
-   
-    const layers = [0, BakeRenderLayer.Static, BakeRenderLayer.Active];
     if (this._requestRender === true) {
       this.renderer.clear();
 
-      for (let l of layers) {
-        this.camera.layers.disableAll();
-        this.camera.layers.set(l);
+      let firstLayer = true;
+
+      if (this.debugObject) {
+        this.debugObject.rotateOnAxis(new Vector3(0, 1, 0), deltaTime * Math.PI / 2); 
+      }
+
+      for (let group of this.passesGroups) {
+        this.scene.background =
+          firstLayer && this.probeVolumeHandler.globalEnv
+            ? this.probeVolumeHandler.globalEnv.irradianceCubeProbe.texture
+            : null;
+
+        this.scene.backgroundIntensity = 1;
+
+        firstLayer = false;
+
+        for (let g of this.passesGroups) {
+          g.visible = g === group;
+        }
+
+        this.camera.layers.mask = group.layers.mask;
 
         this.renderer.render(this.scene, this.camera);
       }

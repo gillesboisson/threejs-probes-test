@@ -5,7 +5,7 @@ import {
   Object3D,
   Object3DEventMap,
 } from 'three';
-import { BaseBakeHandler } from './BaseBakeHandler';
+import { BaseBakeSceneMapper } from './BakeSceneMapper';
 import { BakeRenderLayer, VisibilityDefinition } from '../data';
 
 export class VisibilityHandler {
@@ -13,12 +13,12 @@ export class VisibilityHandler {
   protected _flatObjectNames: string[];
 
   constructor(protected _visibilities: VisibilityDefinition[]) {
-    this._flatObjectNames = this._visibilities
-      .map((collection) => collection.objects)
-      .flat()
-      .filter(
-        (objectName, index, names) => names.indexOf(objectName) === index
-      );
+    // this._flatObjectNames = this._visibilities
+    //   .map((collection) => collection.objects)
+    //   .flat()
+    //   .filter(
+    //     (objectName, index, names) => names.indexOf(objectName) === index
+    //   );
   }
 
   reset() {
@@ -39,6 +39,10 @@ export class VisibilityHandler {
       }else{
         mesh.layers.disableAll();
         mesh.layers.enable(BakeRenderLayer.Static);
+
+        if (mesh.castShadow){
+          mesh.layers.enable(BakeRenderLayer.Shadows);
+        }
       }
 
     }
