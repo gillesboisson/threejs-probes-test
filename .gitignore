@@ -6,3 +6,7 @@ node_modules
 remote-profile
 app/src/**/*.d.ts
 **/__render_cache
+
+archive
+
+apps/*/assets/licensed-*
