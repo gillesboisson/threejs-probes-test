@@ -13,7 +13,7 @@ const defaultConfig = {
   optimiseProbes: true,
   optimiseLightmaps: true,
   verbose: false,
-  compressionLevel:9,
+  compressionLevel: 9,
   forceUByte: false,
 };
 
@@ -147,9 +147,9 @@ for (let imageRef of imageRefs) {
     // const sourceBaseFilename = sourceFilename.split('.').slice(0, -1).join('.');
     // const sourceDirectory = sourceRelativeDirSplit.join('/');
 
-    const image = sharp(sourcePath);
+    let image = sharp(sourcePath);
     const extension = relativeUrl.split('.').pop().toLowerCase();
-    
+
     if (supportedExtensions.includes(extension)) {
       promisesStack = promisesStack.then(() =>
         image.metadata().then((metadata) => {
@@ -180,46 +180,34 @@ for (let imageRef of imageRefs) {
 
           const use16BitsColorDepth = metadata?.depth === 'ushort';
 
-          if (use16BitsColorDepth && !forceUByte) {
-            if (verbose) {
-              console.log(
-                '! 16 bits color depth not supported: ',
-                sourcePath.split('/').pop()
-              );
-            }
-            return new Promise((resolve, reject) => {
-              fs.copyFile(sourcePath, destPath, (err) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
-                }
-              });
-            });
-          } else {
-            if (verbose) {
-              console.log(
-                'Resize image : ' +
-                  filename +
-                  ' : ' +
-                  metadata.width +
-                  'x' +
-                  metadata.height +
-                  ' -> ' +
-                  finalWidth +
-                  'x' +
-                  finalHeight,
-                ' [/' + newDivideFactor + ']'
-              );
-            }
-
-            return image
-              .png({
-                compressionLevel,
-              })
-              .resize(finalWidth, finalHeight)
-              .toFile(destPath);
+          if (verbose) {
+            console.log(
+              'Resize image : ' +
+                filename +
+                ' : ' +
+                metadata.width +
+                'x' +
+                metadata.height +
+                ' -> ' +
+                finalWidth +
+                'x' +
+                finalHeight,
+              ' [/' + newDivideFactor + ']'
+            );
           }
+
+
+          if(use16BitsColorDepth && !forceUByte) {
+            image = image.toColourspace( metadata.space === 'srgb' ? 'srgb16' : 'rgb16')
+          }
+
+          return image
+            .png({
+              compressionLevel,
+            })
+            .resize(finalWidth, finalHeight)
+            .toFile(destPath);
+          // }
         })
       );
     } else {

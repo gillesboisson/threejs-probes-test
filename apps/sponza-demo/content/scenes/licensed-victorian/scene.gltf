@@ -685,7 +685,7 @@
               "baked_by_light_maps": []
             },
             {
-              "layer_bit_mask": 51,
+              "layer_bit_mask": 2,
               "name": "use only probes",
               "baked_by_probes": [],
               "baked_by_light_maps": []

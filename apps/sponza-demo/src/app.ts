@@ -101,6 +101,26 @@ export class App {
   protected _displayAOMap = true;
   protected debugObject: Mesh;
 
+  protected _layersMask = 1 | 2 | 4 | 8;
+
+  protected _layers = [
+    {
+      mask: 1,
+      name: 'Lightmaps baked',
+      visible: true,
+    },
+    {
+      mask: 2,
+      name: 'Static objects (probes only)',
+      visible: true,
+    },
+    {
+      mask: 4,
+      name: 'Active objects',
+      visible: true,
+    },
+  ];
+
   get lightMapIntensity(): number {
     return this._lightMapIntensity;
   }
@@ -147,11 +167,8 @@ export class App {
           mat.map = null;
           mat.color = new Color(0xffffff);
           mat.needsUpdate = true;
-          
         });
       }
-
-
     }
   }
 
@@ -230,12 +247,12 @@ export class App {
     const copyrightPanel = document.createElement('div');
     infoPanel.id = 'info-panel';
     copyrightPanel.id = 'copyright';
-    
+
     document.body.appendChild(infoPanel);
     document.body.appendChild(copyrightPanel);
 
     infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw wi th left rotate camera.`;
-    copyrightPanel.innerHTML = `<a href="https://sketchfab.com/3d-models/victorian-living-room-824dfd61f8e348989fd346103c67bd9f">Victorian living room by Matthew Collings</a>`
+    copyrightPanel.innerHTML = `<a href="https://sketchfab.com/3d-models/victorian-living-room-824dfd61f8e348989fd346103c67bd9f">Victorian living room by Matthew Collings</a>`;
   }
 
   async loadScene() {
@@ -306,7 +323,10 @@ export class App {
     };
 
     const { lightmapHandler, probeVolumeHandler, groups, objects } =
-      await loader.loadScene('scenes/licensed-victorian/scene.gltf', this.scene);
+      await loader.loadScene(
+        'scenes/licensed-victorian/scene.gltf',
+        this.scene
+      );
 
     this.passesGroups = groups;
 
@@ -395,6 +415,21 @@ export class App {
     lightmapFolder.add(this, 'displayLightmap').name('Display lightmap');
     lightmapFolder.add(this, 'displayAOMap').name('Display AO map');
 
+    const layerFolder = gui.addFolder('Layers');
+
+    for (let layer of this._layers) {
+      layerFolder
+        .add(layer, 'visible')
+        .name(layer.name)
+        .onChange(() => {
+          this._layersMask = layer.visible
+            ? this._layersMask | layer.mask
+            : this._layersMask & ~layer.mask;
+
+          this._requestRender = true;
+        });
+    }
+
     if (this.debugObject) {
       const debugFolder = gui.addFolder('Debug');
 
@@ -459,6 +494,7 @@ export class App {
         );
       }
 
+      // groups are rendered one by one
       for (let group of this.passesGroups) {
         this.scene.background =
           firstLayer && this.probeVolumeHandler.globalEnv
@@ -473,7 +509,7 @@ export class App {
           g.visible = g === group;
         }
 
-        this.camera.layers.mask = group.layers.mask;
+        this.camera.layers.mask = group.layers.mask & this._layersMask;
 
         this.renderer.render(this.scene, this.camera);
       }
