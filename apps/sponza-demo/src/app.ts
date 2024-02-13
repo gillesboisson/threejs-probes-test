@@ -18,6 +18,8 @@ import {
   WebGLRenderer,
 } from 'three';
 
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader';
+
 import { MapControls } from 'three/examples/jsm/controls/MapControls';
 
 import {
@@ -35,8 +37,11 @@ import {
 } from '@libs/probes';
 import GUI from 'lil-gui';
 
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module';
+
 const guiParams = {
-  exposure: 8.0,
+  exposure: 5,
   toneMapping: 'ACESFilmic',
   blurriness: 0.3,
   intensity: 1.0,
@@ -133,6 +138,7 @@ export class App {
         this.materials.forEach((mat) => {
           mat.map = (mat as any).__map;
           mat.color = (mat as any).__color;
+          mat.needsUpdate = true;
         });
       } else {
         this.materials.forEach((mat) => {
@@ -140,8 +146,12 @@ export class App {
           (mat as any).__color = mat.color;
           mat.map = null;
           mat.color = new Color(0xffffff);
+          mat.needsUpdate = true;
+          
         });
       }
+
+
     }
   }
 
@@ -155,11 +165,13 @@ export class App {
       if (val) {
         this.materials.forEach((mat) => {
           mat.lightMap = (mat as any).__lightMap;
+          mat.needsUpdate = true;
         });
       } else {
         this.materials.forEach((mat) => {
           (mat as any).__lightMap = mat.lightMap;
           mat.lightMap = null;
+          mat.needsUpdate = true;
         });
       }
     }
@@ -175,11 +187,13 @@ export class App {
       if (val) {
         this.materials.forEach((mat) => {
           mat.aoMap = (mat as any).__aoMap;
+          mat.needsUpdate = true;
         });
       } else {
         this.materials.forEach((mat) => {
           (mat as any).__aoMap = mat.aoMap;
           mat.aoMap = null;
+          mat.needsUpdate = true;
         });
       }
     }
@@ -213,10 +227,15 @@ export class App {
     this.renderer.autoClear = false;
 
     const infoPanel = document.createElement('div');
+    const copyrightPanel = document.createElement('div');
     infoPanel.id = 'info-panel';
+    copyrightPanel.id = 'copyright';
+    
     document.body.appendChild(infoPanel);
+    document.body.appendChild(copyrightPanel);
 
     infoPanel.innerHTML = `Drag with right click to move the camera. <br> Draw wi th left rotate camera.`;
+    copyrightPanel.innerHTML = `<a href="https://sketchfab.com/3d-models/victorian-living-room-824dfd61f8e348989fd346103c67bd9f">Victorian living room by Matthew Collings</a>`
   }
 
   async loadScene() {
@@ -228,8 +247,7 @@ export class App {
     const useProbeLayer =
       useLightMapLayerMask | useProbeStaticLayerMask | useActiveLayerMask;
 
-
-    // In this example 
+    // In this example
     // - irradiance probes are used for GI only (on objects with lightmaps)
     // - reflection probes are used for all objects
     // - lightmaps are used for diffuse only on a specific group of objects
@@ -247,12 +265,12 @@ export class App {
     //     > they will be lit by active lights
     // Active objects / lights
     //    > objects they will use probes with autoupdate with interpolation mode
-    //    > lights will lit all none lightmapped objects 
+    //    > lights will lit all none lightmapped objects
 
     loader.filterProbeMesh = (mesh, handler) =>
       (mesh.layers.mask & useProbeLayer) !== 0;
-    
-      loader.mapProbeMaterial = (
+
+    loader.mapProbeMaterial = (
       mesh,
       material: ConvertibleMeshProbeMaterial,
       handler: ProbeVolumeHandler
@@ -261,10 +279,9 @@ export class App {
 
       const isStatic = (mesh.layers.mask & useActiveLayerMask) === 0;
 
-      const activeProbeMode =
-        isStatic
-          ? ProbeMode.Nearest
-          : ProbeMode.FragmentRatio;
+      const activeProbeMode = isStatic
+        ? ProbeMode.Nearest
+        : ProbeMode.FragmentRatio;
 
       finalMaterial.autoUpdateProbes = !isStatic;
       finalMaterial.needsProbeUpdate = true;
@@ -274,17 +291,13 @@ export class App {
         : activeProbeMode;
       finalMaterial.reflectionProbeMode = activeProbeMode;
 
-      console.log('finalMaterial',mesh.name, finalMaterial.name, mesh.layers.mask, useActiveLayerMask, isStatic, activeProbeMode);
-
       return finalMaterial;
     };
 
     loader.mapObject = (object, material, handler) => {
       const isStatic = (object.layers.mask & useActiveLayerMask) === 0;
 
-      console.log('mapObject',object.name, object.layers.mask, useActiveLayerMask, isStatic);
-
-      if(isStatic) {
+      if (isStatic) {
         object.matrixAutoUpdate = false;
         object.updateMatrix();
       }
@@ -293,13 +306,13 @@ export class App {
     };
 
     const { lightmapHandler, probeVolumeHandler, groups, objects } =
-      await loader.loadScene('victorian/victorian-house.gltf', this.scene);
+      await loader.loadScene('scenes/licensed-victorian/scene.gltf', this.scene);
 
     this.passesGroups = groups;
 
     // based on victorian-house.gltf layers masks and current lights : layers will be splitted in two passes automatically
     // - objects with lightmaps (layer 1)
-    // - objects with no lightmaps 
+    // - objects with no lightmaps
 
     this.lightmapHandler = lightmapHandler;
     this.probeVolumeHandler = probeVolumeHandler;
@@ -326,9 +339,9 @@ export class App {
   protected setupCamera() {
     this.scene.add(this.camera);
 
-    const offset = new Vector3(0, 0, 3);
+    const offset = new Vector3(-2, 0, 0);
     const targetPos = offset.clone().add(new Vector3(0, 0, 0));
-    const camPos = offset.clone().add(new Vector3(-0, 3, 9));
+    const camPos = offset.clone().add(new Vector3(-5, 6, 6));
 
     this.camera.position.copy(camPos);
 
@@ -408,11 +421,11 @@ export class App {
 
   refresh(forcedDeltaTime: number = -1) {
     if (this.clock.running) {
-
-      
       const clockDeltaTime = this.clock.getElapsedTime();
       const deltaTime =
-        forcedDeltaTime !== -1 ? forcedDeltaTime : clockDeltaTime - this.elapsedTime;
+        forcedDeltaTime !== -1
+          ? forcedDeltaTime
+          : clockDeltaTime - this.elapsedTime;
       const frameRatio = (deltaTime * 1) / 60;
 
       this.elapsedTime = clockDeltaTime;
@@ -440,7 +453,10 @@ export class App {
       let firstLayer = true;
 
       if (this.debugObject) {
-        this.debugObject.rotateOnAxis(new Vector3(0, 1, 0), deltaTime * Math.PI / 2); 
+        this.debugObject.rotateOnAxis(
+          new Vector3(0, 1, 0),
+          (deltaTime * Math.PI) / 2
+        );
       }
 
       for (let group of this.passesGroups) {

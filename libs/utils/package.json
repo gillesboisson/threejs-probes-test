@@ -21,7 +21,8 @@
   "devDependencies": {
     "typescript": "^4.0.2",
     "@libs/config":"0.0.1",
-    "@types/three": "^0.160"
+    "@types/three": "^0.160",
+    "wrap-ansi": "^9.0.0"
     
   },
   "dependencies": {

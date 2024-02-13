@@ -11,6 +11,7 @@ import {
   VisibilityDefinition,
   VisibilityRelation,
 } from '../data';
+import { cleanObjectName } from '../helpers';
 
 export class LightMap {
   readonly type: LightMapType;
@@ -25,7 +26,7 @@ export class LightMap {
   constructor(data: LightMapDefinition, group: LightMapGroupDefinition) {
     this.type = group.type;
     this.name = group.name;
-    this.objectNames = data.objects;
+    this.objectNames = data.objects.map(cleanObjectName);
     this.passes = group.passes;
     this.format = group.format;
     this.uvIndex = group.uv_index;

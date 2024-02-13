@@ -30,6 +30,25 @@ canvas {
   line-height: 18px;
 }
 
+#copyright a{
+  color: #000;
+}
+
+#copyright{
+
+  position: absolute;
+  color: #FFF;
+  width: 100%;
+  text-align: right;
+  right: 10px;
+  bottom:10px;
+  z-index: 1000;
+  font-size:14px;
+  line-height: 18px;
+  font-size:11px;
+
+}
+
 *:focus {
   outline: none;
 }

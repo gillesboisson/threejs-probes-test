@@ -1,0 +1,67 @@
+Arguments: 
+  /home/gillesboisson/.nvm/versions/node/v20.10.0/bin/node /home/gillesboisson/.nvm/versions/node/v20.10.0/bin/yarn
+
+PATH: 
+  /home/gillesboisson/.bun/bin:/home/gillesboisson/.chatgpt/bin:/home/gillesboisson/.bun/bin:/home/gillesboisson/.chatgpt/bin:/home/gillesboisson/.nvm/versions/node/v20.10.0/bin:/home/gillesboisson/.cargo/bin:/home/gillesboisson/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/gillesboisson/.dotnet/tools
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  20.10.0
+
+Platform: 
+  linux x64
+
+Trace: 
+  SyntaxError: /home/gillesboisson/Projects/sandbox/threejs-probes/libs/probes/package.json: Expected double-quoted property name in JSON at position 844
+      at JSON.parse (<anonymous>)
+      at /home/gillesboisson/.nvm/versions/node/v20.10.0/lib/node_modules/yarn/lib/cli.js:1629:59
+      at Generator.next (<anonymous>)
+      at step (/home/gillesboisson/.nvm/versions/node/v20.10.0/lib/node_modules/yarn/lib/cli.js:310:30)
+      at /home/gillesboisson/.nvm/versions/node/v20.10.0/lib/node_modules/yarn/lib/cli.js:321:13
+
+npm manifest: 
+  {
+    "name": "@libs/probes",
+    "version": "0.0.1",
+    "private": true,
+    "contributors": [
+      "Gilles Boisson <gillesboisson@gmail.com>"
+    ],
+    "main": "build/index.js",
+    "typings": "build/index.d.ts",
+    "files": [
+      "build"
+    ],
+    "scripts": {
+      "start:dev": "tsc -p ./tsconfig.dev.json -w",
+      "build:dev": "tsc -p ./tsconfig.dev.json",
+      "build:production": "tsc",
+      "clean": "rm -fr build"
+    },
+    "peerDependencies": {},
+    "devDependencies": {
+      "@libs/config": "0.0.1",
+      "@types/three": "^0.160",
+      "@types/wrap-ansi": "^8.1.0",
+      "ts-loader": "^8.0.4",
+      "typescript": "^4.0.3",
+      "webpack": "^4.44.2",
+      "webpack-cli": "^4.5.0",
+      "webpack-dev-server": "^3.11.2",
+      "webpack-node-externals": "^2.5.2"
+    },
+    "dependencies": {
+      "@libs/utils": "^0.0.1",
+      "raw-loader": "^4.0.2",
+      "three": "^0.160",
+  
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile

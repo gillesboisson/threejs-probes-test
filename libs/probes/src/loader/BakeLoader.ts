@@ -124,7 +124,7 @@ export class BakeLoader {
     const layerHandler = new VisibilityLayersHandler();
 
     layerHandler.setupObjectLayers(collections, gltf.scene.children);
-
+    
     
 
     const objects: Object3D[] = [];
@@ -138,7 +138,8 @@ export class BakeLoader {
           : gltf.scene.children[i];
 
       let addToScene = false;
-      let isStatic = false;
+
+      
 
       if (object.layers.mask === 0) {
         continue;
@@ -146,15 +147,12 @@ export class BakeLoader {
 
       if (object instanceof Light) {
         addToScene = true;
-        object.intensity /= 5000;
-        // object.intensity = 0;
-        // if (object instanceof PointLight) {
-        //   object.decay = 1;
-        // }
+        object.intensity /= 10000;
       }
 
       if (object instanceof Mesh) {
         addToScene = true;
+        if(object.name === 'red_cube001') debugger
         this._lightmapHandler.addMesh(object);        
         this._probeVolumeHandler.addMesh(object)
       }
@@ -245,10 +243,10 @@ export class BakeLoader {
 
     const lightmapGroups: LightMapGroupDefinition[] = lightmapGroupsJSON.map(
       (group) => {
-        const visibilityDefinition = this.getVisibilityDefinition(
+        const visibilityDefinition = group.visibility.collection ? this.getVisibilityDefinition(
           group.visibility.collection,
           visibilities
-        );
+        ) : null;
 
         const groupMaps: LightMapDefinition[] = group.maps.map((lightMap) => {
           const mapIndex = maps.findIndex(
