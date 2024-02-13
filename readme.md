@@ -1,18 +1,17 @@
-# Three JS probes volumes
+# Three JS baked probes
 
-This project is an implementation test of probes volumes in three js. The goal is to be able to have robust probes volumes in three js that can be used for static lighting. 
+This project is an extension of existing three js feature with probes support and easy lightmap render group integration . The goal is to be able to have robust probes volumes in three js that can be used for static lighting. 
 
-It is inspired by Blender eevee probes volumes and it is made to be integrated with [this blender plugin](https://github.com/gillesboisson/blender-probes-export). This plugin allow to bake irradiance and radiance volumes as usable data for realtime 3D engine.
+It is inspired by Blender eevee probes volumes and it is made to be integrated with [a blender plugin] (coming soon on blender marker)
 
 Here is technical details on irradiance / radiance computation :
 - Irradiance : [https://learnopengl.com/PBR/IBL/Diffuse-irradiance](https://learnopengl.com/PBR/IBL/Diffuse-irradiance)
 - Specular : [https://learnopengl.com/PBR/IBL/Specular-IBL](https://learnopengl.com/PBR/IBL/Specular-IBL)
 
-More details in [plugin documentation](https://github.com/gillesboisson/blender-probes-export)
-
 ## Demo
 
-![Demo](./doc/screen-2023-11-08.png)
+![Demo](./doc/victorian-high.png)
+![Light](./doc/victorian-light-map.png)
 
 Demo available at [https://three-probes.dotify.eu/](https://three-probes.dotify.eu/)
 
@@ -21,42 +20,29 @@ Demo is based on blender scene provided here [./apps/probes-simpledemo/assets/ba
 
 ## Features
 
-- [ ] radiance cubemaps volume
-  - [x] box area
-  - [x] sphere area
-  - [ ] parallax correction
+### Probes volumes
 
-- [ ] irradiance cubemaps volume
-  - [x] grid volume
-  - [ ] detect dead probes or occlusion between probes
-  - [ ] other volume shapes TBD
+Replacement of existing environment map by a set of probes.
 
+**Probes Type**
+- Irradiance probe grid
+- Radiance probe volume with prebaked multi roughness cubemap
 
-- [x] volume data structure
-  - [x] global environment as fallback
-  - [x] cubemap based probes
-  - [x] irradiance based probes
-  - [x] volumes bounds solver (brute force)
-  - [x] volume interpolation
-  
+**Probe mode**
+- Nearest : get nearest probe
+- Fragment interpolation (Vertex irradiance interpolation coming soon)
 
-- [ ] baking
-  - [x] data schema based on blender plugin (details [blender plugin on doc](https://github.com/gillesboisson/blender-probes-export))
-  - [x] data loader 
-  - [x] SDR texture wrapper
-  - [x] HDR texture wrapper
-  - [ ] three js baking tools (based on data schema)
+**Probes format**
+- PNG : 8 / 16 uint color depth
+- EXR : half float / float 
 
-- [x] material
-  - [x] shader helper
-  - [x] standard material extension
-  - [x] physical material extension
-  - [x] phong material extension
-  - [x] lamber material extension
-  
+### Lightmap
 
-- [ ] others
-  - [x] debugging tools
+No spécific lightmap specifig integration, only a bake data loading integration (more info on plugin doc comming)
+
+### visibility collection | layers
+
+As three JS doesn't support a light group system, a light group split system is integrated. in bake loader, which take visibility collection and generate a list of Groups with all light / object combinaison based on light layers mask and object layer mask. 
 
 
 ## Three JS integration
@@ -88,7 +74,7 @@ export class MeshProbeStandardMaterial extends extendProbesMaterial<MeshStandard
 
 ### In engine baking
 
-In engine baking is not supported for now. Blender exported data provided enough data (like probe visibility and cam clipping plane) to be able to bake probes in engine.
+In engine baking is not supported for now. The main focus for now is the integration with the coming blender plugin
 
 - [ ]: Allow the blender to export only data (for now you need to bake probes in blender)
 - [ ]: Implement a probe render based on cubemap renderer
